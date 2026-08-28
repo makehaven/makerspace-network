@@ -5,6 +5,7 @@ import SpacePage from './pages/SpacePage';
 import Standards from './pages/Standards';
 import About from './pages/About';
 import Achievements from './pages/Achievements';
+import Home from './pages/Home';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
 
@@ -79,7 +80,7 @@ export default function App() {
 
   useEffect(() => {
     document.title =
-      route.page === 'directory'
+      route.page === 'directory' && region
         ? `${region.name} Makerspaces — Makerspace Network`
         : 'Makerspace Network';
   }, [route, region]);
@@ -92,7 +93,7 @@ export default function App() {
             Makerspace<span className="net">.network</span>
           </a>
           <nav className="nav">
-            <Link page="directory">Spaces</Link>
+            <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="standards">Standards</Link>
             <Link page="achievements">Badges</Link>
             <Link page="about">About</Link>
@@ -102,7 +103,7 @@ export default function App() {
       </header>
 
       <main>
-        {route.page === 'directory' && <Directory region={region} />}
+        {route.page === 'directory' && (region ? <Directory region={region} /> : <Home />)}
         {route.page === 'space' && route.id && <SpacePage id={route.id} />}
         {route.page === 'standards' && <Standards />}
         {route.page === 'achievements' && <Achievements />}
@@ -122,7 +123,7 @@ export default function App() {
             <strong>Makerspace Network</strong>
             <p style={{ marginTop: 6 }}>
               An open directory maintained by the regional networks that know these spaces.
-              {region.steward?.organization && <> {region.name} is stewarded by {region.steward.organization}.</>}
+              {region?.steward?.organization && <> {region.name} is stewarded by {region.steward.organization}.</>}
             </p>
           </div>
           <div>

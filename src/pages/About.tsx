@@ -1,7 +1,7 @@
 import type { Region } from '../types';
 import { SPACES, REGIONS, REPO_URL } from '../data';
 
-export default function About({ region }: { region: Region }) {
+export default function About({ region }: { region: Region | null }) {
   return (
     <>
       <section className="hero">
@@ -22,9 +22,9 @@ export default function About({ region }: { region: Region }) {
           <li>
             <strong>A named steward per region.</strong> Someone is responsible for these records
             being true.{' '}
-            {region.steward?.organization
+            {region?.steward?.organization
               ? <>{region.name} is stewarded by {region.steward.organization}.</>
-              : <>{region.name} does not have a steward listed yet.</>}
+              : <>Each region names its own.</>}
             {' '}That is a social answer to the staleness problem, not a technical one, and it is
             the only one that has ever worked.
           </li>
@@ -75,7 +75,7 @@ export default function About({ region }: { region: Region }) {
         <p>
           {REGIONS.length > 1
             ? REGIONS.map((r) => r.name).join(', ')
-            : `${region.name} is the first. The platform is multi-region by design — a second state adds a region file and a folder of spaces.`}
+            : `${REGIONS[0].name} is the first. The platform is multi-region by design — a second state adds a region file and a folder of spaces, not a code change.`}
         </p>
       </div>
     </>

@@ -49,9 +49,13 @@ export const CAPABILITY_DOMAINS: { id: string; label: string }[] = [
   { id: 'science', label: 'Science' },
 ];
 
-/** The region this visit is about. Subdomain first so
- *  connecticut.makerspace.network just works, then ?region=, then the only one. */
-export function resolveRegion(): Region {
+/** The region this visit is about, or null on the network apex.
+ *
+ *  Hostname first so connecticut.makerspace.network just works, then ?region=.
+ *  Returning null rather than defaulting to the first region matters: the apex
+ *  is the network, not whichever state happens to be listed first, and a
+ *  visitor to makerspace.network should not silently land inside Connecticut. */
+export function resolveRegion(): Region | null {
   const host = window.location.hostname.toLowerCase();
   const byHost = REGIONS.find((r) => r.hostname && host === r.hostname.toLowerCase());
   if (byHost) return byHost;
@@ -61,11 +65,13 @@ export function resolveRegion(): Region {
   if (byName) return byName;
 
   const param = new URLSearchParams(window.location.search).get('region');
-  const byParam = REGIONS.find((r) => r.id === param);
-  if (byParam) return byParam;
-
-  return REGIONS[0];
+  return REGIONS.find((r) => r.id === param) ?? null;
 }
+
+/** Where to send someone for a region: its own host if it has one, so the
+ *  canonical URL is the regional domain rather than a query string. */
+export const regionHref = (r: Region): string =>
+  r.hostname ? `https://${r.hostname}/` : `/?region=${r.id}`;
 
 export const spacesIn = (region: Region): Space[] =>
   SPACES.filter((s) => s.region_ids.includes(region.id) && s.status !== 'closed');
