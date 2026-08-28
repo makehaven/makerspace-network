@@ -1,0 +1,2003 @@
+<title>Makerspace Standards of Excellence</title>
+<style>
+  :root {
+    --bg: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f0efec;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --line: #e1e0d9;
+    --border: rgba(11,11,11,.10);
+    --accent: #256abf;
+    --accent-strong: #184f95;
+    --accent-soft: #cde2fb;
+    --series-you: #2a78d6;
+    --series-net: #eb6834;
+    --series-aqua: #1baf7a;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warn: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --baseline: #c3c2b7;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d0d0d;
+      --surface: #1a1a19;
+      --surface-2: #242422;
+      --ink: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --line: #2c2c2a;
+      --border: rgba(255,255,255,.10);
+      --accent: #3987e5;
+      --accent-strong: #6da7ec;
+      --accent-soft: #0d366b;
+      --series-you: #3987e5;
+      --series-net: #d95926;
+      --series-aqua: #199e70;
+      --good: #0ca30c;
+      --good-text: #0ca30c;
+      --warn: #fab219;
+      --serious: #ec835a;
+      --critical: #d03b3b;
+      --baseline: #383835;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #242422;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --line: #2c2c2a;
+    --border: rgba(255,255,255,.10);
+    --accent: #3987e5;
+    --accent-strong: #6da7ec;
+    --accent-soft: #0d366b;
+    --series-you: #3987e5;
+    --series-net: #d95926;
+    --series-aqua: #199e70;
+    --good: #0ca30c;
+    --good-text: #0ca30c;
+    --warn: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --baseline: #383835;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  code, .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--surface);
+  }
+  .brand .eyebrow {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  }
+  .brand h1 { margin: 2px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+  .topbar-org { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .topbar-org .org-name { font-weight: 600; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .tabs {
+    display: flex; gap: 2px; padding: 0 16px; background: var(--surface);
+    border-bottom: 1px solid var(--line); overflow-x: auto;
+  }
+  .tabs button {
+    appearance: none; background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 11px 14px; font: inherit; font-size: 14px; font-weight: 550; color: var(--ink-2);
+    cursor: pointer; white-space: nowrap;
+  }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tabs button:focus-visible, .btn:focus-visible, .seg button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  main { max-width: 1060px; margin: 0 auto; padding: 24px 24px 80px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h2 { font-size: 21px; font-weight: 650; letter-spacing: -.01em; margin: 4px 0 4px; text-wrap: balance; }
+  h3 { font-size: 16px; font-weight: 650; margin: 0 0 8px; }
+  .lede { color: var(--ink-2); max-width: 62ch; margin: 0 0 20px; }
+  .section-note { color: var(--muted); font-size: 13px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .grid { display: grid; gap: 14px; }
+  .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink); font: inherit; font-size: 14px; font-weight: 550;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  }
+  .btn:hover { border-color: var(--baseline); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn.quiet { border-color: transparent; color: var(--ink-2); }
+  .btn.quiet:hover { color: var(--ink); border-color: var(--line); }
+  .btn.danger { color: var(--critical); }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 20px; border: 1px solid var(--line); color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .chip.critical { color: var(--critical); border-color: var(--critical); }
+  .chip.level-emerging   { color: var(--ink-2); }
+  .chip.level-foundational { color: var(--good-text); border-color: var(--good); }
+  .chip.level-operational  { background: var(--good); border-color: var(--good); color: #fff; }
+  .chip.level-accredited   { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  label.field { display: block; margin-bottom: 12px; }
+  label.field .lbl {
+    display: block; font-size: 12px; font-weight: 650; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--ink-2); margin-bottom: 4px;
+  }
+  label.field .hint { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  input[type=text], input[type=date], select, textarea {
+    width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px 10px;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-row .t-label { font-weight: 550; }
+  .toggle-row .t-note { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .seg button {
+    appearance: none; border: none; background: var(--surface); color: var(--ink-2);
+    font: inherit; font-size: 13px; font-weight: 600; padding: 6px 13px; cursor: pointer;
+    border-left: 1px solid var(--line);
+  }
+  .seg button:first-child { border-left: none; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .seg.score button.on { background: var(--accent); }
+
+  /* Assessment */
+  .assess-toolbar {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    padding: 10px 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+  }
+  .assess-toolbar .spacer { flex: 1; }
+  .progress-pill {
+    font-size: 13px; font-weight: 600; color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .domain-section { margin-bottom: 26px; }
+  .domain-head {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 6px 0; margin-bottom: 8px; border-bottom: 2px solid var(--ink);
+  }
+  .domain-head h3 { font-size: 15px; margin: 0; }
+  .domain-head .count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .std {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .std.inactive { opacity: .55; }
+  .std-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
+  .std-id { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; color: var(--muted); }
+  .std-text { font-weight: 550; max-width: 72ch; }
+  .std-evidence-hint { font-size: 12.5px; color: var(--muted); margin: 2px 0 10px; }
+  .std-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .std-controls .ev { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 8px; }
+  .ev-ok { color: var(--good-text); font-size: 13px; font-weight: 650; white-space: nowrap; }
+  .anchor-rows { display: grid; gap: 4px; margin: 2px 0 12px; }
+  .anchor {
+    display: flex; gap: 10px; align-items: baseline; text-align: left;
+    appearance: none; font: inherit; font-size: 13px; line-height: 1.45; color: var(--ink-2);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .anchor:hover { border-color: var(--baseline); }
+  .anchor:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .anchor .an { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); flex-shrink: 0; }
+  .anchor.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  .anchor.sel .an { color: var(--accent); }
+  #assess-body.hide-anchors .anchor-rows { display: none; }
+  .ev-area { margin-top: 10px; }
+  .ev-item {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 8px; margin-bottom: 6px;
+  }
+  .ev-item .kind {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); flex-shrink: 0; width: 34px;
+  }
+  .ev-item input { flex: 1; min-width: 150px; background: var(--surface); padding: 5px 8px; font-size: 13px; }
+  .ev-share {
+    appearance: none; font: inherit; font-size: 11.5px; font-weight: 650; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px;
+    background: var(--surface); color: var(--ink-2); white-space: nowrap;
+  }
+  .ev-share.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .std details { margin-top: 10px; }
+  .std summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 550; }
+  .std .plan-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; }
+
+  /* Dashboard */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 18px 0; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  }
+  .stat .k { font-size: 12px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+  .stat .v { font-size: 28px; font-weight: 650; letter-spacing: -.01em; margin-top: 2px; }
+  .stat .v small { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .stat.hero .v { font-size: 40px; color: var(--accent); }
+  .stat .sub { font-size: 12.5px; color: var(--muted); }
+
+  .level-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 16px 0; }
+  .level-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .level-card.met { border-color: var(--good); }
+  .level-card h4 { margin: 0 0 2px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .level-card .desc { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+  .req { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; padding: 3px 0; color: var(--ink-2); }
+  .req .mark { font-weight: 700; width: 16px; flex-shrink: 0; text-align: center; }
+  .req.ok .mark { color: var(--good-text); }
+  .req.no .mark { color: var(--critical); }
+
+  .chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 16px 0; position: relative; }
+  .chart-card h3 { margin-bottom: 2px; }
+  .chart-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+  .chart-scroll { overflow-x: auto; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend .li { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 20; display: none;
+    background: var(--ink); color: var(--bg); font-size: 12.5px; line-height: 1.4;
+    padding: 7px 10px; border-radius: 7px; max-width: 260px;
+  }
+
+  /* Plan */
+  .plan-group { margin: 20px 0; }
+  .plan-row {
+    display: grid; grid-template-columns: auto 1fr; gap: 4px 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 8px;
+  }
+  .plan-score {
+    font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px;
+    align-self: start; padding-top: 1px; white-space: nowrap;
+  }
+  .plan-score .need { color: var(--muted); font-weight: 500; }
+
+  /* Network */
+  table.net { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.net th, table.net td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  table.net th { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+  table.net td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  table.net th.num { text-align: right; }
+  .table-scroll { overflow-x: auto; }
+
+  .callout {
+    border-left: 3px solid var(--warn); background: var(--surface-2);
+    border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13.5px; color: var(--ink-2);
+    margin: 18px 0; max-width: 75ch;
+  }
+
+  .steps { counter-reset: step; margin: 18px 0; display: grid; gap: 10px; }
+  .step { display: flex; gap: 14px; align-items: baseline; }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    font-weight: 700; font-size: 13px; color: var(--accent);
+    border: 1.5px solid var(--accent); border-radius: 50%;
+    width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transform: translateY(3px);
+  }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px;
+    font-size: 14px; z-index: 100; display: none;
+  }
+
+  footer { max-width: 1060px; margin: 0 auto; padding: 0 24px 40px; color: var(--muted); font-size: 12.5px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (max-width: 640px) {
+    main { padding: 16px 14px 60px; }
+    .topbar { padding: 12px 14px; }
+    .topbar-org .org-name { display: none; }
+  }
+</style>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="eyebrow">Makerspace Network · Pilot Draft</div>
+    <h1>Standards of Excellence</h1>
+  </div>
+  <div class="topbar-org">
+    <span class="org-name" id="hdr-org"></span>
+    <span class="chip" id="hdr-level">—</span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-view="start" class="active">Start Here</button>
+  <button data-view="profile">Profile</button>
+  <button data-view="assess">Assessment</button>
+  <button data-view="metrics">Annual Data</button>
+  <button data-view="dashboard">Dashboard</button>
+  <button data-view="plan">Action Plan</button>
+  <button data-view="network">Network Benchmark</button>
+</nav>
+
+<main>
+
+  <!-- ============ START ============ -->
+  <section class="view active" id="view-start">
+    <h2>Self-assess. Set a goal. Benchmark with the network.</h2>
+    <p class="lede">This tool helps any makerspace — regardless of size or program mix — determine which standards apply, assess current practice against them, build a prioritized improvement plan, and compare results across a network of peer spaces.</p>
+
+    <div class="steps">
+      <div class="step"><div><strong>Describe your space.</strong> Answer the Profile questions. Core standards always apply; conditional modules (Youth, Tool Lending, Incubation…) switch on only when they match how you operate.</div></div>
+      <div class="step"><div><strong>Score each applicable standard 0–3.</strong> 0 Absent · 1 Foundational · 2 Operational · 3 Sustained &amp; review-ready. Record specific evidence — a document, URL, log, or verifiable observation.</div></div>
+      <div class="step"><div><strong>Review the Dashboard.</strong> See your recognition level, domain scores, evidence coverage, and what stands between you and the next level.</div></div>
+      <div class="step"><div><strong>Set a goal and work the Action Plan.</strong> Pick a target recognition level; the plan lists exactly which standards block it, with owners and due dates.</div></div>
+      <div class="step"><div><strong>Share and benchmark.</strong> Export a <em>network share file</em> — profile, annual data, capabilities, and summary readiness only. A network coordinator loads everyone's share files in the Network Benchmark tab to see the collective picture.</div></div>
+    </div>
+
+    <div class="callout" style="border-left-color: var(--accent)"><strong>Score honestly — the detail stays private.</strong> Your per-standard scores, evidence, and action plan never leave your space unless you choose to share the full private export. The network share file carries only summary readiness, and network views show readiness in aggregate — no space is ranked or individually scored. This assessment works only if it is a mirror, not a brochure.</div>
+
+    <h3 style="margin-top:26px">Recognition levels</h3>
+    <div class="grid cols-3" style="margin-top:10px">
+      <div class="card">
+        <span class="chip level-foundational">Foundational</span>
+        <p class="section-note" style="margin:10px 0 0">Average score ≥ 1.0 and every critical Tier-1 standard scores at least 1. The basics exist, even if informal.</p>
+      </div>
+      <div class="card">
+        <span class="chip level-operational">Operational</span>
+        <p class="section-note" style="margin:10px 0 0">Average ≥ 2.0; critical Tier 1–2 standards score at least 2; evidence recorded for ≥ 80% of applicable standards.</p>
+      </div>
+      <div class="card">
+        <span class="chip level-accredited">Exemplary</span>
+        <p class="section-note" style="margin:10px 0 0">Average ≥ 2.7; all critical standards at 3; ≥ 95% evidence; three years of retained records. Practices are sustained and review-ready — the level a peer-review or recognition program could later build on.</p>
+      </div>
+    </div>
+
+    <div class="callout"><strong>Important:</strong> this is a working draft for pilot testing — not a legal, code-compliance, or insurance certification. Local fire, building, occupational-safety, employment, youth-protection, environmental, and insurance requirements vary; verify them with qualified local professionals.</div>
+
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn primary" onclick="showView('profile')">Start your profile →</button>
+      <button class="btn" onclick="document.getElementById('import-self').click()">Load a saved assessment file</button>
+    </div>
+    <input type="file" id="import-self" accept=".json,application/json" style="display:none">
+  </section>
+
+  <!-- ============ PROFILE ============ -->
+  <section class="view" id="view-profile">
+    <h2>Operational profile</h2>
+    <p class="lede">Core standards always apply. Each “Yes” below activates a conditional module of additional standards matched to how your space actually operates.</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Organization</h3>
+        <label class="field"><span class="lbl">Organization name</span><input type="text" id="p-name" placeholder="e.g., MakeHaven"></label>
+        <label class="field"><span class="lbl">Assessment lead</span><input type="text" id="p-lead"></label>
+        <label class="field"><span class="lbl">Assessment date</span><input type="date" id="p-date"></label>
+        <label class="field"><span class="lbl">State / jurisdiction</span><input type="text" id="p-jurisdiction"></label>
+        <label class="field"><span class="lbl">Current paying members</span><input type="text" id="p-members" inputmode="numeric" placeholder="e.g., 780">
+          <span class="hint">Headcount with an active paid membership today, at any rate — including need-based reduced dues. (The Annual Data tab asks separately for the formal year-end count.)</span></label>
+        <label class="field"><span class="lbl">Approximate active participants (past 12 months)</span><input type="text" id="p-users" inputmode="numeric" placeholder="e.g., 250">
+          <span class="hint">Unique people who made, learned, or volunteered here in the past 12 months: members (any payment status), workshop / class / program attendees, and regular volunteers — count each person once. Do not count website visitors, social followers, or passive audiences at fairs and open houses. A membership list plus registration sheets is enough to estimate this.</span></label>
+        <label class="field"><span class="lbl">Approximate annual revenue (USD)</span><input type="text" id="p-revenue" inputmode="numeric" placeholder="e.g., 400000"></label>
+      </div>
+      <div class="card">
+        <h3>Operating features</h3>
+        <div id="p-flags"></div>
+      </div>
+    </div>
+    <p class="section-note" style="margin-top:14px" id="p-applicable-note"></p>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn primary" onclick="showView('assess')">Continue to assessment →</button>
+    </div>
+  </section>
+
+  <!-- ============ ASSESSMENT ============ -->
+  <section class="view" id="view-assess">
+    <h2>Standards assessment</h2>
+    <p class="lede">Each standard shows an example of what a 0, 1, 2, and 3 look like in practice — click the description that best matches your space today. Then attach evidence: links to documents, small file uploads, or written notes (a document title with date, a log range, a verifiable observation — not a general assertion). Evidence stays private unless you mark an item “Share as resource” to offer it to other spaces as a template.</p>
+    <details class="card" style="margin-bottom:14px">
+      <summary style="cursor:pointer;font-weight:600">Scoring rubric</summary>
+      <div style="margin-top:10px;font-size:13.5px;color:var(--ink-2)">
+        <p style="margin:4px 0"><strong>0 — Absent.</strong> No reliable practice or evidence.</p>
+        <p style="margin:4px 0"><strong>1 — Foundational.</strong> Basic practice exists; may be informal or inconsistent; minimum evidence available.</p>
+        <p style="margin:4px 0"><strong>2 — Operational.</strong> Written, assigned, consistently implemented, supported by current evidence.</p>
+        <p style="margin:4px 0"><strong>3 — Sustained / review-ready.</strong> Effectiveness is reviewed; improvements documented; historical evidence supports continuity.</p>
+      </div>
+    </details>
+    <div class="assess-toolbar">
+      <span class="progress-pill" id="assess-progress"></span>
+      <span class="spacer"></span>
+      <label style="font-size:13px;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="show-anchors" checked> Scoring examples</label>
+      <select id="assess-filter" style="width:auto">
+        <option value="all">Show all applicable</option>
+        <option value="unscored">Unscored only</option>
+        <option value="goalgaps">Blocking my goal</option>
+        <option value="critical">Critical only</option>
+        <option value="noev">Missing evidence</option>
+      </select>
+    </div>
+    <div id="assess-body"></div>
+    <input type="file" id="ev-file-input" style="display:none">
+  </section>
+
+  <!-- ============ ANNUAL DATA ============ -->
+  <section class="view" id="view-metrics">
+    <h2>Annual network data</h2>
+    <p class="lede">Baseline metrics every network space reports once a year (calendar-year basis, due January 31). Fill in what you can — these travel with your export and power the network totals, capability map, and comparisons. All figures are aggregate organizational data; no personally identifiable information.</p>
+    <div class="grid cols-2" id="metrics-form">
+      <div class="card">
+        <h3>Reporting period &amp; structure</h3>
+        <label class="field"><span class="lbl">Reporting year</span><input type="text" inputmode="numeric" data-m="year" placeholder="e.g., 2025"></label>
+        <label class="field"><span class="lbl">Legal structure</span>
+          <select data-msel="structure">
+            <option value="">—</option>
+            <option>501(c)(3) nonprofit</option>
+            <option>For-profit</option>
+            <option>Institution-based</option>
+            <option>Grassroots / unincorporated</option>
+          </select></label>
+        <label class="field"><span class="lbl">Average weekly open hours</span><input type="text" inputmode="numeric" data-m="weeklyHours"></label>
+        <div class="toggle-row"><span class="t-label">24/7 access for trusted members?</span>
+          <span class="seg" data-mflag="access247"><button data-val="1">Yes</button><button data-val="0">No</button></span></div>
+        <div class="toggle-row"><span class="t-label">Electronic access control — building<span class="t-note">card / fob / PIN entry system</span></span>
+          <span class="seg" data-mflag="acBuilding"><button data-val="1">Yes</button><button data-val="0">No</button></span></div>
+        <div class="toggle-row"><span class="t-label">Electronic access control — tools<span class="t-note">per-tool interlocks or badge readers</span></span>
+          <span class="seg" data-mflag="acTools"><button data-val="1">Yes</button><button data-val="0">No</button></span></div>
+        <div class="toggle-row"><span class="t-label">Fab Lab Network member<span class="t-note">listed on fablabs.io</span></span>
+          <span class="seg" data-mflag="affilFabLab"><button data-val="1">Yes</button><button data-val="0">No</button></span></div>
+        <div class="toggle-row"><span class="t-label">Nation of Makers member</span>
+          <span class="seg" data-mflag="affilNOM"><button data-val="1">Yes</button><button data-val="0">No</button></span></div>
+        <label class="field" style="margin-top:10px"><span class="lbl">Other network affiliations — optional</span><input type="text" data-m="affilOther" placeholder="e.g., CT Makerspace Network, ACCE">
+          <span class="hint">Peer networks, associations, or coalitions your organization belongs to.</span></label>
+      </div>
+      <div class="card">
+        <h3>Staffing &amp; people</h3>
+        <label class="field"><span class="lbl">Paid staff — full-time #</span><input type="text" inputmode="numeric" data-m="staffFT"></label>
+        <label class="field"><span class="lbl">Paid staff — part-time #</span><input type="text" inputmode="numeric" data-m="staffPT"></label>
+        <label class="field"><span class="lbl">Contractors # (annual)</span><input type="text" inputmode="numeric" data-m="contractors"></label>
+        <label class="field"><span class="lbl">Contractor expense $</span><input type="text" inputmode="numeric" data-m="contractorExpense"></label>
+        <label class="field"><span class="lbl">Titled regular volunteers #</span><input type="text" inputmode="numeric" data-m="volunteers"></label>
+        <label class="field"><span class="lbl">Estimated volunteer hours (annual)</span><input type="text" inputmode="numeric" data-m="volunteerHours"></label>
+      </div>
+      <div class="card">
+        <h3>Finances</h3>
+        <label class="field"><span class="lbl">Total operating expenses $</span><input type="text" inputmode="numeric" data-m="expenses"></label>
+        <label class="field"><span class="lbl">Year surplus / deficit $</span><input type="text" inputmode="numeric" data-m="surplus"></label>
+        <label class="field"><span class="lbl">% earned income (memberships, classes, services, rent)</span><input type="text" inputmode="numeric" data-m="revEarned"></label>
+        <label class="field"><span class="lbl">% contributed income (grants, donations, sponsorships)</span><input type="text" inputmode="numeric" data-m="revContributed"></label>
+        <label class="field"><span class="lbl">% institutional support (university / library / town budget)</span><input type="text" inputmode="numeric" data-m="revInstitutional"></label>
+      </div>
+      <div class="card">
+        <h3>Facility (square feet)</h3>
+        <label class="field"><span class="lbl">Total facility</span><input type="text" inputmode="numeric" data-m="sqftTotal"></label>
+        <label class="field"><span class="lbl">Shops / work areas</span><input type="text" inputmode="numeric" data-m="sqftShops"></label>
+        <label class="field"><span class="lbl">Storage</span><input type="text" inputmode="numeric" data-m="sqftStorage"></label>
+        <label class="field"><span class="lbl">Classrooms / event space</span><input type="text" inputmode="numeric" data-m="sqftClass"></label>
+        <label class="field"><span class="lbl">Other</span><input type="text" inputmode="numeric" data-m="sqftOther"></label>
+      </div>
+      <div class="card">
+        <h3>Membership &amp; engagement</h3>
+        <label class="field"><span class="lbl">Active paying members (year end)</span><input type="text" inputmode="numeric" data-m="membersEnd"></label>
+        <label class="field"><span class="lbl">New members joined (during year)</span><input type="text" inputmode="numeric" data-m="membersNew"></label>
+        <label class="field"><span class="lbl">Members lost / churned (during year)</span><input type="text" inputmode="numeric" data-m="membersLost"></label>
+        <label class="field"><span class="lbl">Total event registrations (all types)</span><input type="text" inputmode="numeric" data-m="eventRegs"></label>
+        <label class="field"><span class="lbl">Free / low-cost public events held (#)</span><input type="text" inputmode="numeric" data-m="publicEvents">
+          <span class="hint">Open houses, tours, demo nights, repair cafés, community events — supervised occasions where non-members can experience the space at no or nominal cost. Count events, not attendees. Public access today means welcoming events and accessible membership, not unsupervised open shop time.</span></label>
+        <label class="field"><span class="lbl">Individual coaching / skill sessions</span><input type="text" inputmode="numeric" data-m="coachingSessions"></label>
+      </div>
+      <div class="card">
+        <h3>Impact &amp; reach (annual counts)</h3>
+        <label class="field"><span class="lbl">Tool authorizations issued</span><input type="text" inputmode="numeric" data-m="authIssued">
+          <span class="hint">Every badge, checkout, or sign-off granted this year across all tools. A tally sheet at the front desk works — count each authorization, not each person.</span></label>
+        <label class="field"><span class="lbl">Guest / visitor waivers signed</span><input type="text" inputmode="numeric" data-m="guestWaivers">
+          <span class="hint">Waivers collected from non-members during the year, paper or digital. Your best measure of reach beyond membership.</span></label>
+        <label class="field"><span class="lbl">Members on need-based reduced dues (#)</span><input type="text" inputmode="numeric" data-m="reducedMembers">
+          <span class="hint">Year-end count of members paying a reduced rate through any need-based program — sliding scale, scholarship, or hardship arrangement.</span></label>
+        <label class="field"><span class="lbl">Need-based discounts given ($)</span><input type="text" inputmode="numeric" data-m="reducedDollars">
+          <span class="hint">Standard price minus what was actually paid, summed for the year, across memberships and programs. This is the subsidy your space provides its community.</span></label>
+        <label class="field"><span class="lbl">Incident reports recorded (#)</span><input type="text" inputmode="numeric" data-m="incidents">
+          <span class="hint">Injuries plus near misses logged in your incident system (Standard S016). Zero is only a valid answer if you keep a log — a high count usually means good reporting culture, not a dangerous shop.</span></label>
+        <label class="field"><span class="lbl">% members identifying as BIPOC — optional</span><input type="text" inputmode="numeric" data-m="pctBIPOC">
+          <span class="hint">Only if you collect member demographics through a survey or profile. Leave blank rather than estimate.</span></label>
+        <label class="field"><span class="lbl">% women / non-binary members — optional</span><input type="text" inputmode="numeric" data-m="pctWomenNB">
+          <span class="hint">Same rule: report from collected data, never an eyeball guess.</span></label>
+        <label class="field"><span class="lbl">% members active in past 90 days — optional</span><input type="text" inputmode="numeric" data-m="pctActive90">
+          <span class="hint">Share of members with at least one visit in the last 90 days. Needs an access-control or sign-in system — skip it if you have neither.</span></label>
+      </div>
+      <div class="card">
+        <h3>Capabilities (statewide referral map)</h3>
+        <div id="metrics-caps"></div>
+      </div>
+    </div>
+    <div class="stat-row" id="metrics-derived"></div>
+    <div class="card" style="margin-top:16px">
+      <h3>Organizational health check — auto-derived</h3>
+      <p class="section-note">The network data standards include a Yes / In&nbsp;Progress / No health check. These answers are derived automatically from your Standards Assessment (score 2+ = Yes, 1 = In&nbsp;Progress, 0 = No) so spaces never answer twice.</p>
+      <div id="metrics-health" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="view" id="view-dashboard">
+    <h2>Dashboard</h2>
+    <p class="lede" id="dash-lede"></p>
+    <div class="stat-row" id="dash-stats"></div>
+    <div class="level-cards" id="dash-levels"></div>
+    <div class="chart-card">
+      <h3>Domain scores</h3>
+      <div class="chart-sub">Average score per domain, 0–3. Unscored standards count as 0.</div>
+      <div class="chart-scroll" id="chart-domains"></div>
+      <div class="tooltip" id="tt-domains"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Goal</h3>
+      <div class="btn-row">
+        <select id="goal-select" style="width:auto">
+          <option value="foundational">Foundational</option>
+          <option value="operational">Operational</option>
+          <option value="accredited">Exemplary</option>
+        </select>
+        <span id="goal-summary" style="font-size:14px;color:var(--ink-2)"></span>
+        <button class="btn" onclick="showView('plan')">Open action plan →</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>Export</h3>
+      <p class="section-note" style="margin:6px 0 12px;max-width:75ch">Two files, two audiences. The <strong>full assessment</strong> contains every score, evidence note, owner, and action — it is for your board and staff only. The <strong>network share file</strong> contains your profile, annual data, capabilities, summary readiness only (recognition level, domain averages, health check), and any evidence documents you explicitly marked “Share as resource” — never scores, private evidence, or notes. Score honestly: the detail stays in your building.</p>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-export">Export full assessment (.json) — private</button>
+        <button class="btn" id="btn-share">Export network share file (.json)</button>
+        <button class="btn" id="btn-report">Download board summary (.md)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="view" id="view-plan">
+    <h2>Improvement action plan</h2>
+    <p class="lede" id="plan-lede"></p>
+    <div id="plan-body"></div>
+  </section>
+
+  <!-- ============ NETWORK ============ -->
+  <section class="view" id="view-network">
+    <h2>Network benchmark</h2>
+    <p class="lede">Load network share files from other makerspaces to see the collective picture — capacity, reach, capabilities, and aggregate readiness. Share files contain no per-standard scores, so what appears here is safe to show the state and public. Files are read locally in your browser — nothing is uploaded anywhere.</p>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn primary" onclick="document.getElementById('import-net').click()">Add share files…</button>
+      <input type="file" id="import-net" accept=".json,application/json" multiple style="display:none">
+      <button class="btn" id="btn-net-csv">Export network data (.csv)</button>
+      <button class="btn quiet danger" id="btn-net-clear">Remove all</button>
+    </div>
+    <div id="net-body"></div>
+    <div class="tooltip" id="tt-net"></div>
+  </section>
+
+</main>
+
+<footer>
+  Makerspace Standards of Excellence — self-assessment pilot. 84 standards · 6 core domains · 5 conditional modules. Data stays in your browser; use Export to save or share.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= Standards catalog ================= */
+const DOMAINS = [
+  { code: "1", name: "Governance" },
+  { code: "2", name: "Safety & Risk" },
+  { code: "3", name: "User Access" },
+  { code: "4", name: "Facility & Assets" },
+  { code: "5", name: "Finance & People" },
+  { code: "6", name: "Community & Impact" },
+  { code: "A", name: "Tool Lending" },
+  { code: "B", name: "Youth" },
+  { code: "C", name: "Incubation" },
+  { code: "D", name: "Circular Repair" },
+  { code: "E", name: "Workspaces" }
+];
+
+const MODULES = {
+  core:       { label: "Core", always: true },
+  member:     { label: "Member Access",        flag: "membership" },
+  public:     { label: "Public Access",        flag: "publicAccess" },
+  staff:      { label: "Paid Staff",           flag: "paidStaff" },
+  volunteer:  { label: "Volunteer Operations", flag: "volunteer" },
+  lending:    { label: "Tool Lending",         flag: "toolLending" },
+  youth:      { label: "Youth",                flag: "youth" },
+  incubation: { label: "Incubation",           flag: "incubation" },
+  repair:     { label: "Circular Repair",      flag: "repair" },
+  rentals:    { label: "Workspace Rentals",    flag: "rentals" }
+};
+
+const FLAG_DEFS = [
+  { key: "membership",   label: "Formal membership model?",                        note: "Activates the Member Access track" },
+  { key: "publicAccess", label: "Public / drop-in access?",                        note: "Activates the Public Access track" },
+  { key: "paidStaff",    label: "Paid employees?",                                 note: "Activates the Paid Staff track" },
+  { key: "volunteer",    label: "Volunteers hold operational roles?",              note: "Activates the Volunteer Operations track" },
+  { key: "toolLending",  label: "Lends tools for off-site use?",                   note: "Activates the Tool Lending extension" },
+  { key: "youth",        label: "Serves minors under 18?",                         note: "Activates the Youth extension" },
+  { key: "incubation",   label: "Supports business incubation or production?",     note: "Activates the Incubation extension" },
+  { key: "repair",       label: "Hosts repair cafés or salvage programs?",         note: "Activates the Circular Repair extension" },
+  { key: "rentals",      label: "Rents dedicated desks, studios, bays, storage?",  note: "Activates the Workspace Rentals extension" },
+  { key: "records3yr",   label: "At least 3 years of retained records?",           note: "Required for the Exemplary level" }
+];
+
+/* id, d: domain code, m: module key, t: target tier, c: critical, s: standard, e: expected evidence */
+const STANDARDS = [
+  { id:"S001", d:"1", m:"core", t:1, c:true,  s:"Legal entity, tax-exempt status, registrations, and required filings are current.", e:"Formation documents; determination letter; filing calendar; latest filings" },
+  { id:"S002", d:"1", m:"core", t:1, c:true,  s:"Governing documents define authority, elections, meetings, and dissolution.", e:"Current bylaws; amendments" },
+  { id:"S003", d:"1", m:"core", t:1, c:true,  s:"Board has at least five independent, unrelated voting directors or documents why another structure is appropriate.", e:"Board roster; independence declarations" },
+  { id:"S004", d:"1", m:"core", t:1, c:true,  s:"Board meets regularly and retains approved minutes documenting decisions.", e:"Meeting calendar; approved minutes" },
+  { id:"S005", d:"1", m:"core", t:2, c:true,  s:"Conflict-of-interest policy includes annual disclosure and documented handling of conflicts.", e:"Policy; signed disclosures; relevant minutes" },
+  { id:"S006", d:"1", m:"core", t:2, c:false, s:"Whistleblower, records-retention, and ethics policies cover directors, staff, and key volunteers.", e:"Board-approved policies; training records" },
+  { id:"S007", d:"1", m:"core", t:2, c:false, s:"Board-approved strategy connects mission, programs, facilities, and major capital purchases.", e:"Strategic plan; annual goals; board review" },
+  { id:"S008", d:"1", m:"core", t:2, c:false, s:"Users retain intellectual property they create except where a written agreement clearly states otherwise.", e:"IP policy; sponsored-project agreement template" },
+  { id:"S009", d:"1", m:"core", t:3, c:true,  s:"Leadership succession and emergency authority are documented and tested.", e:"Succession plan; delegation matrix; test record" },
+  { id:"S010", d:"1", m:"core", t:3, c:false, s:"Board completes a documented annual self-evaluation and reviews organizational risk.", e:"Three annual evaluations; risk register reviews" },
+  { id:"S011", d:"2", m:"core", t:1, c:true,  s:"Written general safety rules, emergency procedures, and emergency contacts are visible and current.", e:"Safety manual; posted procedures; review date" },
+  { id:"S012", d:"2", m:"core", t:1, c:true,  s:"Required fire protection, first-aid supplies, eyewash, exits, and emergency shutoffs are accessible and inspected.", e:"Inspection checklist; service tags; photos" },
+  { id:"S013", d:"2", m:"core", t:1, c:true,  s:"Hazardous chemicals are labeled, stored compatibly, and supported by accessible SDS information.", e:"Chemical inventory; SDS access; storage inspection" },
+  { id:"S014", d:"2", m:"core", t:1, c:true,  s:"Tools have point-of-use rules and required guarding, dust collection, ventilation, and PPE.", e:"Tool SOPs; inspection records; photos" },
+  { id:"S015", d:"2", m:"core", t:2, c:true,  s:"Tools are assigned risk levels that determine training, supervision, and access-control requirements.", e:"Hazard matrix; approved access rules" },
+  { id:"S016", d:"2", m:"core", t:2, c:true,  s:"Injuries, near misses, unsafe conditions, and equipment damage are promptly reported and reviewed.", e:"Incident form; log; corrective-action records" },
+  { id:"S017", d:"2", m:"core", t:2, c:false, s:"Opening, closing, lone-work, impairment, and after-hours emergency protocols are documented.", e:"Operating policies; orientation materials" },
+  { id:"S018", d:"2", m:"core", t:2, c:true,  s:"Insurance coverages and limits are reviewed annually against actual operations.", e:"Policies; broker review; board minutes" },
+  { id:"S019", d:"2", m:"core", t:3, c:true,  s:"A qualified annual safety audit tracks findings through closure and analyzes incident trends.", e:"Three annual audits; closure log; trend review" },
+  { id:"S020", d:"2", m:"core", t:3, c:false, s:"Waste, emissions, used materials, and hazardous disposal are managed under documented environmental procedures.", e:"Waste plan; vendor records; training logs" },
+  { id:"S021", d:"3", m:"member", t:1, c:true,  s:"Every member completes orientation, accepts conduct rules, and signs required agreements before access.", e:"Orientation checklist; agreements; access record" },
+  { id:"S022", d:"3", m:"member", t:1, c:true,  s:"Restricted tools require verified practical training before independent use.", e:"Badge requirements; training records" },
+  { id:"S023", d:"3", m:"member", t:2, c:true,  s:"Digital or auditable credentials control tool and facility access and can be suspended promptly.", e:"Badge database; access-control test; suspension procedure" },
+  { id:"S024", d:"3", m:"member", t:2, c:false, s:"Dues, holds, guests, refunds, accessibility accommodations, and termination rules are transparent.", e:"Published membership policies" },
+  { id:"S025", d:"3", m:"member", t:2, c:true,  s:"Conduct and disciplinary procedures provide reporting, fair review, documentation, and proportionate action.", e:"Conduct policy; complaint procedure; de-identified case log" },
+  { id:"S026", d:"3", m:"member", t:3, c:false, s:"Credential quality is periodically reviewed and portable credentials are accepted only through defined equivalency rules.", e:"Curriculum review; equivalency agreements; audit sample" },
+  { id:"S027", d:"3", m:"public", t:1, c:true,  s:"Visitors register, accept safety/conduct rules, and remain within defined access boundaries.", e:"Visitor form; signage; sign-in log" },
+  { id:"S028", d:"3", m:"public", t:1, c:true,  s:"Staffing and supervision levels match the hazards available during public access.", e:"Coverage schedule; hazard/supervision matrix" },
+  { id:"S029", d:"3", m:"public", t:2, c:true,  s:"Point-of-use authorization or verified workshop credentials govern restricted equipment use.", e:"Facilitation procedure; credential records" },
+  { id:"S030", d:"3", m:"public", t:2, c:false, s:"Accessible pathways help repeat visitors advance from introduction to independent capability.", e:"Program pathway; participant guidance" },
+  { id:"S031", d:"3", m:"public", t:3, c:false, s:"Public-access data and feedback are reviewed to improve hours, staffing, access, and instruction.", e:"Three annual reviews; change log" },
+  { id:"S032", d:"4", m:"core", t:1, c:true,  s:"A current inventory identifies major equipment, location, status, and responsible lead.", e:"Asset register" },
+  { id:"S033", d:"4", m:"core", t:1, c:true,  s:"Unsafe equipment is clearly locked out and cannot return to service without authorization.", e:"Lockout procedure; repair/release records" },
+  { id:"S034", d:"4", m:"core", t:2, c:true,  s:"Preventive maintenance schedules reflect manufacturer guidance, use, and risk.", e:"Maintenance schedule and completed logs" },
+  { id:"S035", d:"4", m:"core", t:2, c:false, s:"Original manuals, warranties, leases, insurance, access-control configuration, and critical records are securely backed up.", e:"Document index; backup test" },
+  { id:"S036", d:"4", m:"core", t:2, c:true,  s:"Shop inspections verify egress, storage, guards, utilities, ventilation, and housekeeping.", e:"Routine inspection checklists; corrective actions" },
+  { id:"S037", d:"4", m:"core", t:2, c:false, s:"Critical digital services have named owners, backups, recovery instructions, and controlled administrator access.", e:"Systems register; recovery test; admin roster" },
+  { id:"S038", d:"4", m:"core", t:3, c:true,  s:"Annual asset audits reconcile inventory, condition, maintenance, training controls, and replacement needs.", e:"Three annual asset audits" },
+  { id:"S039", d:"4", m:"core", t:3, c:false, s:"A board-designated capital replacement plan and reserve reflect documented lifecycle needs.", e:"Replacement forecast; reserve policy; statements" },
+  { id:"S040", d:"5", m:"core", t:1, c:true,  s:"Board approves an annual budget and reviews timely budget-to-actual, balance sheet, and cash information.", e:"Approved budget; financial packets; minutes" },
+  { id:"S041", d:"5", m:"core", t:1, c:true,  s:"Financial duties are separated or compensating controls are documented for receipts, payments, payroll, and reconciliation.", e:"Control matrix; approvals; reconciliation samples" },
+  { id:"S042", d:"5", m:"core", t:1, c:true,  s:"Restricted funds, donations, acknowledgments, and fundraising claims are handled accurately.", e:"Gift records; acknowledgments; restrictions schedule" },
+  { id:"S043", d:"5", m:"core", t:2, c:true,  s:"Board reviews liquidity, revenue concentration, liabilities, and insurance at least annually.", e:"Dashboard; risk discussion minutes" },
+  { id:"S044", d:"5", m:"core", t:2, c:false, s:"Independent financial review, compilation, or audit matches legal requirements and organizational risk.", e:"Accountant report; management letter response" },
+  { id:"S045", d:"5", m:"core", t:3, c:true,  s:"Multi-year forecasts and reserves demonstrate a credible continuity plan under adverse scenarios.", e:"Forecast; scenario analysis; reserve policy" },
+  { id:"S046", d:"5", m:"staff", t:1, c:true,  s:"Every employee has a current job description, lawful classification, payroll processing, and required postings.", e:"Job descriptions; payroll records; postings checklist" },
+  { id:"S047", d:"5", m:"staff", t:2, c:true,  s:"Employee handbook covers conduct, harassment, leave, hours, safety, complaints, and discipline.", e:"Current handbook; acknowledgments" },
+  { id:"S048", d:"5", m:"staff", t:2, c:false, s:"Performance goals, supervision, compensation review, and annual evaluations are documented.", e:"Review schedule; completed evaluations" },
+  { id:"S049", d:"5", m:"staff", t:3, c:false, s:"Leadership reviews retention, workload, pay equity, development, and single-person dependencies.", e:"Three annual workforce reviews; mitigation plan" },
+  { id:"S050", d:"5", m:"volunteer", t:1, c:true,  s:"Volunteer leads have defined roles, authority, contacts, and required safety qualifications.", e:"Lead roster; role descriptions; training records" },
+  { id:"S051", d:"5", m:"volunteer", t:2, c:true,  s:"Scheduling, onboarding, supervision, complaints, removal, and escalation are documented.", e:"Volunteer handbook; schedules; escalation procedure" },
+  { id:"S052", d:"5", m:"volunteer", t:2, c:false, s:"Critical responsibilities have backup coverage and transitions do not depend on one volunteer.", e:"Coverage matrix; handoff documentation" },
+  { id:"S053", d:"5", m:"volunteer", t:3, c:false, s:"Leadership annually reviews workload, retention, recognition, burnout risk, and succession.", e:"Three annual reviews; improvement actions" },
+  { id:"S054", d:"6", m:"core", t:1, c:false, s:"Organization tracks who participates, what they use, and basic program attendance.", e:"Membership/visitor and attendance reports" },
+  { id:"S055", d:"6", m:"core", t:1, c:true,  s:"Nondiscrimination, accessibility, and inclusion expectations apply to users, staff, volunteers, and programs.", e:"Policies; accommodation procedure; training" },
+  { id:"S056", d:"6", m:"core", t:2, c:false, s:"Measurable annual goals connect activities to participant learning, agency, belonging, or opportunity.", e:"Outcomes framework; annual targets" },
+  { id:"S057", d:"6", m:"core", t:2, c:false, s:"Participant feedback is collected safely and reviewed with usage and demographic information.", e:"Survey tools; results; leadership review" },
+  { id:"S058", d:"6", m:"core", t:2, c:false, s:"Instruction supports choice, iteration, peer learning, and multiple ways to participate and demonstrate learning.", e:"Facilitation guide; observation rubric; instructor training" },
+  { id:"S059", d:"6", m:"core", t:2, c:false, s:"Community partnerships have clear purposes, responsibilities, and mutual benefit.", e:"MOUs; partner list; review notes" },
+  { id:"S060", d:"6", m:"core", t:3, c:false, s:"A public annual report summarizes finances, participation, outcomes, setbacks, and improvement commitments.", e:"Three annual reports" },
+  { id:"S061", d:"6", m:"core", t:3, c:false, s:"Evaluation findings demonstrably influence program design, outreach, staffing, and capital decisions.", e:"Three-year decision/change log" },
+  { id:"S062", d:"A", m:"lending", t:1, c:true,  s:"Each circulating tool is uniquely identified and checked out to a verified borrower.", e:"Catalog; checkout records" },
+  { id:"S063", d:"A", m:"lending", t:2, c:true,  s:"Loan agreement, due dates, condition, accessories, loss, and safe-use limits are documented.", e:"Agreement; checkout checklist" },
+  { id:"S064", d:"A", m:"lending", t:2, c:true,  s:"Returned powered tools receive documented functional and electrical inspection before recirculation.", e:"Return inspection logs" },
+  { id:"S065", d:"A", m:"lending", t:3, c:false, s:"Loss, damage, late return, utilization, and maintenance trends inform inventory decisions.", e:"Three annual lending analyses" },
+  { id:"S066", d:"B", m:"youth", t:1, c:true,  s:"Parent/guardian consent, emergency contacts, supervision, and authorized pickup rules are enforced.", e:"Forms; procedures; roster samples" },
+  { id:"S067", d:"B", m:"youth", t:1, c:true,  s:"Age and capability rules prohibit or control youth access to hazardous equipment.", e:"Age/hazard matrix; curriculum rules" },
+  { id:"S068", d:"B", m:"youth", t:2, c:true,  s:"Background screening and youth-protection training apply to all covered adults before service.", e:"Screening roster; training records" },
+  { id:"S069", d:"B", m:"youth", t:2, c:true,  s:"Two-adult/open-observable practices, reporting duties, communication, and overnight/transport rules are documented as applicable.", e:"Youth protection policy; incident/reporting procedure" },
+  { id:"S070", d:"B", m:"youth", t:3, c:false, s:"Youth curricula and outcomes are periodically reviewed with educators, families, and participants.", e:"Three annual curriculum/outcome reviews" },
+  { id:"S071", d:"C", m:"incubation", t:1, c:true,  s:"Commercial use, production limits, shared-tool priority, staging, and prohibited activities are clear.", e:"Commercial use policy" },
+  { id:"S072", d:"C", m:"incubation", t:2, c:true,  s:"Written agreements define space, term, fees, insurance, IP, milestones, and termination.", e:"Executed agreements; insurance certificates" },
+  { id:"S073", d:"C", m:"incubation", t:2, c:true,  s:"Production activities receive documented safety, zoning, environmental, and capacity review.", e:"Intake/risk reviews; approvals" },
+  { id:"S074", d:"C", m:"incubation", t:3, c:false, s:"Program outcomes and community subsidy are measured and reviewed for mission alignment.", e:"Three annual cohort and subsidy analyses" },
+  { id:"S075", d:"D", m:"repair", t:1, c:true,  s:"Repair events use intake, ownership, safety, and liability procedures.", e:"Intake form; event procedure" },
+  { id:"S076", d:"D", m:"repair", t:2, c:true,  s:"Repairs are assigned to qualified mentors and powered items receive an appropriate post-repair safety check.", e:"Mentor roster; test logs" },
+  { id:"S077", d:"D", m:"repair", t:2, c:true,  s:"Salvaged materials are screened for hazardous coatings, contamination, structural defects, and prohibited items.", e:"Acceptance policy; inspection records" },
+  { id:"S078", d:"D", m:"repair", t:3, c:false, s:"Diversion, repair outcomes, incidents, and repeat failures are reviewed annually.", e:"Three annual outcome reports" },
+  { id:"S079", d:"E", m:"rentals", t:1, c:true,  s:"Every occupant has a written license or rental agreement defining use, fees, term, termination, and non-subletting.", e:"Executed agreements; occupant roster" },
+  { id:"S080", d:"E", m:"rentals", t:1, c:true,  s:"Egress, fire access, storage, chemicals, and housekeeping are inspected in private areas.", e:"Bay inspection logs; corrective actions" },
+  { id:"S081", d:"E", m:"rentals", t:2, c:true,  s:"Electrical loads, personal machinery, alterations, hot work, and prohibited uses require defined approval.", e:"Workspace rules; approval records" },
+  { id:"S082", d:"E", m:"rentals", t:2, c:true,  s:"Access, property risk, required insurance, disputes, and abandoned property are addressed in writing.", e:"Agreements; insurance records; procedures" },
+  { id:"S083", d:"E", m:"rentals", t:3, c:false, s:"Annual portfolio review covers compliance, incidents, insurance, occupancy, subsidy, and mission alignment.", e:"Three annual workspace reviews" },
+  { id:"S084", d:"6", m:"core", t:2, c:false, s:"Organization participates in peer makerspace networks and shares documentation, curricula, or lessons learned beyond its own walls.", e:"Network memberships; shared templates or curricula; exchange or conference participation" }
+];
+
+/* Per-standard scoring anchors: what a 0 / 1 / 2 / 3 looks like in practice. */
+const ANCHORS = {
+  S001: ["No formation documents on hand; filing status unknown or lapsed.","Incorporated and tax-exempt, but filings are tracked informally and documents are scattered.","All registrations current; a filing calendar exists and the latest filings are on file.","Several years of on-time filings; the calendar has an owner and is reviewed annually."],
+  S002: ["No bylaws can be produced, or practice ignores them.","Bylaws exist but are outdated or silent on elections, meetings, or dissolution.","Current bylaws cover authority, elections, meetings, and dissolution; amendments are recorded.","Bylaws are reviewed on a set cycle; amendment history is documented in minutes."],
+  S003: ["Fewer than five directors, or mostly related people, with no documented rationale.","Board is near the bar but independence has never been documented.","Roster shows five or more independent, unrelated directors with declarations — or a documented rationale for another structure.","Independence is reaffirmed annually and recruitment sustains the standard."],
+  S004: ["Meetings are irregular and minutes are missing.","Board meets, but minutes are inconsistent or never formally approved.","Regular meeting calendar; approved minutes document every decision.","A multi-year archive of approved minutes makes past decisions easy to retrieve."],
+  S005: ["No conflict-of-interest policy.","A policy exists but annual disclosures are not collected.","Annual signed disclosures; conflicts are handled and recorded in minutes.","Several years of disclosures on file; handling is reviewed for effectiveness."],
+  S006: ["None of these policies exist.","One or two exist but coverage is partial and training is absent.","Board-approved whistleblower, records-retention, and ethics policies with training records.","Policies are reviewed on a cycle and training is refreshed and logged."],
+  S007: ["No strategy beyond day-to-day survival.","Goals live informally with a few leaders.","A board-approved plan connects mission, programs, facilities, and capital purchases, with annual goals.","The plan is reviewed annually against results and cited in major decisions."],
+  S008: ["No position on who owns what users create.","Informal understanding that users keep their IP; nothing written.","A written IP policy plus a sponsored-project agreement template are in use.","The policy is periodically reviewed and agreements are consistently executed."],
+  S009: ["No plan for leadership absence or emergency authority.","Key knowledge is held by individuals; emergency authority is undocumented.","A succession plan and delegation matrix are documented.","The plan has been tested by drill or a real absence and updated afterward."],
+  S010: ["No board self-evaluation or risk review.","Occasional informal reflection, nothing documented.","A documented annual self-evaluation and organizational risk review.","Three consecutive annual evaluations with follow-up actions tracked."],
+  S011: ["No written safety rules.","Rules exist but are outdated or not visible in the shop.","Current rules, emergency procedures, and contacts are posted with a review date.","Reviews happen on schedule and updates are logged."],
+  S012: ["Extinguishers, first aid, or eyewash missing, blocked, or expired.","Equipment is present but inspections are ad hoc.","An inspection checklist with current service tags; everything accessible.","Multi-year inspection records; deficiencies tracked to correction."],
+  S013: ["Unlabeled containers or incompatible storage.","Most chemicals labeled; SDS collection incomplete.","Inventory maintained, SDS accessible, storage compatibility verified.","Storage is audited periodically and the inventory reconciled yearly."],
+  S014: ["Guards removed or missing; no point-of-use rules.","Some tool SOPs exist; PPE and dust collection are inconsistent.","SOPs posted at tools; guarding, dust collection, ventilation, and PPE in place and inspected.","Inspections are logged over time and SOPs updated after incidents."],
+  S015: ["No notion of tool risk levels.","An informal sense of which tools are dangerous guides practice.","A hazard matrix ties each tool risk level to training, supervision, and access control.","The matrix is reviewed and access rules are audited against it."],
+  S016: ["Incidents go unrecorded.","Serious injuries get mentioned; near misses are lost.","A reporting form and log capture injuries, near misses, and damage, with corrective actions.","Trends are analyzed and recurring causes demonstrably addressed."],
+  S017: ["No documented protocols.","Practices exist by habit; nothing written.","Opening, closing, lone-work, impairment, and after-hours protocols are documented and taught.","Protocols are reviewed and updated from real events."],
+  S018: ["Coverage unknown or lapsed.","Policies in force but never compared to actual operations.","An annual broker review matches coverage to operations; the board is informed.","Multi-year review records show changes made from findings."],
+  S019: ["No safety audit has ever happened.","Occasional informal walkthroughs.","A qualified annual audit with findings tracked to closure.","Three annual audits plus a closure log and incident-trend analysis."],
+  S020: ["Hazardous waste goes in the dumpster.","Disposal is roughly right but undocumented.","A written waste plan, vendor records, and training logs.","Practices are reviewed and improved; records span multiple years."],
+  S021: ["People get access without orientation or signatures.","Orientation happens but records are spotty.","Checklist-based orientation with signed agreements before access; records kept.","Records are audited and orientation content is reviewed."],
+  S022: ["Anyone can use any tool.","Training is expected but verification is informal.","Verified practical training is recorded before independent use of restricted tools.","Training records are sampled for quality and the curriculum reviewed."],
+  S023: ["No way to tell who has access to what.","Shared keys or codes; suspension is slow or impossible.","Per-person auditable credentials control access; suspension works promptly.","Access rights are periodically audited against the credential database."],
+  S024: ["Rules are invented case by case.","Policies exist but are not published.","Dues, holds, guests, refunds, accommodations, and termination rules are published.","Policies are reviewed and refined from member feedback."],
+  S025: ["No conduct procedure; issues are handled arbitrarily.","Issues handled ad hoc by whoever is present.","A written procedure covers reporting, fair review, documentation, and proportionate action.","A de-identified case log exists and the process is reviewed for fairness."],
+  S026: ["Credential quality is never examined.","Instructors vary widely with no review.","Periodic curriculum review; outside credentials accepted only via defined equivalency rules.","Audit samples confirm credential quality over time."],
+  S027: ["Visitors wander in unrecorded.","A sign-in sheet exists but is inconsistently used.","Registration, rules acceptance, and defined access boundaries are enforced.","Logs are reviewed and boundaries and signage refined."],
+  S028: ["Public hours run without hazard-matched supervision.","Staffing is set by availability, not hazards.","A coverage schedule matches supervision to the hazards available.","Coverage is reviewed against incidents and adjusted."],
+  S029: ["Visitors can reach restricted equipment unsupervised.","Staff intervene informally at risky tools.","Point-of-use authorization or verified workshop credentials govern restricted equipment.","Authorization records are kept and periodically checked."],
+  S030: ["No path beyond a first visit.","Repeat visitors advance only by asking around.","A documented pathway moves visitors from introduction toward independent capability.","Pathway completion is tracked and the design improved."],
+  S031: ["No public-access data is collected.","Anecdotes drive decisions.","Data and feedback are reviewed annually to improve hours, staffing, and instruction.","Three annual reviews and a change log show decisions made from data."],
+  S032: ["No asset list exists.","A partial or stale spreadsheet.","A current register lists major equipment, location, status, and responsible lead.","The register is reconciled annually and discrepancies resolved."],
+  S033: ["Broken tools stay in service or carry only a note.","Tagging is informal; returns to service are unverified.","A lockout procedure with authorization required before return to service; records kept.","Practice is audited and repeat failures analyzed."],
+  S034: ["Equipment runs to failure.","Some machines get attention when someone remembers.","Schedules reflect manufacturer guidance, use, and risk, with completed logs.","Multi-year logs tune the schedule based on failure history."],
+  S035: ["Critical documents exist only on paper or one laptop.","Some records backed up; coverage unknown.","An indexed document set is securely backed up and the backup tested.","Backups are tested on a schedule; the index stays current."],
+  S036: ["No routine shop inspections.","Occasional informal walkarounds.","Routine checklists verify egress, storage, guards, utilities, ventilation, and housekeeping.","Inspection history shows findings closed out."],
+  S037: ["One person holds all the passwords.","A partial list of systems and owners; backups unverified.","A systems register with owners, tested backups, recovery instructions, and controlled admin access.","Recovery is re-tested periodically and admin access audited."],
+  S038: ["Assets are never audited.","Partial spot checks only.","An annual audit reconciles inventory, condition, maintenance, training controls, and replacement needs.","Three annual audits on file."],
+  S039: ["No replacement planning or reserve.","Awareness of looming replacements, nothing designated.","A board-designated replacement plan and reserve reflect documented lifecycle needs.","The reserve is funded per forecast and reviewed annually."],
+  S040: ["No budget.","A budget is set but rarely revisited.","Approved budget with timely budget-to-actual, balance sheet, and cash review.","Multi-year discipline; variances explained and acted on."],
+  S041: ["One person handles money end to end, unchecked.","Some approvals exist; controls undocumented.","A control matrix documents separation or compensating controls, with reconciliation samples.","Controls are tested or reviewed periodically."],
+  S042: ["Restricted gifts mix with general funds.","Donations acknowledged inconsistently.","Gift records, acknowledgments, and a restrictions schedule are accurate.","Restricted-fund handling is reviewed with no exceptions found."],
+  S043: ["The board never sees financial risk.","Finances discussed without structure.","Liquidity, revenue concentration, liabilities, and insurance reviewed at least annually.","A standing dashboard and minuted risk discussions across years."],
+  S044: ["No independent financial review of any kind.","Internal review only.","Independent review, compilation, or audit matches legal requirements and risk; letters answered.","Recurring engagements with findings resolved."],
+  S045: ["No forward look beyond this year.","A rough one-year projection.","Multi-year forecast, adverse-scenario analysis, and a reserve policy.","Updated annually and credible under stress-testing."],
+  S046: ["Classification or payroll basics are missing or wrong.","Payroll runs; job descriptions are stale.","Current job descriptions, lawful classification, payroll records, and required postings.","Reviewed annually as roles change."],
+  S047: ["No handbook.","A partial or outdated handbook.","Handbook covers conduct, harassment, leave, hours, safety, complaints, and discipline, with acknowledgments.","Updated on a cycle with training on changes."],
+  S048: ["No goals, supervision, or evaluations.","Feedback happens informally.","Documented goals, supervision, compensation review, and annual evaluations.","A consistent multi-year evaluation record."],
+  S049: ["Workforce risks are invisible.","Leadership discusses staffing informally.","A documented annual review of retention, workload, pay equity, development, and dependencies.","Three annual reviews with a mitigation plan."],
+  S050: ["Whoever shows up runs things.","Lead roles are understood but undocumented.","A lead roster with role descriptions, authority, contacts, and safety qualifications.","Roles are reviewed and qualifications kept current."],
+  S051: ["No documented volunteer operations.","Practices exist by tradition.","Scheduling, onboarding, supervision, complaints, removal, and escalation are documented.","The handbook is maintained and applied consistently."],
+  S052: ["Single points of failure everywhere.","A few roles have informal backups.","A coverage matrix and handoff documentation for critical responsibilities.","Transitions have happened smoothly using the documentation."],
+  S053: ["Volunteer burnout and turnover are never examined.","Occasional informal check-ins.","A documented annual review of workload, retention, recognition, burnout, and succession.","Three annual reviews with improvement actions taken."],
+  S054: ["No participation records.","Headcounts sometimes taken.","Membership, visitor, and attendance reports are produced routinely.","Reports inform staffing and program decisions."],
+  S055: ["No nondiscrimination or accessibility commitments.","A statement exists; no procedure or training.","Policies, an accommodation procedure, and training cover users, staff, volunteers, and programs.","Outcomes are monitored and the approach reviewed."],
+  S056: ["Activities have no stated outcomes.","Aspirations are described but unmeasurable.","Measurable annual goals connect activities to learning, agency, belonging, or opportunity.","Targets are tracked across years and inform planning."],
+  S057: ["Feedback is never collected.","Occasional surveys, rarely reviewed.","Feedback is collected safely and reviewed with usage and demographic information.","Multi-year feedback shapes documented changes."],
+  S058: ["Instruction is one-size-fits-all.","Some instructors use good practice on their own.","A facilitation guide, observation rubric, and instructor training support choice, iteration, and peer learning.","Instruction is observed and improved on a cycle."],
+  S059: ["Partnerships are handshakes.","Partners exist without defined responsibilities.","MOUs define purpose, responsibilities, and mutual benefit.","Partnerships are reviewed and renewed deliberately."],
+  S060: ["No public reporting.","Occasional updates without finances or outcomes.","An annual public report covers finances, participation, outcomes, and setbacks.","Three annual reports on file."],
+  S061: ["Evaluation never changes anything.","Findings occasionally spark change, undocumented.","Findings visibly influence programs, outreach, staffing, and capital decisions.","A three-year decision log ties changes to evidence."],
+  S062: ["No record of what left the building.","A paper list of loans, often stale.","Each tool is uniquely identified and checked out to a verified borrower.","Checkout records are audited against inventory."],
+  S063: ["No loan agreement.","A basic form missing key terms.","Agreement covers due dates, condition, accessories, loss, and safe-use limits.","Terms are reviewed from real loss and dispute experience."],
+  S064: ["Returned tools go straight back on the shelf.","Visual check only.","Documented functional and electrical inspection before recirculation.","Inspection logs are complete and reviewed."],
+  S065: ["Lending performance is unknown.","Losses noticed anecdotally.","Loss, damage, late-return, utilization, and maintenance trends are tracked.","Three annual analyses inform inventory decisions."],
+  S066: ["Youth participate without consent forms.","Forms collected inconsistently.","Consent, emergency contacts, supervision, and pickup rules are enforced with complete records.","Rosters and forms are audited by sample."],
+  S067: ["No age rules around hazardous equipment.","Informal judgment calls.","An age and capability matrix controls youth access to hazardous equipment.","The matrix is reviewed with curricula and incidents."],
+  S068: ["Unscreened adults work with youth.","Some screening; coverage incomplete.","Background screening and youth-protection training precede service for all covered adults.","A roster tracks renewals with no lapses."],
+  S069: ["No youth-protection practices documented.","Two-adult practice by custom only.","Two-adult and open-observable practices, reporting duties, and communication rules are documented.","Practices are trained, followed, and reviewed."],
+  S070: ["Youth programming is never reviewed.","Informal debriefs only.","Curricula and outcomes are reviewed with educators, families, and participants.","Three annual reviews with changes made."],
+  S071: ["Commercial use is unregulated.","Informal expectations only.","A commercial-use policy covers limits, priority, staging, and prohibited activities.","The policy is enforced and reviewed."],
+  S072: ["Incubation runs on verbal deals.","Some agreements, missing key terms.","Written agreements define space, term, fees, insurance, IP, milestones, and termination.","Agreements and certificates are current and audited."],
+  S073: ["Production starts without any review.","Ad hoc safety conversations.","Documented safety, zoning, environmental, and capacity review before production.","Reviews recur as activities change."],
+  S074: ["Program impact and subsidy are unknown.","Anecdotal wins only.","Outcomes and community subsidy are measured and reviewed for mission alignment.","Three annual cohort and subsidy analyses."],
+  S075: ["Repair events run without intake or waivers.","A sign-in sheet at best.","Intake, ownership, safety, and liability procedures are used at every event.","Procedures are refined from event experience."],
+  S076: ["Anyone repairs anything; items leave untested.","Skilled people gravitate to repairs informally.","Qualified mentors are assigned and powered items get a post-repair safety check.","Test logs are complete and reviewed."],
+  S077: ["Salvage is accepted sight unseen.","Obvious hazards turned away informally.","A written acceptance policy screens coatings, contamination, defects, and prohibited items.","Inspection records show consistent screening."],
+  S078: ["Repair outcomes are never totaled.","Rough counts kept sometimes.","Diversion, outcomes, incidents, and repeat failures are reviewed annually.","Three annual outcome reports."],
+  S079: ["Occupants hold space on verbal arrangements.","Some agreements are written; terms vary.","Every occupant has a written agreement covering use, fees, term, termination, and non-subletting.","Agreements and the roster are reconciled on renewal."],
+  S080: ["Private areas are never inspected.","Inspections only after complaints.","Egress, fire access, storage, chemicals, and housekeeping are inspected in private areas.","Logs show findings corrected."],
+  S081: ["Occupants modify and install freely.","Risky work is discouraged informally.","Electrical loads, machinery, alterations, hot work, and prohibited uses require defined approval.","Approval records are complete and reviewed."],
+  S082: ["Insurance, disputes, and abandoned property are unaddressed.","Handled case by case.","Access, property risk, required insurance, disputes, and abandoned property are covered in writing.","Provisions are exercised and refined as cases arise."],
+  S083: ["The rental program is never reviewed.","Occupancy tracked, nothing else.","An annual review covers compliance, incidents, insurance, occupancy, subsidy, and mission alignment.","Three annual reviews on file."],
+  S084: ["The space operates in isolation from other makerspaces.","Individuals attend meetups or online forums informally; nothing organizational.","The organization belongs to at least one peer network and contributes documents, curricula, or data to it.","Sustained two-way participation: resources are both adopted from and contributed to the network over multiple years."]
+};
+
+const LEVELS = {
+  emerging:     { label: "Emerging",         order: 0 },
+  foundational: { label: "Foundational",     order: 1 },
+  operational:  { label: "Operational",      order: 2 },
+  accredited:   { label: "Exemplary", order: 3 }
+};
+const GOALS = {
+  foundational: { avg: 1.0, ev: 0,    critNeed: 1, critScope: st => st.c && st.t === 1, records: false,
+                  critLabel: "Critical Tier-1 standards ≥ 1" },
+  operational:  { avg: 2.0, ev: 0.80, critNeed: 2, critScope: st => st.c && st.t <= 2, records: false,
+                  critLabel: "Critical Tier 1–2 standards ≥ 2" },
+  accredited:   { avg: 2.7, ev: 0.95, critNeed: 3, critScope: st => st.c, records: true,
+                  critLabel: "All critical standards = 3" }
+};
+
+/* ================= State ================= */
+const STORE_KEY = "msx-assessment-v1";
+const NET_KEY = "msx-network-v1";
+
+const defaultState = () => ({
+  app: "makerspace-standards", version: 1,
+  profile: {
+    name: "", lead: "", date: "", jurisdiction: "", members: "", users: "", revenue: "",
+    flags: { membership: true, publicAccess: false, paidStaff: true, volunteer: false,
+             toolLending: false, youth: false, incubation: false, repair: false,
+             rentals: false, records3yr: false }
+  },
+  goal: "operational",
+  scores: {},  /* id -> {score, evidence, na, owner, due, action} */
+  metrics: { capabilities: {} }   /* annual network data */
+});
+
+let state = loadState();
+let network = loadNetwork();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && s.profile && s.scores) {
+        const merged = Object.assign(defaultState(), s);
+        merged.metrics = Object.assign({ capabilities: {} }, s.metrics || {});
+        merged.metrics.capabilities = merged.metrics.capabilities || {};
+        /* migrate legacy single evidence text into an evidence item */
+        for (const id of Object.keys(merged.scores)) {
+          const r = merged.scores[id];
+          if (!r.evidenceItems) r.evidenceItems = [];
+          if (r.evidence && r.evidence.trim() && !r.evidenceItems.length) {
+            r.evidenceItems.push({ kind: "note", note: r.evidence.trim(), share: false });
+            r.evidence = "";
+          }
+        }
+        return merged;
+      }
+    }
+  } catch (e) {}
+  return defaultState();
+}
+function saveState() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function loadNetwork() {
+  try { const raw = localStorage.getItem(NET_KEY); if (raw) { const n = JSON.parse(raw); if (Array.isArray(n)) return n; } } catch (e) {}
+  return [];
+}
+function saveNetwork() { try { localStorage.setItem(NET_KEY, JSON.stringify(network)); } catch (e) {} }
+
+/* ================= Computation ================= */
+function computeFor(data) {
+  const flags = data.profile.flags || {};
+  const scores = data.scores || {};
+  const applicable = STANDARDS.filter(st => {
+    const mod = MODULES[st.m];
+    if (!(mod.always || flags[mod.flag])) return false;
+    if (scores[st.id] && scores[st.id].na) return false;
+    return true;
+  });
+  const sc = id => { const r = scores[id]; return (r && typeof r.score === "number") ? r.score : null; };
+  const hasEv = id => hasEvidence(scores[id]);
+
+  const scored = applicable.filter(st => sc(st.id) !== null);
+  const total = applicable.reduce((a, st) => a + (sc(st.id) || 0), 0);
+  const avg = applicable.length ? total / applicable.length : 0;
+  const evCount = applicable.filter(st => hasEv(st.id)).length;
+  const evPct = applicable.length ? evCount / applicable.length : 0;
+
+  const critOk = goal => applicable.filter(GOALS[goal].critScope).every(st => (sc(st.id) || 0) >= GOALS[goal].critNeed);
+  const levelChecks = {};
+  for (const g of Object.keys(GOALS)) {
+    const G = GOALS[g];
+    levelChecks[g] = {
+      avg: avg >= G.avg, crit: critOk(g),
+      ev: evPct >= G.ev, records: !G.records || !!flags.records3yr
+    };
+  }
+  const met = g => Object.values(levelChecks[g]).every(Boolean);
+  let level = "emerging";
+  if (met("foundational")) level = "foundational";
+  if (met("operational")) level = "operational";
+  if (met("accredited")) level = "accredited";
+
+  const domains = DOMAINS.map(dom => {
+    const list = applicable.filter(st => st.d === dom.code);
+    const dTotal = list.reduce((a, st) => a + (sc(st.id) || 0), 0);
+    return {
+      code: dom.code, name: dom.name, applicable: list.length,
+      scored: list.filter(st => sc(st.id) !== null).length,
+      avg: list.length ? dTotal / list.length : 0,
+      urgent: list.filter(st => st.c && (sc(st.id) || 0) === 0).length
+    };
+  }).filter(d => d.applicable > 0);
+
+  const urgent = applicable.filter(st => st.c && (sc(st.id) || 0) === 0).length;
+  return { applicable, sc, hasEv, scored, avg, evCount, evPct, levelChecks, level, domains, urgent };
+}
+
+function goalBlockers(c, goal) {
+  const G = GOALS[goal];
+  const required = c.applicable
+    .filter(st => G.critScope(st) && (c.sc(st.id) || 0) < G.critNeed)
+    .map(st => ({ st, need: G.critNeed }));
+  const reqSet = new Set(required.map(r => r.st.id));
+  const raisers = c.applicable
+    .filter(st => !reqSet.has(st.id) && (c.sc(st.id) || 0) < 3)
+    .sort((a, b) => ((c.sc(a.id) || 0) - (c.sc(b.id) || 0)) || (a.c === b.c ? 0 : a.c ? -1 : 1));
+  const evMissing = c.applicable.filter(st => !c.hasEv(st.id));
+  return { required, raisers, evMissing, G };
+}
+
+/* ================= Evidence helpers ================= */
+function evItemFilled(it) { return !!(it && ((it.url && it.url.trim()) || (it.note && it.note.trim()) || it.data)); }
+function hasEvidence(r) {
+  if (!r) return false;
+  if (r.evidence && r.evidence.trim()) return true;
+  return (r.evidenceItems || []).some(evItemFilled);
+}
+function evidenceCount(r) {
+  if (!r) return 0;
+  return (r.evidenceItems || []).filter(evItemFilled).length + ((r.evidence && r.evidence.trim()) ? 1 : 0);
+}
+function evidenceSummary(r) {
+  if (!r) return "";
+  const parts = [];
+  if (r.evidence && r.evidence.trim()) parts.push(r.evidence.trim());
+  (r.evidenceItems || []).forEach(it => { if (evItemFilled(it)) parts.push(it.url || it.fileName || it.note); });
+  return parts.join("; ");
+}
+function dataUrlToBytes(dataUrl) {
+  const bin = atob(dataUrl.split(",")[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+/* ================= Utilities ================= */
+const $ = sel => document.querySelector(sel);
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch])); }
+function fmt(n, d) { return Number(n).toFixed(d === undefined ? 2 : d); }
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.style.display = "none"; }, 2600);
+}
+function slug(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "makerspace"; }
+
+async function saveFile(filename, data) {
+  if (window.claude && window.claude.downloads) {
+    try { await window.claude.downloads.save({ filename, data }); toast("Saved " + filename); return; }
+    catch (err) {
+      if (err && err.code === "declined") return;
+      if (err && (err.code === "rate_limited")) { toast("A save prompt is already open — try again in a moment."); return; }
+      /* fall through to anchor fallback */
+    }
+  }
+  try {
+    const blob = new Blob([data], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+    toast("Downloaded " + filename);
+  } catch (e) { toast("Could not save the file in this viewer."); }
+}
+
+/* ================= Navigation ================= */
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  if (name === "assess") renderAssessment();
+  if (name === "metrics") renderMetrics();
+  if (name === "dashboard") renderDashboard();
+  if (name === "plan") renderPlan();
+  if (name === "network") renderNetwork();
+  if (name === "profile") renderProfile();
+  window.scrollTo(0, 0);
+}
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view); });
+
+function renderHeader() {
+  const c = computeFor(state);
+  $("#hdr-org").textContent = state.profile.name || "Unnamed makerspace";
+  const lvl = $("#hdr-level");
+  lvl.textContent = LEVELS[c.level].label;
+  lvl.className = "chip level-" + c.level;
+}
+
+/* ================= Profile view ================= */
+function renderProfile() {
+  $("#p-name").value = state.profile.name;
+  $("#p-lead").value = state.profile.lead;
+  $("#p-date").value = state.profile.date;
+  $("#p-jurisdiction").value = state.profile.jurisdiction;
+  $("#p-members").value = state.profile.members || "";
+  $("#p-users").value = state.profile.users;
+  $("#p-revenue").value = state.profile.revenue;
+  const wrap = $("#p-flags");
+  wrap.innerHTML = FLAG_DEFS.map(f => `
+    <div class="toggle-row">
+      <span class="t-label">${esc(f.label)}<span class="t-note">${esc(f.note)}</span></span>
+      <span class="seg" data-flag="${f.key}">
+        <button class="${state.profile.flags[f.key] ? "on" : ""}" data-val="1">Yes</button>
+        <button class="${!state.profile.flags[f.key] ? "on" : ""}" data-val="0">No</button>
+      </span>
+    </div>`).join("");
+  updateApplicableNote();
+}
+function updateApplicableNote() {
+  const c = computeFor(state);
+  const mods = Object.keys(MODULES).filter(k => MODULES[k].always || state.profile.flags[MODULES[k].flag]).map(k => MODULES[k].label);
+  $("#p-applicable-note").textContent = c.applicable.length + " standards currently apply · Active modules: " + mods.join(", ");
+  renderHeader();
+}
+["p-name", "p-lead", "p-date", "p-jurisdiction", "p-members", "p-users", "p-revenue"].forEach(id => {
+  document.getElementById(id).addEventListener("input", e => {
+    const key = { "p-name": "name", "p-lead": "lead", "p-date": "date", "p-jurisdiction": "jurisdiction", "p-members": "members", "p-users": "users", "p-revenue": "revenue" }[id];
+    state.profile[key] = e.target.value; saveState(); if (key === "name") renderHeader();
+  });
+});
+$("#p-flags").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const seg = b.closest(".seg"); const key = seg.dataset.flag;
+  state.profile.flags[key] = b.dataset.val === "1";
+  saveState(); renderProfile();
+});
+
+/* ================= Assessment view ================= */
+function ensureScore(id) {
+  if (!state.scores[id]) state.scores[id] = { score: null, evidence: "", evidenceItems: [], na: false, owner: "", due: "", action: "" };
+  if (!state.scores[id].evidenceItems) state.scores[id].evidenceItems = [];
+  return state.scores[id];
+}
+
+let showAnchors = localStorage.getItem("msx-show-anchors") !== "0";
+
+function anchorRowsHtml(st, score) {
+  const a = ANCHORS[st.id];
+  if (!a) return "";
+  return `<div class="anchor-rows">` + [0, 1, 2, 3].map(n =>
+    `<button class="anchor ${score === n ? "sel" : ""}" data-anchor="${n}" title="Set score to ${n}"><span class="an">${n}</span><span>${esc(a[n])}</span></button>`
+  ).join("") + `</div>`;
+}
+
+function evAreaHtml(st, r) {
+  const items = (r && r.evidenceItems) || [];
+  const rows = items.map((it, i) => {
+    const shareBtn = it.kind === "note" ? "" :
+      `<button class="ev-share ${it.share ? "on" : ""}" data-evshare="${i}" title="Offer this document to other spaces as a template — it will be included in your network share file">${it.share ? "✓ Shared as resource" : "Share as resource"}</button>`;
+    let body = "";
+    if (it.kind === "link") {
+      body = `<input type="text" data-evf="url" data-idx="${i}" placeholder="https://…" value="${esc(it.url || "")}">
+        <input type="text" data-evf="note" data-idx="${i}" placeholder="What is this? (optional)" value="${esc(it.note || "")}">`;
+    } else if (it.kind === "file") {
+      body = `<button class="btn quiet" data-evdl="${i}" title="Download">${esc(it.fileName || "file")} <span style="color:var(--muted);font-weight:400">${Math.round((it.size || 0) / 1024)} KB</span></button>
+        <input type="text" data-evf="note" data-idx="${i}" placeholder="What is this? (optional)" value="${esc(it.note || "")}">`;
+    } else {
+      body = `<input type="text" data-evf="note" data-idx="${i}" placeholder="Document title and date, log range, or verifiable observation" value="${esc(it.note || "")}">`;
+    }
+    return `<div class="ev-item"><span class="kind">${it.kind}</span>${body}${shareBtn}<button class="btn quiet" data-evrm="${i}" title="Remove">✕</button></div>`;
+  }).join("");
+  return `<div class="ev-area">${rows}
+    <div class="btn-row" style="gap:6px">
+      <button class="btn quiet" data-evadd="link">+ Link</button>
+      <button class="btn quiet" data-evadd="file">+ File</button>
+      <button class="btn quiet" data-evadd="note">+ Note</button>
+    </div></div>`;
+}
+
+function refreshEvArea(card) {
+  const id = card.dataset.id;
+  const st = STANDARDS.find(s => s.id === id);
+  const r = state.scores[id];
+  const area = card.querySelector(".ev-area");
+  if (area) area.outerHTML = evAreaHtml(st, r);
+  const ok = card.querySelector("[data-evok]");
+  if (ok) {
+    const n = evidenceCount(r);
+    ok.style.visibility = n ? "visible" : "hidden";
+    ok.textContent = "✓ evidence" + (n > 1 ? " (" + n + ")" : "");
+  }
+  updateAssessProgress();
+}
+
+function syncScoreUI(card, score) {
+  card.querySelectorAll(".seg.score button").forEach(b => b.classList.toggle("on", Number(b.dataset.score) === score));
+  card.querySelectorAll(".anchor").forEach(b => b.classList.toggle("sel", Number(b.dataset.anchor) === score));
+}
+
+function renderAssessment() {
+  const c = computeFor(state);
+  const filter = $("#assess-filter").value;
+  const blockers = goalBlockers(c, state.goal);
+  const reqSet = new Set(blockers.required.map(r => r.st.id));
+  const visible = st => {
+    if (filter === "unscored") return c.sc(st.id) === null;
+    if (filter === "goalgaps") return reqSet.has(st.id);
+    if (filter === "critical") return st.c;
+    if (filter === "noev") return !c.hasEv(st.id);
+    return true;
+  };
+  $("#assess-progress").textContent = `${c.scored.length} / ${c.applicable.length} scored · ${c.evCount} with evidence`;
+
+  const appIds = new Set(c.applicable.map(st => st.id));
+  let html = "";
+  for (const dom of DOMAINS) {
+    const list = c.applicable.filter(st => st.d === dom.code && visible(st));
+    if (!list.length) continue;
+    const dScored = list.filter(st => c.sc(st.id) !== null).length;
+    html += `<div class="domain-section">
+      <div class="domain-head"><h3>${esc(dom.code)} · ${esc(dom.name)}</h3><span class="count">${dScored}/${list.length} scored</span></div>`;
+    for (const st of list) {
+      const r = state.scores[st.id] || {};
+      const score = c.sc(st.id);
+      html += `<div class="std" data-id="${st.id}">
+        <div class="std-top">
+          <span class="std-id">${st.id}</span>
+          <span class="chip">Tier ${st.t}</span>
+          ${st.c ? '<span class="chip critical">Critical</span>' : ""}
+          ${st.m !== "core" ? `<span class="chip">${esc(MODULES[st.m].label)}</span>` : ""}
+        </div>
+        <div class="std-text">${esc(st.s)}</div>
+        <div class="std-evidence-hint">Expected evidence: ${esc(st.e)}</div>
+        ${anchorRowsHtml(st, score)}
+        <div class="std-controls">
+          <span class="seg score" data-id="${st.id}">
+            ${[0, 1, 2, 3].map(n => `<button data-score="${n}" class="${score === n ? "on" : ""}">${n}</button>`).join("")}
+          </span>
+          <span class="ev-ok" data-evok style="visibility:${c.hasEv(st.id) ? "visible" : "hidden"}">✓ evidence${evidenceCount(r) > 1 ? " (" + evidenceCount(r) + ")" : ""}</span>
+          <button class="btn quiet" data-na="${st.id}" title="Mark not applicable">N/A</button>
+        </div>
+        ${evAreaHtml(st, r)}
+        <details><summary>Owner, due date &amp; improvement action</summary>
+          <div class="plan-fields">
+            <input type="text" data-owner="${st.id}" placeholder="Owner" value="${esc(r.owner || "")}">
+            <input type="date" data-due="${st.id}" value="${esc(r.due || "")}">
+            <input type="text" data-action="${st.id}" placeholder="Improvement action" value="${esc(r.action || "")}">
+          </div>
+        </details>
+      </div>`;
+    }
+    html += "</div>";
+  }
+  const naList = STANDARDS.filter(st => state.scores[st.id] && state.scores[st.id].na && (MODULES[st.m].always || state.profile.flags[MODULES[st.m].flag]));
+  if (naList.length) {
+    html += `<div class="domain-section"><div class="domain-head"><h3>Marked N/A</h3><span class="count">${naList.length}</span></div>` +
+      naList.map(st => `<div class="std inactive"><div class="std-top"><span class="std-id">${st.id}</span><span class="std-text" style="font-weight:400">${esc(st.s)}</span>
+        <button class="btn quiet" data-restore="${st.id}">Restore</button></div></div>`).join("") + "</div>";
+  }
+  if (!html) html = `<p class="section-note">Nothing matches this filter.</p>`;
+  const bodyEl = $("#assess-body");
+  bodyEl.innerHTML = html;
+  bodyEl.classList.toggle("hide-anchors", !showAnchors);
+  $("#show-anchors").checked = showAnchors;
+}
+
+$("#assess-filter").addEventListener("change", renderAssessment);
+$("#show-anchors").addEventListener("change", e => {
+  showAnchors = e.target.checked;
+  try { localStorage.setItem("msx-show-anchors", showAnchors ? "1" : "0"); } catch (err) {}
+  $("#assess-body").classList.toggle("hide-anchors", !showAnchors);
+});
+$("#assess-body").addEventListener("click", e => {
+  const sBtn = e.target.closest("button[data-score]");
+  if (sBtn) {
+    const id = sBtn.closest(".seg").dataset.id;
+    const r = ensureScore(id);
+    const n = Number(sBtn.dataset.score);
+    r.score = (r.score === n) ? null : n;   /* click again to clear */
+    saveState();
+    syncScoreUI(sBtn.closest(".std"), r.score);
+    updateAssessProgress(); renderHeader();
+    return;
+  }
+  const aBtn = e.target.closest("button[data-anchor]");
+  if (aBtn) {
+    const card = aBtn.closest(".std");
+    const r = ensureScore(card.dataset.id);
+    const n = Number(aBtn.dataset.anchor);
+    r.score = (r.score === n) ? null : n;   /* click again to clear */
+    saveState();
+    syncScoreUI(card, r.score);
+    updateAssessProgress(); renderHeader();
+    return;
+  }
+  const naBtn = e.target.closest("button[data-na]");
+  if (naBtn) { ensureScore(naBtn.dataset.na).na = true; saveState(); renderAssessment(); renderHeader(); return; }
+  const rsBtn = e.target.closest("button[data-restore]");
+  if (rsBtn) { ensureScore(rsBtn.dataset.restore).na = false; saveState(); renderAssessment(); renderHeader(); return; }
+
+  const card = e.target.closest(".std");
+  if (!card) return;
+  const addBtn = e.target.closest("button[data-evadd]");
+  if (addBtn) {
+    const kind = addBtn.dataset.evadd;
+    if (kind === "file") { pendingFileTarget = card.dataset.id; $("#ev-file-input").click(); return; }
+    ensureScore(card.dataset.id).evidenceItems.push({ kind, url: "", note: "", share: false });
+    saveState(); refreshEvArea(card);
+    const inp = card.querySelector(".ev-item:last-of-type input");
+    if (inp) inp.focus();
+    return;
+  }
+  const rmBtn = e.target.closest("button[data-evrm]");
+  if (rmBtn) {
+    ensureScore(card.dataset.id).evidenceItems.splice(Number(rmBtn.dataset.evrm), 1);
+    saveState(); refreshEvArea(card); renderHeader();
+    return;
+  }
+  const shBtn = e.target.closest("button[data-evshare]");
+  if (shBtn) {
+    const it = ensureScore(card.dataset.id).evidenceItems[Number(shBtn.dataset.evshare)];
+    if (it) { it.share = !it.share; saveState(); refreshEvArea(card); }
+    return;
+  }
+  const dlBtn = e.target.closest("button[data-evdl]");
+  if (dlBtn) {
+    const it = ensureScore(card.dataset.id).evidenceItems[Number(dlBtn.dataset.evdl)];
+    if (it && it.data) saveFile(it.fileName || "evidence-file", dataUrlToBytes(it.data));
+    return;
+  }
+});
+
+let pendingFileTarget = null;
+const EV_FILE_LIMIT = 600 * 1024;
+$("#ev-file-input").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = "";
+  const id = pendingFileTarget; pendingFileTarget = null;
+  if (!f || !id) return;
+  if (f.size > EV_FILE_LIMIT) {
+    toast("That file is " + Math.round(f.size / 1024) + " KB — attachments are capped at 600 KB. Host it (Drive, Dropbox) and add it as a link instead.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const r = ensureScore(id);
+    r.evidenceItems.push({ kind: "file", fileName: f.name, size: f.size, data: reader.result, note: "", share: false });
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (err) {
+      r.evidenceItems.pop();
+      toast("Browser storage is full — remove another attachment or use a link for this document.");
+      return;
+    }
+    const card = document.querySelector(`.std[data-id="${id}"]`);
+    if (card) refreshEvArea(card);
+    toast("Attached " + f.name);
+  };
+  reader.readAsDataURL(f);
+});
+$("#assess-body").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.evf !== undefined) {
+    const card = t.closest(".std");
+    const it = ensureScore(card.dataset.id).evidenceItems[Number(t.dataset.idx)];
+    if (it) { it[t.dataset.evf] = t.value; saveState(); }
+    const ok = card.querySelector("[data-evok]");
+    if (ok) {
+      const n = evidenceCount(state.scores[card.dataset.id]);
+      ok.style.visibility = n ? "visible" : "hidden";
+      ok.textContent = "✓ evidence" + (n > 1 ? " (" + n + ")" : "");
+    }
+    updateAssessProgress();
+  }
+  if (t.dataset.owner !== undefined) { ensureScore(t.dataset.owner).owner = t.value; saveState(); }
+  if (t.dataset.due !== undefined) { ensureScore(t.dataset.due).due = t.value; saveState(); }
+  if (t.dataset.action !== undefined) { ensureScore(t.dataset.action).action = t.value; saveState(); }
+});
+function updateAssessProgress() {
+  const c = computeFor(state);
+  $("#assess-progress").textContent = `${c.scored.length} / ${c.applicable.length} scored · ${c.evCount} with evidence`;
+}
+
+/* ================= Annual data (network metrics) ================= */
+const CAPABILITIES = [
+  ["wood", "Woodshop", "saws, sanders, drill press"],
+  ["metal", "Metalshop", "welding, milling, lathe, sheet metal"],
+  ["digifab", "Digital fabrication", "3D printers, laser cutters, CNC routers"],
+  ["electronics", "Electronics / robotics", "soldering, oscilloscopes, PCB mill"],
+  ["textiles", "Textiles / soft goods", "sewing, embroidery, vinyl"],
+  ["lab", "Clean lab / bio / science", "vent hoods, microscopes, wet lab"],
+  ["computer", "Computer lab / design", "CAD stations, VR/AR"]
+];
+
+/* Health-check questions from the network data standards, mapped to standards */
+const HEALTH_CHECK = [
+  ["Current written strategic plan", "S007"],
+  ["Program evaluation system", "S057"],
+  ["Board meets at least quarterly", "S004"],
+  ["Leadership succession plan", "S009"],
+  ["Volunteer role descriptions", "S050"],
+  ["Board-approved annual budget", "S040"],
+  ["Regular financial reporting to leadership", "S043"],
+  ["Liability waiver / agreements before access", "S021"],
+  ["Accident / incident reporting system", "S016"],
+  ["Mandatory tracked safety training", "S022"],
+  ["State / federal filings current", "S001"],
+  ["Nondiscrimination & inclusion policy", "S055"],
+  ["Conflict-of-interest policy", "S005"],
+  ["Whistleblower policy", "S006"],
+  ["Reserves / financial continuity plan", "S045"]
+];
+
+function healthAnswer(c, stdId) {
+  const applicable = c.applicable.some(st => st.id === stdId);
+  if (!applicable) return "N/A";
+  const s = c.sc(stdId);
+  if (s === null) return "Not scored";
+  return s >= 2 ? "Yes" : s === 1 ? "In progress" : "No";
+}
+
+function num(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ""));
+  return isFinite(n) ? n : null;
+}
+function fmtNum(n) { return n === null ? "—" : Number(n).toLocaleString("en-US", { maximumFractionDigits: 1 }); }
+
+function renderMetrics() {
+  const m = state.metrics;
+  document.querySelectorAll("#metrics-form [data-m]").forEach(inp => { inp.value = m[inp.dataset.m] || ""; });
+  document.querySelectorAll("#metrics-form [data-msel]").forEach(sel => { sel.value = m[sel.dataset.msel] || ""; });
+  document.querySelectorAll("#metrics-form [data-mflag]").forEach(seg => {
+    const v = m[seg.dataset.mflag];
+    seg.querySelectorAll("button").forEach(b =>
+      b.classList.toggle("on", v !== undefined && (b.dataset.val === "1") === !!v));
+  });
+  $("#metrics-caps").innerHTML = CAPABILITIES.map(([key, label, hint]) => `
+    <div class="toggle-row">
+      <span class="t-label">${esc(label)}<span class="t-note">${esc(hint)}</span></span>
+      <span class="seg" data-cap="${key}">
+        <button class="${m.capabilities[key] === true ? "on" : ""}" data-val="1">Yes</button>
+        <button class="${m.capabilities[key] === false ? "on" : ""}" data-val="0">No</button>
+      </span>
+    </div>`).join("");
+  renderMetricsDerived();
+  renderHealthCheck();
+}
+
+function renderMetricsDerived() {
+  const m = state.metrics;
+  const end = num(m.membersEnd), nw = num(m.membersNew), lost = num(m.membersLost);
+  const exp = num(m.expenses), sqft = num(m.sqftTotal);
+  const start = (end !== null && nw !== null && lost !== null) ? end - nw + lost : null;
+  const tiles = [];
+  if (start !== null && start > 0 && lost !== null)
+    tiles.push(["Annual churn", Math.round(lost / start * 100) + "%", lost + " of " + fmtNum(start) + " at start of year"]);
+  if (nw !== null && lost !== null)
+    tiles.push(["Net member growth", (nw - lost >= 0 ? "+" : "") + fmtNum(nw - lost), "joined " + fmtNum(nw) + " · lost " + fmtNum(lost)]);
+  if (exp !== null && end !== null && end > 0)
+    tiles.push(["Expense per member", "$" + fmtNum(exp / end), "annual operating expense ÷ members"]);
+  if (sqft !== null && end !== null && end > 0)
+    tiles.push(["Sq ft per member", fmtNum(sqft / end), fmtNum(sqft) + " sq ft ÷ " + fmtNum(end) + " members"]);
+  $("#metrics-derived").innerHTML = tiles.map(([k, v, sub]) =>
+    `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="sub">${sub}</div></div>`).join("");
+}
+
+function renderHealthCheck() {
+  const c = computeFor(state);
+  $("#metrics-health").innerHTML = HEALTH_CHECK.map(([q, id]) => {
+    const a = healthAnswer(c, id);
+    const color = a === "Yes" ? "var(--good-text)" : a === "In progress" ? "var(--warn)" : a === "No" ? "var(--critical)" : "var(--muted)";
+    return `<div class="req" style="justify-content:space-between;gap:14px">
+      <span>${esc(q)} <span class="std-id">${id}</span></span>
+      <span style="font-weight:650;color:${color};white-space:nowrap">${a}</span></div>`;
+  }).join("");
+}
+
+$("#metrics-form").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.m !== undefined) { state.metrics[t.dataset.m] = t.value; saveState(); renderMetricsDerived(); }
+});
+$("#metrics-form").addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.msel !== undefined) { state.metrics[t.dataset.msel] = t.value; saveState(); }
+});
+$("#metrics-form").addEventListener("click", e => {
+  const b = e.target.closest("button[data-val]"); if (!b) return;
+  const capSeg = b.closest("[data-cap]");
+  if (capSeg) { state.metrics.capabilities[capSeg.dataset.cap] = b.dataset.val === "1"; saveState(); renderMetrics(); return; }
+  const flagSeg = b.closest("[data-mflag]");
+  if (flagSeg) { state.metrics[flagSeg.dataset.mflag] = b.dataset.val === "1"; saveState(); renderMetrics(); }
+});
+
+/* ================= Dashboard ================= */
+function renderDashboard() {
+  const c = computeFor(state);
+  $("#dash-lede").textContent = (state.profile.name || "Your makerspace") +
+    " · " + c.applicable.length + " applicable standards · assessed " + (state.profile.date || "(no date set)");
+
+  $("#dash-stats").innerHTML = `
+    <div class="stat hero"><div class="k">Average score</div><div class="v">${fmt(c.avg)}<small> / 3</small></div>
+      <div class="sub">${c.scored.length} of ${c.applicable.length} scored${c.scored.length < c.applicable.length ? " — unscored count as 0" : ""}</div></div>
+    <div class="stat"><div class="k">Evidence coverage</div><div class="v">${Math.round(c.evPct * 100)}<small>%</small></div>
+      <div class="sub">${c.evCount} of ${c.applicable.length} standards</div></div>
+    <div class="stat"><div class="k">Urgent gaps</div><div class="v" style="color:${c.urgent ? "var(--critical)" : "var(--good-text)"}">${c.urgent}</div>
+      <div class="sub">critical standards at 0</div></div>
+    <div class="stat"><div class="k">Unscored</div><div class="v">${c.applicable.length - c.scored.length}</div>
+      <div class="sub">of ${c.applicable.length} applicable</div></div>`;
+
+  const reqRow = (ok, text) => `<div class="req ${ok ? "ok" : "no"}"><span class="mark">${ok ? "✓" : "✗"}</span><span>${text}</span></div>`;
+  $("#dash-levels").innerHTML = ["foundational", "operational", "accredited"].map(g => {
+    const G = GOALS[g], ch = c.levelChecks[g];
+    const met = Object.values(ch).every(Boolean);
+    return `<div class="level-card ${met ? "met" : ""}">
+      <h4>${LEVELS[g].label} ${met ? '<span class="chip level-' + g + '">Met</span>' : ""}</h4>
+      <div class="desc">${g === "accredited" ? "Sustained, review-ready practice across every critical standard." : "&nbsp;"}</div>
+      ${reqRow(ch.avg, "Average ≥ " + fmt(G.avg, 1) + " (now " + fmt(c.avg) + ")")}
+      ${reqRow(ch.crit, G.critLabel)}
+      ${G.ev ? reqRow(ch.ev, "Evidence ≥ " + Math.round(G.ev * 100) + "% (now " + Math.round(c.evPct * 100) + "%)") : ""}
+      ${G.records ? reqRow(ch.records, "Three years of retained records") : ""}
+    </div>`;
+  }).join("");
+
+  renderDomainChart(c);
+
+  $("#goal-select").value = state.goal;
+  const blockers = goalBlockers(c, state.goal);
+  const already = LEVELS[c.level].order >= LEVELS[state.goal].order;
+  $("#goal-summary").textContent = already
+    ? "Goal met — consider the next level."
+    : blockers.required.length + " required standard" + (blockers.required.length === 1 ? "" : "s") + " below target" +
+      (blockers.G.ev && c.evPct < blockers.G.ev ? " · evidence below " + Math.round(blockers.G.ev * 100) + "%" : "") +
+      (c.avg < blockers.G.avg ? " · average " + fmt(blockers.G.avg - c.avg) + " short" : "");
+  renderHeader();
+}
+$("#goal-select").addEventListener("change", e => { state.goal = e.target.value; saveState(); renderDashboard(); });
+
+/* rounded-right bar path (data-end rounding, anchored baseline) */
+function barPath(x, y, w, h, r) {
+  if (w <= 0) return "";
+  r = Math.min(r, w, h / 2);
+  return `M${x},${y} h${w - r} a${r},${r} 0 0 1 ${r},${r} v${h - 2 * r} a${r},${r} 0 0 1 ${-r},${r} h${-(w - r)} z`;
+}
+
+function renderDomainChart(c) {
+  const rows = c.domains;
+  const W = 720, rowH = 36, padT = 8, padB = 24, gutter = 200, right = 46;
+  const H = padT + rows.length * rowH + padB;
+  const plotW = W - gutter - right;
+  const x = v => gutter + (v / 3) * plotW;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:560px;width:100%;display:block" role="img" aria-label="Average score by domain">`;
+  for (let g = 0; g <= 3; g++) {
+    svg += `<line x1="${x(g)}" y1="${padT}" x2="${x(g)}" y2="${H - padB}" stroke="${g === 0 ? "var(--baseline)" : "var(--line)"}" stroke-width="1"/>`;
+    svg += `<text x="${x(g)}" y="${H - padB + 15}" text-anchor="middle" font-size="11" fill="var(--muted)">${g}</text>`;
+  }
+  rows.forEach((d, i) => {
+    const y = padT + i * rowH + (rowH - 18) / 2;
+    svg += `<text x="${gutter - 10}" y="${y + 13}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">${esc(d.code + " " + d.name)}</text>`;
+    svg += `<path d="${barPath(x(0), y, (d.avg / 3) * plotW, 18, 4)}" fill="var(--series-you)"/>`;
+    svg += `<text x="${x(d.avg) + 7}" y="${y + 13}" font-size="12" fill="var(--ink-2)" style="font-variant-numeric:tabular-nums">${fmt(d.avg, 1)}</text>`;
+    svg += `<rect data-i="${i}" x="0" y="${padT + i * rowH}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  svg += "</svg>";
+  const holder = $("#chart-domains");
+  holder.innerHTML = svg;
+  attachTooltip(holder, $("#tt-domains"), el => {
+    const d = rows[Number(el.dataset.i)];
+    if (!d) return null;
+    return `<strong>${esc(d.code + " " + d.name)}</strong><br>Average ${fmt(d.avg)} / 3 · ${d.scored}/${d.applicable} scored` +
+      (d.urgent ? `<br>${d.urgent} critical at 0` : "");
+  });
+}
+
+function attachTooltip(container, tt, contentFor) {
+  container.addEventListener("mousemove", e => {
+    const el = e.target.closest("[data-i]");
+    if (!el) { tt.style.display = "none"; return; }
+    const html = contentFor(el);
+    if (!html) { tt.style.display = "none"; return; }
+    tt.innerHTML = html; tt.style.display = "block";
+    const rect = container.closest(".chart-card").getBoundingClientRect();
+    let lx = e.clientX - rect.left + 14, ly = e.clientY - rect.top + 14;
+    tt.style.left = Math.min(lx, rect.width - 240) + "px"; tt.style.top = ly + "px";
+  });
+  container.addEventListener("mouseleave", () => { tt.style.display = "none"; });
+}
+
+/* ================= Action plan ================= */
+function renderPlan() {
+  const c = computeFor(state);
+  const blockers = goalBlockers(c, state.goal);
+  const G = blockers.G;
+  $("#plan-lede").textContent = "Goal: " + LEVELS[state.goal].label + ". Everything listed here blocks or advances that goal. Owners, due dates, and actions save automatically and appear in your export.";
+
+  const row = (st, need, kind) => {
+    const r = state.scores[st.id] || {};
+    const cur = c.sc(st.id);
+    const pr = st.c && (cur || 0) === 0 ? "Urgent" : kind === "req" ? "High" : (cur || 0) < 2 ? "Medium" : "Low";
+    const prColor = pr === "Urgent" ? "var(--critical)" : pr === "High" ? "var(--serious)" : pr === "Medium" ? "var(--warn)" : "var(--muted)";
+    return `<div class="plan-row">
+      <div class="plan-score">${cur === null ? "—" : cur}<span class="need">${need ? " → " + need : ""}</span></div>
+      <div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline">
+          <span class="std-id">${st.id}</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${prColor}">${pr}</span>
+          ${st.c ? '<span class="chip critical">Critical</span>' : ""}
+          <span class="chip">${esc(DOMAINS.find(d => d.code === st.d).name)}</span>
+        </div>
+        <div style="font-weight:550;margin:2px 0 8px">${esc(st.s)}</div>
+        <div class="plan-fields" style="margin-top:0">
+          <input type="text" data-owner="${st.id}" placeholder="Owner" value="${esc(r.owner || "")}">
+          <input type="date" data-due="${st.id}" value="${esc(r.due || "")}">
+          <input type="text" data-action="${st.id}" placeholder="Improvement action" value="${esc(r.action || "")}">
+        </div>
+      </div>
+    </div>`;
+  };
+
+  let html = "";
+  if (blockers.required.length) {
+    html += `<div class="plan-group"><h3>Required for ${LEVELS[state.goal].label} (${blockers.required.length})</h3>
+      <p class="section-note">${G.critLabel}.</p>` +
+      blockers.required.map(r => row(r.st, r.need, "req")).join("") + "</div>";
+  } else {
+    html += `<div class="plan-group"><h3>Required for ${LEVELS[state.goal].label}</h3><p class="section-note">✓ No required standards below target.</p></div>`;
+  }
+  if (G.ev && c.evPct < G.ev) {
+    html += `<div class="plan-group"><h3>Evidence needed (${blockers.evMissing.length} missing, need ≥ ${Math.round(G.ev * 100)}%)</h3>
+      <p class="section-note">Add evidence on the Assessment tab — a document title with date, URL, folder path, or log range.</p>
+      <p style="font-size:13.5px;color:var(--ink-2)">${blockers.evMissing.slice(0, 40).map(st => `<code>${st.id}</code>`).join(" ")}${blockers.evMissing.length > 40 ? " …" : ""}</p></div>`;
+  }
+  if (c.avg < G.avg) {
+    const shown = blockers.raisers.slice(0, 12);
+    html += `<div class="plan-group"><h3>Raise the average (${fmt(c.avg)} → ${fmt(G.avg, 1)})</h3>
+      <p class="section-note">Lowest-scoring applicable standards first — improving any of these lifts your overall average.</p>` +
+      shown.map(st => row(st, null, "raise")).join("") +
+      (blockers.raisers.length > shown.length ? `<p class="section-note">…and ${blockers.raisers.length - shown.length} more below 3.</p>` : "") + "</div>";
+  }
+  if (G.records && !state.profile.flags.records3yr) {
+    html += `<div class="plan-group"><h3>Records requirement</h3><p class="section-note">The Exemplary level requires three years of retained records — confirm on the Profile tab once true.</p></div>`;
+  }
+  if (!blockers.required.length && !(G.ev && c.evPct < G.ev) && c.avg >= G.avg && (!G.records || state.profile.flags.records3yr)) {
+    html += `<div class="card"><h3>Goal met 🎉</h3><p class="section-note">All requirements for ${LEVELS[state.goal].label} are satisfied. Consider setting the next level as your goal on the Dashboard.</p></div>`;
+  }
+  html += `<div class="btn-row" style="margin-top:14px"><button class="btn" id="btn-plan-csv">Export action plan (.csv)</button></div>`;
+  $("#plan-body").innerHTML = html;
+  const csvBtn = $("#btn-plan-csv");
+  if (csvBtn) csvBtn.addEventListener("click", exportPlanCsv);
+}
+$("#plan-body").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.owner !== undefined) { ensureScore(t.dataset.owner).owner = t.value; saveState(); }
+  if (t.dataset.due !== undefined) { ensureScore(t.dataset.due).due = t.value; saveState(); }
+  if (t.dataset.action !== undefined) { ensureScore(t.dataset.action).action = t.value; saveState(); }
+});
+
+/* ================= Export / import ================= */
+function summarize(c) {
+  return {
+    level: c.level, avg: +c.avg.toFixed(3), evPct: +c.evPct.toFixed(3),
+    applicable: c.applicable.length, scored: c.scored.length, urgent: c.urgent,
+    domains: c.domains.map(d => ({ code: d.code, name: d.name, applicable: d.applicable, avg: +d.avg.toFixed(3) })),
+    health: HEALTH_CHECK.map(([q, id]) => healthAnswer(c, id))
+  };
+}
+
+function collectSharedResources(scores) {
+  const out = [];
+  for (const st of STANDARDS) {
+    const r = scores[st.id];
+    if (!r || !r.evidenceItems) continue;
+    r.evidenceItems.forEach(it => {
+      if (!it.share || !evItemFilled(it) || it.kind === "note") return;
+      const res = { standard: st.id, domain: st.d, kind: it.kind, note: it.note || "" };
+      if (it.url) res.url = it.url;
+      if (it.data) { res.fileName = it.fileName; res.size = it.size; res.data = it.data; }
+      out.push(res);
+    });
+  }
+  return out;
+}
+
+function exportSelf() {
+  const payload = JSON.stringify(state, null, 2);
+  saveFile(slug(state.profile.name) + "-standards-assessment-PRIVATE.json", payload);
+}
+$("#btn-export").addEventListener("click", exportSelf);
+
+$("#btn-share").addEventListener("click", () => {
+  const c = computeFor(state);
+  const share = {
+    app: "makerspace-standards-share", version: 1, shared: true,
+    profile: {
+      name: state.profile.name, jurisdiction: state.profile.jurisdiction,
+      date: state.profile.date, members: state.profile.members, users: state.profile.users
+    },
+    metrics: state.metrics,
+    summary: summarize(c),
+    resources: collectSharedResources(state.scores)
+  };
+  saveFile(slug(state.profile.name) + "-network-share.json", JSON.stringify(share, null, 2));
+});
+
+function csvEsc(v) { v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+
+function exportPlanCsv() {
+  const c = computeFor(state);
+  const blockers = goalBlockers(c, state.goal);
+  const rows = [["ID", "Domain", "Standard", "Critical", "Current score", "Needed", "Priority", "Owner", "Due", "Action", "Evidence"]];
+  const push = (st, need, kind) => {
+    const r = state.scores[st.id] || {}; const cur = c.sc(st.id);
+    const pr = st.c && (cur || 0) === 0 ? "Urgent" : kind === "req" ? "High" : (cur || 0) < 2 ? "Medium" : "Low";
+    rows.push([st.id, DOMAINS.find(d => d.code === st.d).name, st.s, st.c ? "Yes" : "No", cur === null ? "" : cur, need || "", pr, r.owner || "", r.due || "", r.action || "", evidenceSummary(r)]);
+  };
+  blockers.required.forEach(r => push(r.st, r.need, "req"));
+  blockers.raisers.forEach(st => push(st, "", "raise"));
+  saveFile(slug(state.profile.name) + "-action-plan.csv", rows.map(r => r.map(csvEsc).join(",")).join("\n"));
+}
+
+$("#btn-report").addEventListener("click", () => {
+  const c = computeFor(state);
+  const p = state.profile;
+  const lines = [];
+  lines.push("# Standards of Excellence — Assessment Summary");
+  lines.push("");
+  lines.push("**Organization:** " + (p.name || "—") + "  ");
+  lines.push("**Date:** " + (p.date || "—") + " · **Lead:** " + (p.lead || "—") + " · **Jurisdiction:** " + (p.jurisdiction || "—"));
+  lines.push("");
+  lines.push("**Recognition level: " + LEVELS[c.level].label + "**  ");
+  lines.push("Average score " + fmt(c.avg) + " / 3 · Evidence coverage " + Math.round(c.evPct * 100) + "% · " + c.scored.length + "/" + c.applicable.length + " scored · " + c.urgent + " urgent gaps");
+  lines.push("");
+  lines.push("| Domain | Applicable | Avg score | Critical at 0 |");
+  lines.push("|---|---:|---:|---:|");
+  c.domains.forEach(d => lines.push(`| ${d.code} ${d.name} | ${d.applicable} | ${fmt(d.avg)} | ${d.urgent} |`));
+  lines.push("");
+  const blockers = goalBlockers(c, state.goal);
+  lines.push("## Goal: " + LEVELS[state.goal].label);
+  if (blockers.required.length) {
+    lines.push("");
+    lines.push("Required standards below target:");
+    blockers.required.forEach(r => lines.push(`- **${r.st.id}** (${c.sc(r.st.id) === null ? "unscored" : c.sc(r.st.id)} → ${r.need}) ${r.st.s}`));
+  } else lines.push("\nNo required standards below target.");
+  lines.push("");
+  lines.push("---");
+  lines.push("*Self-assessment pilot — not a legal, code-compliance, or insurance certification.*");
+  saveFile(slug(p.name) + "-standards-summary.md", lines.join("\n"));
+});
+
+function parseAssessmentFile(text, filename) {
+  const data = JSON.parse(text);
+  if (data && data.app === "makerspace-standards-share" && data.profile && data.summary) return data;
+  if (!data || data.app !== "makerspace-standards" || !data.profile || !data.scores) {
+    throw new Error(filename + " is not a Standards of Excellence export.");
+  }
+  return data;
+}
+$("#import-self").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const data = parseAssessmentFile(await f.text(), f.name);
+    if (data.shared) { toast("That is a network share file — it has no detailed scores to restore. Load a full (private) export instead."); return; }
+    if (!confirm("Replace your current assessment with \"" + (data.profile.name || f.name) + "\"?")) return;
+    state = Object.assign(defaultState(), data); saveState();
+    renderHeader(); showView("dashboard"); toast("Assessment loaded.");
+  } catch (err) { toast(err.message || "Could not read that file."); }
+});
+
+/* ================= Network view ================= */
+$("#import-net").addEventListener("change", async e => {
+  const files = Array.from(e.target.files); e.target.value = "";
+  let added = 0;
+  for (const f of files) {
+    try {
+      const data = parseAssessmentFile(await f.text(), f.name);
+      const name = data.profile.name || f.name.replace(/\.json$/i, "");
+      network = network.filter(n => (n.profile.name || "") !== name);   /* replace same-named space */
+      const entry = { profile: data.profile, metrics: Object.assign({ capabilities: {} }, data.metrics || {}), addedAt: new Date().toISOString().slice(0, 10) };
+      if (data.shared) { entry.share = true; entry.summary = data.summary; entry.resources = data.resources || []; }
+      else { entry.scores = data.scores; entry.goal = data.goal; }
+      network.push(entry);
+      added++;
+    } catch (err) { toast(err.message || ("Skipped " + f.name)); }
+  }
+  if (added) { saveNetwork(); renderNetwork(); toast("Added " + added + " assessment" + (added === 1 ? "" : "s") + "."); }
+});
+$("#btn-net-clear").addEventListener("click", () => {
+  if (!network.length) return;
+  if (confirm("Remove all " + network.length + " imported assessments from this browser?")) { network = []; saveNetwork(); renderNetwork(); }
+});
+
+function networkEntries() {
+  /* current space first, then imports (skip an import with the same name as the current space) */
+  const mine = { profile: state.profile, scores: state.scores, metrics: state.metrics, you: true };
+  const others = network.filter(n => (n.profile.name || "") !== (state.profile.name || ""));
+  return [mine, ...others];
+}
+
+function median(arr) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+let netResources = [];
+
+function renderNetwork() {
+  const entries = networkEntries().map(en => ({
+    ...en,
+    s: en.share ? en.summary : summarize(computeFor(en)),
+    res: en.share ? (en.resources || []) : collectSharedResources(en.scores || {})
+  }));
+  const body = $("#net-body");
+  if (entries.length < 2) {
+    body.innerHTML = `<div class="card"><h3>No network data yet</h3>
+      <p class="section-note">Ask each makerspace to open this tool, complete their assessment and annual data, and send you the <strong>network share file</strong> from their Dashboard (the private full export also works, for spaces that choose to share it). Then load those files here. Your own data is included automatically.</p></div>`;
+    return;
+  }
+
+  /* directory table — identity and capacity only, no readiness scores */
+  let html = `<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div class="table-scroll"><table class="net">
+    <thead><tr><th>Makerspace</th><th>Jurisdiction</th><th>Structure</th><th class="num">Members</th><th class="num">Staff</th><th class="num">Sq ft</th><th>24/7</th><th></th></tr></thead><tbody>`;
+  entries.forEach((en, i) => {
+    const m = en.metrics || {};
+    const staff = (num(m.staffFT) || 0) + (num(m.staffPT) || 0);
+    html += `<tr>
+      <td>${en.you ? "<strong>" + esc(en.profile.name || "You") + "</strong> <span class='section-note'>(you)</span>" : esc(en.profile.name || "Unnamed")}</td>
+      <td>${esc(en.profile.jurisdiction || "")}</td>
+      <td>${esc(m.structure || "")}</td>
+      <td class="num">${fmtNum(num(m.membersEnd) !== null ? num(m.membersEnd) : num(en.profile.members))}</td>
+      <td class="num">${staff > 0 ? staff : "—"}</td>
+      <td class="num">${fmtNum(num(m.sqftTotal))}</td>
+      <td>${m.access247 === undefined ? "" : (m.access247 ? "Yes" : "No")}</td>
+      <td>${en.you ? "" : `<button class="btn quiet danger" data-remove="${i}" style="padding:2px 8px;font-size:12px">Remove</button>`}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div><p class="section-note" style="padding:10px 14px;margin:0">This table and the sections below it are built for sharing outward. Readiness appears only in aggregate — no space is individually scored or ranked here.</p></div>`;
+
+  /* readiness — aggregate only */
+  const dist = { emerging: 0, foundational: 0, operational: 0, accredited: 0 };
+  entries.forEach(en => dist[en.s.level]++);
+  html += `<div class="card" style="margin-bottom:16px"><h3>Readiness across ${entries.length} spaces — aggregate</h3>
+    <div class="btn-row" style="margin-top:8px">` +
+    Object.keys(dist).map(l => `<span class="chip level-${l}">${LEVELS[l].label} · ${dist[l]}</span>`).join(" ") +
+    `</div><p class="section-note" style="margin:10px 0 0">Counts only — individual results stay with each space. The network median and range below show where the ecosystem is strong and where shared training would help most.</p></div>`;
+
+  /* network-at-a-glance totals from annual data */
+  const memberCount = en => { const v = num(en.metrics && en.metrics.membersEnd); return v !== null ? v : num(en.profile.members); };
+  const withM = entries.filter(en => memberCount(en) !== null || (en.metrics && (num(en.metrics.expenses) !== null || num(en.metrics.sqftTotal) !== null)));
+  if (withM.length) {
+    const sum = key => { const vals = withM.map(en => num(en.metrics && en.metrics[key])).filter(v => v !== null); return vals.length ? vals.reduce((a, b) => a + b, 0) : null; };
+    const staff = (() => { const vals = withM.map(en => (num(en.metrics.staffFT) || 0) + (num(en.metrics.staffPT) || 0)).filter(v => v > 0); return vals.length ? vals.reduce((a, b) => a + b, 0) : null; })();
+    const tiles = [
+      ["Spaces reporting data", withM.length + " of " + entries.length, ""],
+      ["Total members", fmtNum((() => { const vals = withM.map(memberCount).filter(v => v !== null); return vals.length ? vals.reduce((a, b) => a + b, 0) : null; })()), "active paying members"],
+      ["Total square feet", fmtNum(sum("sqftTotal")), ""],
+      ["Paid staff", fmtNum(staff), "full + part time"],
+      ["Regular volunteers", fmtNum(sum("volunteers")), ""],
+      ["Event registrations", fmtNum(sum("eventRegs")), "all types, annual"],
+      ["Tool authorizations issued", fmtNum(sum("authIssued")), "annual, all tools"],
+      ["Guest waivers signed", fmtNum(sum("guestWaivers")), "reach beyond membership"],
+      ["Need-based discounts", sum("reducedDollars") === null ? "—" : "$" + fmtNum(sum("reducedDollars")), fmtNum(sum("reducedMembers")) + " members on reduced dues"],
+      ["Combined operating expenses", sum("expenses") === null ? "—" : "$" + fmtNum(sum("expenses")), "annual"]
+    ].filter(t => t[1] !== "—" && t[1] !== null);
+    html += `<div class="card" style="margin-bottom:16px"><h3>Network at a glance</h3>
+      <div class="stat-row" style="margin:12px 0 0">` +
+      tiles.map(([k, v, sub]) => `<div class="stat" style="border:none;background:var(--surface-2)"><div class="k">${k}</div><div class="v" style="font-size:24px">${v}</div><div class="sub">${sub}</div></div>`).join("") +
+      `</div></div>`;
+
+    /* members by space */
+    const memRows = withM.map(en => ({ name: en.profile.name || "Unnamed", you: !!en.you, v: memberCount(en) }))
+      .filter(r => r.v !== null).sort((a, b) => b.v - a.v);
+    if (memRows.length > 1) {
+      const maxV = Math.max(...memRows.map(r => r.v));
+      const W = 720, rowH = 32, padT = 6, padB = 6, gutter = 200, right = 70;
+      const H = padT + memRows.length * rowH + padB;
+      const plotW = W - gutter - right;
+      let svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:560px;width:100%;display:block" role="img" aria-label="Members by makerspace">`;
+      memRows.forEach((r, i) => {
+        const y = padT + i * rowH + (rowH - 16) / 2;
+        svg += `<text x="${gutter - 10}" y="${y + 12}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">${esc(r.name)}${r.you ? " •" : ""}</text>`;
+        svg += `<path d="${barPath(gutter, y, Math.max((r.v / maxV) * plotW, 2), 16, 4)}" fill="var(--series-you)"/>`;
+        svg += `<text x="${gutter + (r.v / maxV) * plotW + 7}" y="${y + 12}" font-size="12" fill="var(--ink-2)" style="font-variant-numeric:tabular-nums">${r.v.toLocaleString()}</text>`;
+      });
+      svg += "</svg>";
+      html += `<div class="chart-card"><h3>Active members by space</h3><div class="chart-sub">Year-end active paying members. • marks your space.</div><div class="chart-scroll">${svg}</div></div>`;
+    }
+
+    /* revenue mix */
+    const mixRows = withM.map(en => {
+      const e = num(en.metrics.revEarned), ct = num(en.metrics.revContributed), inst = num(en.metrics.revInstitutional);
+      const total = (e || 0) + (ct || 0) + (inst || 0);
+      return { name: en.profile.name || "Unnamed", e: e || 0, c: ct || 0, i: inst || 0, total };
+    }).filter(r => r.total > 0);
+    if (mixRows.length) {
+      const W = 720, rowH = 32, padT = 6, padB = 6, gutter = 200, right = 16;
+      const H = padT + mixRows.length * rowH + padB;
+      const plotW = W - gutter - right;
+      let svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:560px;width:100%;display:block" role="img" aria-label="Revenue mix by makerspace">`;
+      mixRows.forEach((r, i) => {
+        const y = padT + i * rowH + (rowH - 16) / 2;
+        svg += `<text x="${gutter - 10}" y="${y + 12}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">${esc(r.name)}</text>`;
+        let cx = gutter;
+        [["e", "var(--series-you)"], ["c", "var(--series-net)"], ["i", "var(--series-aqua)"]].forEach(([k, color]) => {
+          const w = (r[k] / r.total) * plotW;
+          if (w > 0.5) {
+            svg += `<rect x="${cx}" y="${y}" width="${Math.max(w - 2, 1)}" height="16" rx="2" fill="${color}"/>`;
+            if (w > 46) svg += `<text x="${cx + 5}" y="${y + 12}" font-size="10.5" fill="#fff">${Math.round(r[k] / r.total * 100)}%</text>`;
+            cx += w;
+          }
+        });
+      });
+      svg += "</svg>";
+      html += `<div class="chart-card"><h3>Revenue mix</h3><div class="chart-sub">Share of annual revenue by source.</div>
+        <div class="legend">
+          <span class="li"><span class="sw" style="background:var(--series-you)"></span>Earned</span>
+          <span class="li"><span class="sw" style="background:var(--series-net)"></span>Contributed</span>
+          <span class="li"><span class="sw" style="background:var(--series-aqua)"></span>Institutional</span>
+        </div><div class="chart-scroll">${svg}</div></div>`;
+    }
+
+    /* capability map */
+    const capEntries = entries.filter(en => en.metrics && en.metrics.capabilities && Object.keys(en.metrics.capabilities).length);
+    if (capEntries.length) {
+      html += `<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div class="table-scroll"><table class="net">
+        <thead><tr><th>Capability</th>${capEntries.map(en => `<th>${esc(en.profile.name || "Unnamed")}${en.you ? " •" : ""}</th>`).join("")}</tr></thead><tbody>` +
+        CAPABILITIES.map(([key, label]) => `<tr><td>${esc(label)}</td>` +
+          capEntries.map(en => {
+            const v = en.metrics.capabilities[key];
+            return `<td>${v === true ? '<span style="color:var(--good-text);font-weight:700">✓</span>' : v === false ? '<span style="color:var(--muted)">—</span>' : '<span style="color:var(--muted)">?</span>'}</td>`;
+          }).join("") + "</tr>").join("") +
+        `</tbody></table></div><p class="section-note" style="padding:10px 14px;margin:0">Statewide referral map — “where can I prototype metal parts?” ✓ yes · — no · ? not reported.</p></div>`;
+    }
+  }
+
+  /* shared resource library */
+  netResources = [];
+  entries.forEach(en => (en.res || []).forEach(r => netResources.push({ ...r, from: en.profile.name || "Unnamed", you: !!en.you })));
+  if (netResources.length) {
+    const byStd = {};
+    netResources.forEach((r, i) => { (byStd[r.standard] = byStd[r.standard] || []).push([r, i]); });
+    html += `<div class="card" style="margin-bottom:16px"><h3>Shared resource library</h3>
+      <p class="section-note">Templates and documents spaces have offered to the network — policies, forms, checklists — organized by the standard they support.</p>
+      <div style="margin-top:10px">` +
+      Object.keys(byStd).sort().map(stdId => {
+        const st = STANDARDS.find(s => s.id === stdId);
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px">
+            <span class="std-id">${stdId}</span>
+            <span style="font-size:13px;color:var(--ink-2)">${st ? esc(st.s) : ""}</span>
+          </div>` +
+          byStd[stdId].map(([r, i]) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:3px 0 3px 12px">
+            ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:550;font-size:13.5px">${esc(r.note || r.url)}</a>`
+                    : `<button class="btn quiet" data-resdl="${i}" style="font-weight:600">${esc(r.note || r.fileName || "file")} <span style="color:var(--muted);font-weight:400">${Math.round((r.size || 0) / 1024)} KB</span></button>`}
+            <span class="section-note">from ${esc(r.from)}${r.you ? " (you)" : ""}</span>
+          </div>`).join("") +
+        `</div>`;
+      }).join("") + `</div></div>`;
+  }
+
+  /* domain comparison chart */
+  html += `<div class="chart-card"><h3>Domain scores — you vs. the network</h3>
+    <div class="chart-sub">Band shows network range (min–max); tick is the network median; dot is your space.</div>
+    <div class="legend">
+      <span class="li"><span class="sw" style="background:var(--series-you)"></span>You</span>
+      <span class="li"><span class="sw" style="background:var(--series-net)"></span>Network median</span>
+      <span class="li"><span class="sw" style="background:var(--line)"></span>Network range</span>
+    </div>
+    <div class="chart-scroll" id="chart-net"></div></div>`;
+
+  body.innerHTML = html;
+  body.querySelectorAll("button[data-remove]").forEach(b => b.addEventListener("click", () => {
+    const en = entries[Number(b.dataset.remove)];
+    network = network.filter(n => n.profile !== en.profile);
+    saveNetwork(); renderNetwork();
+  }));
+  body.querySelectorAll("button[data-resdl]").forEach(b => b.addEventListener("click", () => {
+    const r = netResources[Number(b.dataset.resdl)];
+    if (r && r.data) saveFile(r.fileName || "resource-file", dataUrlToBytes(r.data));
+  }));
+
+  /* build the chart */
+  const rows = DOMAINS.map(dom => {
+    const vals = entries.filter(en => !en.you).map(en => { const d = en.s.domains.find(x => x.code === dom.code); return d ? d.avg : null; }).filter(v => v !== null);
+    const mineD = entries[0].s.domains.find(x => x.code === dom.code);
+    return { code: dom.code, name: dom.name, vals, mine: mineD ? mineD.avg : null, n: vals.length };
+  }).filter(r => r.vals.length || r.mine !== null);
+
+  const W = 720, rowH = 34, padT = 8, padB = 24, gutter = 200, right = 30;
+  const H = padT + rows.length * rowH + padB;
+  const plotW = W - gutter - right;
+  const x = v => gutter + (v / 3) * plotW;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:560px;width:100%;display:block" role="img" aria-label="Domain scores compared to network">`;
+  for (let g = 0; g <= 3; g++) {
+    svg += `<line x1="${x(g)}" y1="${padT}" x2="${x(g)}" y2="${H - padB}" stroke="${g === 0 ? "var(--baseline)" : "var(--line)"}" stroke-width="1"/>`;
+    svg += `<text x="${x(g)}" y="${H - padB + 15}" text-anchor="middle" font-size="11" fill="var(--muted)">${g}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const cy = padT + i * rowH + rowH / 2;
+    svg += `<text x="${gutter - 10}" y="${cy + 4}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">${esc(r.code + " " + r.name)}</text>`;
+    if (r.vals.length) {
+      const mn = Math.min(...r.vals), mx = Math.max(...r.vals), md = median(r.vals);
+      svg += `<rect x="${x(mn)}" y="${cy - 6}" width="${Math.max(x(mx) - x(mn), 2)}" height="12" rx="3" fill="var(--line)"/>`;
+      svg += `<rect x="${x(md) - 1.5}" y="${cy - 9}" width="3" height="18" fill="var(--series-net)"/>`;
+    }
+    if (r.mine !== null) {
+      svg += `<circle cx="${x(r.mine)}" cy="${cy}" r="5.5" fill="var(--series-you)" stroke="var(--surface)" stroke-width="2"/>`;
+    }
+    svg += `<rect data-i="${i}" x="0" y="${padT + i * rowH}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  svg += "</svg>";
+  $("#chart-net").innerHTML = svg;
+  attachTooltip($("#chart-net"), $("#tt-net"), el => {
+    const r = rows[Number(el.dataset.i)];
+    if (!r) return null;
+    let s = `<strong>${esc(r.code + " " + r.name)}</strong>`;
+    if (r.mine !== null) s += `<br>You: ${fmt(r.mine)}`;
+    if (r.vals.length) s += `<br>Network median: ${fmt(median(r.vals))} · range ${fmt(Math.min(...r.vals))}–${fmt(Math.max(...r.vals))} (${r.n} space${r.n === 1 ? "" : "s"})`;
+    return s;
+  });
+}
+
+$("#btn-net-csv").addEventListener("click", () => {
+  /* Shareable dataset only: identity, annual data, capabilities, health check.
+     No per-standard scores, domain averages, or recognition levels per space. */
+  const entries = networkEntries().map(en => ({ ...en, s: en.share ? en.summary : summarize(computeFor(en)) }));
+  const yn = v => v === true ? "Yes" : v === false ? "No" : "";
+  const M_COLS = [
+    ["year", "Reporting year"], ["structure", "Structure"], ["weeklyHours", "Weekly open hours"], ["affilOther", "Other affiliations"],
+    ["staffFT", "Staff FT"], ["staffPT", "Staff PT"], ["contractors", "Contractors"], ["contractorExpense", "Contractor expense $"],
+    ["volunteers", "Volunteers"], ["volunteerHours", "Volunteer hours"],
+    ["expenses", "Operating expenses $"], ["surplus", "Surplus/deficit $"],
+    ["revEarned", "% earned"], ["revContributed", "% contributed"], ["revInstitutional", "% institutional"],
+    ["sqftTotal", "Sq ft total"], ["sqftShops", "Sq ft shops"], ["sqftStorage", "Sq ft storage"], ["sqftClass", "Sq ft classrooms"], ["sqftOther", "Sq ft other"],
+    ["membersEnd", "Members year end"], ["membersNew", "New members"], ["membersLost", "Members lost"],
+    ["eventRegs", "Event registrations"], ["publicEvents", "Free/low-cost public events"], ["coachingSessions", "Coaching sessions"],
+    ["authIssued", "Tool authorizations issued"], ["guestWaivers", "Guest waivers signed"],
+    ["reducedMembers", "Members on reduced dues"], ["reducedDollars", "Need-based discounts $"],
+    ["incidents", "Incident reports"], ["pctBIPOC", "% BIPOC members"], ["pctWomenNB", "% women/non-binary members"], ["pctActive90", "% active past 90 days"]
+  ];
+  const rows = [[
+    "Makerspace", "Jurisdiction", "Current paying members", "Active participants (12 mo)",
+    ...M_COLS.map(mc => mc[1]), "24/7 access", "Access control (building)", "Access control (tools)", "Fab Lab Network", "Nation of Makers",
+    ...CAPABILITIES.map(cp => "Cap: " + cp[1]),
+    ...HEALTH_CHECK.map(hc => "HC: " + hc[0])
+  ]];
+  entries.forEach(en => {
+    const m = en.metrics || { capabilities: {} };
+    rows.push([
+      en.profile.name || "", en.profile.jurisdiction || "", en.profile.members || "", en.profile.users || "",
+      ...M_COLS.map(mc => m[mc[0]] || ""),
+      yn(m.access247), yn(m.acBuilding), yn(m.acTools), yn(m.affilFabLab), yn(m.affilNOM),
+      ...CAPABILITIES.map(cp => yn((m.capabilities || {})[cp[0]])),
+      ...(en.s.health || HEALTH_CHECK.map(() => ""))
+    ]);
+  });
+  saveFile("network-data.csv", rows.map(r => r.map(csvEsc).join(",")).join("\n"));
+});
+
+/* ================= Boot ================= */
+renderHeader();
+renderProfile();
+</script>
