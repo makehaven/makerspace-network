@@ -14,7 +14,7 @@ without asking anyone's permission.
 
 There is no shortage of makerspace maps. There are at least six —
 [fablabs.io](https://www.fablabs.io), [SpaceAPI](https://spaceapi.io),
-[Nation of Makers](https://www.nationofmakers.us),
+[Nation of Makers](https://www.nationofmakers.us) (now faded out),
 [The Maker Map](https://themakermap.com),
 [Open Know-Where](https://map.internetofproduction.org),
 [Maps of Making](https://mapsofmaking.org) — and most of them are going stale,
@@ -33,7 +33,11 @@ So this is not another map. It is three things the maps don't do:
    emergency path, a board that meets. That is
    [Makerspace Standards of Excellence](https://github.com/makehaven/Makerspace-Standards),
    and it is the genuinely new contribution here.
-3. **Interoperation rather than competition.** We adopt Open Know-Where's
+3. **Reciprocity the member carries.** A credential earned at one space should
+   work at another. Built on [Open Badges 3.0](https://www.imsglobal.org/spec/ob/v3p0)
+   verifiable credentials, so the member holds the claim and no space has to
+   integrate with any other — see [`docs/RECIPROCITY.md`](docs/RECIPROCITY.md).
+4. **Interoperation rather than competition.** We adopt Open Know-Where's
    vocabulary and provenance model, consume and publish SpaceAPI, and import
    from fablabs.io. See [`docs/INTEROP.md`](docs/INTEROP.md) — it is the most
    useful document in this repository.
@@ -46,6 +50,7 @@ So this is not another map. It is three things the maps don't do:
 | `data/regions/` | One record per region. `us-ct.json` is Connecticut. |
 | `data/spaces/` | One JSON record per space. The directory *is* this directory. |
 | `docs/INTEROP.md` | Survey of every existing makerspace directory and standard, and what we do about each. |
+| `docs/RECIPROCITY.md` | How a member's credential travels between spaces — Open Badges 3.0, carried by the member, no space-to-space integration. |
 | `scripts/validate.mjs` | Dependency-free validation of every record against the vocabularies. |
 
 ## The data

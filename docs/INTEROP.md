@@ -4,7 +4,7 @@
 projects, and data standards, and the decisions this project takes as a result.
 
 The short version: **we are not building another map.** Six people have already
-built the map. What nobody has built is a *state-level steward* with a data
+built the map, and two of them have since stopped maintaining it. What nobody has built is a *state-level steward* with a data
 standard underneath it and an operational-quality layer on top. That is the gap
 we fill, and everything below is chosen to interoperate rather than compete.
 
@@ -100,20 +100,77 @@ library user schema). Right problem, unfinished answer.
 **What we do:** align with it and offer CT as the first real implementation.
 This is a contribution opportunity, not a competitor.
 
-### Nation of Makers — `nationofmakers.us`
+### Nation of Makers — *faded out*
 
-The US convener. Two things matter:
+The US convener, and **no longer operating in any meaningful way** (confirmed by
+MakeHaven, 2026-08). The website still stands and `makethedata.org` currently
+returns HTTP 520. Do not plan around them and do not send data to them.
 
-1. **Their governance model is the one we need.** The crowdsourced map of US
-   maker organizations is "populated and maintained by Regional Champions and
-   State Representatives" — geographic stewards responsible for keeping their
-   own listings current. That is the answer to how `makerspace.network` scales
-   past Connecticut, and it is a *social* answer, not a technical one.
-2. **`makethedata.org`** is their data working subcommittee, which runs an
-   annual Survey of Makerspaces. This overlaps directly with the Annual Data
-   tab in our Standards of Excellence tool. We should align questions with
-   theirs before collecting a second, incompatible CT dataset — or better,
-   become their CT collection instrument.
+They are still worth studying for two reasons:
+
+1. **Their governance model is the one we need.** Their crowdsourced map was
+   "populated and maintained by Regional Champions and State Representatives" —
+   named geographic stewards, each responsible for their own patch. That
+   structure is the right answer to the staleness problem and we should adopt
+   it. It is also worth noticing *what actually failed*: the model was sound,
+   the national backbone funding it was not. A federation of self-funded state
+   networks has no single point of failure to lose.
+2. **`makethedata.org` ran an annual Survey of Makerspaces** that overlapped
+   the Annual Data tab in our Standards tool. With it gone, there is now **no
+   national makerspace dataset being collected at all.** That converts an
+   alignment problem into an opportunity: the CT instrument has no incumbent to
+   defer to, and a set of state networks running the same instrument is the
+   most plausible route to a national picture returning.
+
+### Open Badges 3.0 — 1EdTech
+
+**The most consequential standard in this survey**, and the one that changes how
+cross-space reciprocity should be built.
+
+[Open Badges 3.0](https://www.imsglobal.org/spec/ob/v3p0) re-bases Open Badges
+on the W3C Verifiable Credentials Data Model 2.0. An `AchievementCredential` is
+a JSON-LD document, cryptographically signed by the issuer (JWT or Linked Data
+proof), naming an `Achievement` (name, description, criteria, and — critically —
+`alignment` to an external framework) and an `AchievementSubject` (the earner,
+identified by email, URL, or DID). Revocation is a `credentialStatus` pointing
+at a hosted status list. There is an Open Badges API with OAuth2 for wallets,
+and an `EndorsementCredential` type that lets a third party vouch for someone
+else's credential.
+
+**Why this matters more than the partner API.** The reciprocity problem — a
+member authorized on the laser at one space walking into another — looked like
+it needed bilateral integration: every space running an API, syncing member
+standing. Across ten Connecticut spaces, most volunteer-run and several with no
+software staff at all, that was never going to happen.
+
+With Open Badges the member is the carrier. MakeHaven signs "authorized on CO2
+laser." The member holds it. The receiving space verifies the signature against
+MakeHaven's published key and checks the status list. **No integration between
+the two spaces is required, and neither has to know the other exists.** A space
+with no developers can verify a credential on a hosted verifier page.
+
+That is strictly more federated than a partner API, and it is the same argument
+already made in the Nexus `centralized-vs-federated-comparison.md`, carried to
+its conclusion: not just "the edges own the data" but "the person owns the
+claim."
+
+**What the standard does not give us.** Open Badges is an envelope. A signed
+badge reading "Laser" from one space means nothing at another unless both share
+a definition of what laser authorization *entails*. That shared meaning is the
+`alignment` property's job, and publishing it is our work, not 1EdTech's.
+
+Nor does Open Badges answer the question a shop manager actually has. It proves
+a credential is *authentic* — this issuer really signed this. It says nothing
+about whether the issuer's process is any good. Which is exactly what
+`tools/standards/` measures. See `docs/RECIPROCITY.md`.
+
+**Note on the sibling project.** MakeHaven's
+`docs/arch/PUBLIC_BADGE_TRANSCRIPT_AND_OPEN_BADGES_FRAMEWORK_PLAN.md` (in
+`makehaven-website`) already plans a credential ledger, opt-in public
+transcript, and Open Badges projection — a very good fit. It is written against
+**Open Badges 2.0 vocabulary** (Badge Class / Issuer / Assertion, recipient
+identity hashing, hosted assertion endpoints). Worth moving to 3.0; the reason
+is in `docs/RECIPROCITY.md` §4 and it is not pedantry.
 
 ### The Maker Map / makerspace.com / Nesta
 
@@ -155,16 +212,25 @@ contacting directly rather than inferring.
 | **Adopt OKW's provenance model wholesale.** | We aggregate from four sources of differing reliability. Every record must state its source and who verified it, or funders can't trust the aggregate. |
 | **Extend the capability vocabulary well past fablabs.io's six values.** | Their six do not discriminate — all three CT labs have identical arrays. Ours must let a woodshop differ from a metal shop. |
 | **Consume and publish SpaceAPI.** | Live open/closed status is real user value, and `linked_spaces`/`spacefed` are the reciprocity primitive we would otherwise have invented. |
-| **Align the Annual Data questions with `makethedata.org`.** | Do not create a second incompatible national dataset. |
-| **Align reciprocity with the Maker Passport spec.** | Same problem, earlier stage. Be its first implementation and contribute back. |
-| **Copy Nation of Makers' Regional Champion model** for multi-state governance. | It is a proven social structure for exactly the scaling problem. |
+| **Run the Annual Data instrument without waiting for a national partner.** | `makethedata.org` has gone dark; there is no national makerspace dataset being collected. Design the instrument so other state networks can adopt it verbatim. |
+| **Propose Maker Passport as an Open Badges 3.0 profile plus an achievement framework.** | IoPA is solving the right problem but re-deriving credential mechanics that 1EdTech and W3C already settled. |
+| **Copy Nation of Makers' Regional Champion model** for multi-state governance, but not their funding shape. | The steward structure was sound; the single national backbone that funded it was the thing that failed. |
+| **Build reciprocity on Open Badges 3.0, not on a bilateral partner API.** | The member carries the credential; no space-to-space integration is required. Ten mostly-volunteer CT spaces will never all run an API. |
+| **Publish a network achievement framework** that local badges align to. | Open Badges carries the envelope; shared *meaning* is the part nobody else provides. Same pattern as the capability vocabulary. |
+| **Use Standards of Excellence as the issuer trust layer.** | Open Badges proves a credential is authentic. It cannot tell you whether the issuer checks anything. |
 
 ## 3. What is genuinely ours
 
-Everyone above answers one of two questions: *what does a space have* (OKW,
-fablabs.io) or *is it open right now* (SpaceAPI). Nobody answers **is it well
-run** — whether the space has a documented hazard assessment, a tool
-authorization system, a working after-hours emergency path, a board that meets.
+Everyone above answers one of three questions: *what does a space have* (OKW,
+fablabs.io), *is it open right now* (SpaceAPI), or *did this person really earn
+this* (Open Badges). Nobody answers **is it well run** — whether the space has a
+documented hazard assessment, a tool authorization system that anyone audits, a
+working after-hours emergency path, a board that meets.
+
+That last question is not academic once credentials start crossing between
+spaces. Open Badges makes a laser authorization from another space verifiable;
+it cannot make it *meaningful*. The shop manager's real question is whether the
+issuing space checks anything before it signs.
 
 That is what `tools/standards/` does, and as far as this survey found, it does
 not exist anywhere else. It is the contribution, and it sits as a layer *above*
@@ -174,9 +240,13 @@ OKW rather than competing with it.
 
 1. Contact Maps of Making — schema, license, and whether federating with them
    beats maintaining a directory listing.
-2. Ask `makethedata.org` whether the CT Annual Data instrument can serve as
-   their state collection instrument.
+2. With `makethedata.org` dark, decide whether to approach other state networks
+   directly about running the same Annual Data instrument.
 3. Ask IoPA whether the Standards of Excellence framework is welcome as a
-   candidate companion spec to OKW, and whether CT can pilot Maker Passport.
-4. Decide whether `state` (live open/closed) is worth the operational burden for
+   candidate companion spec to OKW, and propose that Maker Passport be
+   specified as an Open Badges 3.0 profile rather than a new credential format.
+4. Decide who operates the network achievement framework namespace, and what
+   the amendment process is. A shared vocabulary with no governance is a fork
+   waiting to happen.
+5. Decide whether `state` (live open/closed) is worth the operational burden for
    CT spaces, or whether we only surface it for spaces that already publish it.

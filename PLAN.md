@@ -27,7 +27,8 @@ Connecticut first, but multi-region in the data shape from day one:
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
-| Accounts, reciprocity, Maker Passport | **Not started** — phase 3 |
+| Reciprocity architecture (`docs/RECIPROCITY.md`) | **Designed, not started** — Open Badges 3.0, member-carried |
+| Network achievement framework | **Not started** — the scarce work in phase 3 |
 
 ## Phases
 
@@ -62,26 +63,39 @@ no backend, so hosting it costs nothing.
 
 ### Phase 2 — Annual data and the network benchmark
 
-- [ ] Align the Annual Data questions with `makethedata.org`'s national Survey
-      of Makerspaces **before** collecting a second incompatible CT dataset
+- [ ] Run the Annual Data instrument on its own terms. `makethedata.org` has
+      gone dark along with Nation of Makers, so there is no national dataset to
+      align to — design the instrument so another state network can adopt it
+      verbatim
 - [ ] Aggregate share files into a published per-region benchmark — level
       counts, medians, ranges, never attributed to a named space
 - [ ] Publish an Open Know-Where conformant export so CT data reaches the
       global map
 
-### Phase 3 — Accounts and reciprocity
+### Phase 3 — Reciprocity via Open Badges
 
-The point where a member in good standing at one space can be recognised at
-another. This is the piece that needs real infrastructure, and it is
-deliberately last.
+The point where a member in good standing at one space is recognised at another.
+**Architecture: `docs/RECIPROCITY.md`.** The short version is that this needs far
+less infrastructure than previously assumed — the member carries a signed
+Open Badges 3.0 credential, so no space has to integrate with any other, and a
+space with no developers can verify on a hosted page.
 
-- [ ] Extract the shared compact (data standards, partner API contract, OIDC
-      identity linking, consent) from Entrepreneurship Nexus so both systems
-      consume one spec
-- [ ] Align with the IoPA Maker Passport / People and Skills Specification, and
-      offer CT as its first real implementation
-- [ ] Use SpaceAPI's existing `linked_spaces` and `spacefed` rather than
-      inventing a parallel primitive
+- [ ] **Network achievement framework v1** — versioned `Achievement` definitions
+      at stable URLs that local badges align to. CO2 laser, 3D printing, woodshop
+      machines, welding, shop orientation. Written *with* two or three CT spaces.
+      This is the scarce work; 1EdTech already settled the credential mechanics.
+- [ ] MakeHaven issues first — it has the ledger, taxonomy, issuer model and a
+      plan already (`makehaven-website/docs/arch/PUBLIC_BADGE_TRANSCRIPT_AND_OPEN_BADGES_FRAMEWORK_PLAN.md`),
+      needing a move from OB 2.0 hosted assertions to 3.0 signed proofs
+- [ ] Hosted verifier at `makerspace.network/verify`
+- [ ] **One second space accepts one credential at the door.** The milestone that
+      matters; everything before it is preparation.
+- [ ] Issuer trust registry derived from Standards assessments, not maintained
+      by hand
+- [ ] Propose Maker Passport to IoPA as an Open Badges 3.0 profile plus an
+      achievement framework, rather than a new credential format
+- [ ] Keep the Nexus partner API for *organisational* records only. Facts about
+      organisations sync; claims about people are carried by the person.
 
 ### Later — second region
 
@@ -102,14 +116,26 @@ working site.
 3. **Whether to carry live open/closed state.** Real value, real operational
    burden. Probably: surface it only for spaces that already publish a SpaceAPI
    endpoint, never ask a space to maintain one for us.
-4. **Governance for multi-state.** Nation of Makers already runs a Regional
-   Champion model. Do we mirror it, or formally partner with them?
+4. **Governance for multi-state.** Nation of Makers ran a Regional Champion
+   model and has since faded out. Mirror the structure, but not the single
+   national backbone that funded it — a federation of self-funded state
+   networks has no centre to lose.
+5. **Who governs the achievement framework.** Once local badges align to
+   network definitions and credentials are signed against versioned URLs, the
+   namespace is load-bearing. Who may add a definition, who may deprecate one,
+   and what happens to credentials already signed against it?
+6. **Standards as a gate.** `docs/RECIPROCITY.md` §5 makes the Standards level
+   determine who is a recognised issuer. That turns a self-assessment tool into
+   an access-control input, which raises the stakes on governance and appeals.
+   Settle this before asking a non-MakeHaven space to trust it.
 
 ## Outreach owed
 
 - Maps of Making — schema, licence, and whether federating beats listing
-- `makethedata.org` — can the CT Annual Data instrument serve as their CT
-  collection instrument?
 - Internet of Production Alliance — is Standards of Excellence welcome as a
-  candidate companion spec to OKW, and can CT pilot the Maker Passport?
+  candidate companion spec to OKW, and would they consider specifying Maker
+  Passport as an Open Badges 3.0 profile rather than a new credential format?
+- Two or three CT spaces — co-author achievement framework v1
+- Other state networks — with `makethedata.org` dark, is there appetite to run
+  a shared Annual Data instrument?
 - SpaceAPI — PR the CT spaces into the directory (there are currently none)
