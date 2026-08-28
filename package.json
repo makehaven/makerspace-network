@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/sync-tools.mjs && vite",
-    "build": "node scripts/sync-tools.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/clean-public.mjs && tsc --noEmit && vite build",
+    "build:standards": "node scripts/build-standards.mjs",
+    "build:all": "npm run build && npm run build:standards",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "validate": "node scripts/validate.mjs",
     "sync-tools": "node scripts/sync-tools.mjs",
-    "check": "npm run validate && npm run typecheck"
+    "check": "npm run validate && npm run typecheck",
+    "deploy": "npm run check && npm run build:all && firebase deploy --only hosting",
+    "deploy:site": "npm run check && npm run build && firebase deploy --only hosting:site",
+    "deploy:standards": "npm run build:standards && firebase deploy --only hosting:standards"
   },
   "dependencies": {
     "react": "^19.0.0",

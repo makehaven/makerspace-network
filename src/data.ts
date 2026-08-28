@@ -74,6 +74,14 @@ export const spaceById = (id: string): Space | undefined => SPACES.find((s) => s
 
 export const REPO_URL = 'https://github.com/makehaven/makerspace-network';
 
+/** The Standards tool has its own host — the framework is not Connecticut's and
+ *  should not live under a region's URL. Locally it is served from public/ by
+ *  scripts/sync-tools.mjs so dev works without DNS. */
+export const STANDARDS_URL =
+  location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? '/tools/standards/'
+    : 'https://standards.makerspace.network/';
+
 /** How complete a record is, as a fraction of the fields a visitor actually
  *  wants. Drives the "help us" prompts — an honest gap is an invitation. */
 export function completeness(s: Space): { score: number; missing: string[] } {

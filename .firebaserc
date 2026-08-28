@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "makerspace-net"
+  },
+  "targets": {
+    "makerspace-net": {
+      "hosting": {
+        "site": ["makerspace-net"],
+        "standards": ["makerspace-standards"]
+      }
+    }
+  }
+}

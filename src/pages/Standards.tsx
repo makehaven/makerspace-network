@@ -1,4 +1,4 @@
-import { REPO_URL } from '../data';
+import { REPO_URL, STANDARDS_URL } from '../data';
 
 export default function Standards() {
   return (
@@ -17,7 +17,7 @@ export default function Standards() {
 
       <div className="wrap narrow prose" style={{ paddingTop: 26 }}>
         <p>
-          <a className="btn" href="/tools/standards/">Open the assessment tool</a>
+          <a className="btn" href={STANDARDS_URL}>Open the assessment tool</a>
           {' '}
           <a className="btn ghost" href="https://github.com/makehaven/Makerspace-Standards">Framework source</a>
         </p>
