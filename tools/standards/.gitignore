@@ -1,0 +1,16 @@
+# WSL download provenance markers
+*:Zone.Identifier
+
+# Saved research page (large, third-party assets) — kept locally
+standards-research.html
+standards-research_files/
+
+# Working draft, not for publication yet
+STANDARDS_GAPS.md
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*~
+.vscode/
+.idea/
