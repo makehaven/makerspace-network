@@ -1,0 +1,26 @@
+{
+  "name": "makerspace-network",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/sync-tools.mjs && vite",
+    "build": "node scripts/sync-tools.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "validate": "node scripts/validate.mjs",
+    "sync-tools": "node scripts/sync-tools.mjs",
+    "check": "npm run validate && npm run typecheck"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}

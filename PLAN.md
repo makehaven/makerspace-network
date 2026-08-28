@@ -22,8 +22,8 @@ Connecticut first, but multi-region in the data shape from day one:
 | CT directory records | **10 records, mixed verification** — 3 with addresses and contact, 7 descriptive only |
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
-| Website | **Not started** |
-| Standards of Excellence tool | **Built, lives in `makehaven/Makerspace-Standards`** — hosting and repo location undecided |
+| Website (`src/`, Vite + React + TS) | **Built** — directory with faceted filters, space pages with provenance, Standards, Badges, About |
+| Standards of Excellence tool | **Built and hosted** — `tools/standards` git subtree, served verbatim at `/tools/standards/` |
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
@@ -44,20 +44,24 @@ cost, can my kid come — were never captured.
 - [ ] **Verify the seven incomplete records** — street address, coordinates,
       website, access model, membership cost. This is the highest-value
       remaining work in phase 0 and it is phone calls, not code.
-- [ ] Static site: directory with capability / access / cost / youth filters,
-      map, and per-space pages. Vite + React + TS, matching the Nexus stack so
-      code and patterns move between them.
+- [x] Static site: directory with capability / access / cost / youth facets and
+      live counts, per-space pages showing provenance and gaps. Vite + React +
+      TS, matching the Nexus stack so code and patterns move between them
+- [ ] Map view — deferred until more than three records have coordinates.
 - [ ] Publish `makerspace.network` and point `connecticut.makerspace.network`
       at the CT region
 - [ ] Script the fablabs.io import; add a Nation of Makers import
 
-### Phase 1 — Host the Standards tool
+### Phase 1 — Host the Standards tool *(mostly done)*
 
 The assessment tool is a single self-contained HTML file with `localStorage` and
 no backend, so hosting it costs nothing.
 
-- [ ] Decide where the code lives (see Open decisions)
-- [ ] Serve it at `makerspace.network/tools/standards`
+- [x] Brought in as a git subtree at `tools/standards`, so
+      `makehaven/Makerspace-Standards` keeps working and updates can be pulled
+      with `git subtree pull`
+- [x] Served verbatim at `/tools/standards/` — copied into `public/` by
+      `scripts/sync-tools.mjs`, never bundled through the site's React
 - [ ] Link participating spaces from their directory records via `standards.level`,
       published only with explicit consent
 
@@ -105,12 +109,10 @@ working site.
 
 ## Open decisions
 
-1. **Where the Standards tool lives.** `makehaven/Makerspace-Standards` exists
-   and is public. Options: leave it standalone and embed the built file here;
-   bring it in as a git subtree and archive the standalone repo; or add it as a
-   submodule. Leaning toward subtree — its Network Benchmark half is inherently
-   a network function — but this restructures an existing public repo, so it
-   needs a deliberate call.
+1. ~~Where the Standards tool lives.~~ **Settled**: git subtree at
+   `tools/standards`. `makehaven/Makerspace-Standards` stays public and
+   authoritative for the framework; changes flow either way with
+   `git subtree pull` / `push`. Nothing was archived.
 2. **Data licence.** Currently CC BY-SA 4.0, chosen for Open Know-Where
    compatibility. ODbL is the other defensible choice for a directory dataset.
 3. **Whether to carry live open/closed state.** Real value, real operational
