@@ -1,0 +1,49 @@
+{
+  "id": "fairfield-county-makers-guild",
+  "name": "Fairfield County Makers' Guild",
+  "kind": "community_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A membership-based nonprofit makerspace in Norwalk covering digital fabrication, jewelry and textiles.",
+  "address": {
+    "county": "Fairfield",
+    "region": "CT",
+    "country": "US"
+  },
+  "operations": {
+    "tax_status": "nonprofit_other"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "laser_cutting",
+    "cnc_router",
+    "jewelry",
+    "textiles_sewing"
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+    ]
+  }
+}

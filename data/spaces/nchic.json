@@ -1,0 +1,47 @@
+{
+  "id": "nchic",
+  "name": "NCHIC",
+  "kind": "community_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A Health Foundation project in development supporting veterans, with 3D printing and scanning.",
+  "address": {
+    "county": "Litchfield",
+    "region": "CT",
+    "country": "US"
+  },
+  "operations": {
+    "tax_status": "nonprofit_other"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "three_d_scanning"
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
+      "listed as in development \u2014 confirm whether status should be 'forming' rather than 'active'"
+    ]
+  }
+}

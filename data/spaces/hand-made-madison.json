@@ -1,0 +1,67 @@
+{
+  "id": "hand-made-madison",
+  "name": "Hand Made",
+  "kind": "school_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A high school Fab Lab in the Daniel Hand High School library media center, serving the Madison Public Schools district. Full Fab Lab inventory and a Fab Academy teacher.",
+  "address": {
+    "street": "286 Green Hill Rd",
+    "locality": "Madison",
+    "county": "New Haven",
+    "region": "CT",
+    "postal_code": "06443",
+    "country": "US",
+    "latitude": 41.2924874,
+    "longitude": -72.6196444,
+    "notes": "In the school library media center."
+  },
+  "contact": {
+    "website": "https://www.madison.k12.ct.us/daniel-hand-high-school",
+    "email": "ricec@madison.k12.ct.us",
+    "phone": "+1-203-245-6350"
+  },
+  "operations": {
+    "access_model": "host_institution_hours",
+    "public_access": false,
+    "tax_status": "public_school",
+    "membership_models": [
+      "free_gated"
+    ],
+    "minor_policy": "primarily_youth"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "laser_cutting",
+    "cnc_router",
+    "vinyl_cutting",
+    "pcb_fabrication",
+    "electronics_bench"
+  ],
+  "external_refs": [
+    {
+      "system": "fablabs_io",
+      "id": "2644",
+      "url": "https://www.fablabs.io/labs/handmade"
+    }
+  ],
+  "sources": [
+    {
+      "system": "fablabs_io",
+      "url": "https://api.fablabs.io/0/labs.json",
+      "retrieved": "2026-08-28",
+      "note": "fablabs.io lab id 2644"
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "Not on the CT Google Site \u2014 newly surfaced from fablabs.io.",
+      "capabilities inferred from the undifferentiated fablabs.io six-value list; needs confirmation",
+      "public access policy unconfirmed"
+    ]
+  }
+}

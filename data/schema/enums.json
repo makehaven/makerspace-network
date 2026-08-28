@@ -1,0 +1,135 @@
+{
+  "$comment": "Controlled vocabularies for the Makerspace Network directory. Versioned: adding a value is a minor bump, removing or renaming one is a major bump. okw and fablabs_io keys record the crosswalk to those standards; see docs/INTEROP.md.",
+  "version": "0.1.0",
+
+  "SpaceKind": [
+    { "id": "community_makerspace", "label": "Community makerspace", "okw": "Makerspace" },
+    { "id": "hackerspace", "label": "Hackerspace", "okw": "Makerspace" },
+    { "id": "fab_lab", "label": "Fab Lab", "okw": "Fab Lab", "fablabs_io": "fab_lab" },
+    { "id": "mini_fab_lab", "label": "Mini Fab Lab", "fablabs_io": "mini_fab_lab" },
+    { "id": "mobile_lab", "label": "Mobile lab", "fablabs_io": "mobile" },
+    { "id": "library_makerspace", "label": "Library makerspace" },
+    { "id": "school_makerspace", "label": "School makerspace (K-12)" },
+    { "id": "university_makerspace", "label": "University makerspace" },
+    { "id": "corporate_makerspace", "label": "Corporate or sponsored makerspace" },
+    { "id": "tool_library", "label": "Tool library" },
+    { "id": "repair_cafe", "label": "Repair café" },
+    { "id": "artist_studio_collective", "label": "Artist studio collective" },
+    { "id": "shared_production_facility", "label": "Shared production facility", "okw": "Workshop" },
+    { "id": "other", "label": "Other" }
+  ],
+
+  "OperatingStatus": [
+    { "id": "active", "label": "Active", "fablabs_io": "active" },
+    { "id": "forming", "label": "Forming / in development" },
+    { "id": "dormant", "label": "Dormant" },
+    { "id": "closed", "label": "Closed" }
+  ],
+
+  "$comment_capabilities": "Deliberately granular. fablabs.io's six-value vocabulary does not discriminate — every lab checks all six — so the fablabs_io key maps our values UP to theirs for export, not the reverse.",
+  "Capability": [
+    { "id": "three_d_printing_fdm", "label": "3D printing — FDM", "domain": "digital_fabrication", "fablabs_io": "three_d_printing" },
+    { "id": "three_d_printing_resin", "label": "3D printing — resin / SLA", "domain": "digital_fabrication", "fablabs_io": "three_d_printing" },
+    { "id": "three_d_printing_powder", "label": "3D printing — powder / SLS / metal", "domain": "digital_fabrication", "fablabs_io": "three_d_printing" },
+    { "id": "three_d_scanning", "label": "3D scanning", "domain": "digital_fabrication" },
+    { "id": "laser_cutting", "label": "Laser cutting / engraving (CO2)", "domain": "digital_fabrication", "fablabs_io": "laser" },
+    { "id": "laser_fiber", "label": "Fiber laser (metal marking / cutting)", "domain": "digital_fabrication", "fablabs_io": "laser" },
+    { "id": "cnc_router", "label": "CNC router (sheet goods)", "domain": "digital_fabrication", "fablabs_io": "cnc_milling" },
+    { "id": "cnc_mill", "label": "CNC mill (metal)", "domain": "metalworking", "fablabs_io": "precision_milling" },
+    { "id": "cnc_lathe", "label": "CNC lathe", "domain": "metalworking", "fablabs_io": "precision_milling" },
+    { "id": "waterjet", "label": "Waterjet cutting", "domain": "metalworking" },
+    { "id": "plasma_cutting", "label": "Plasma cutting", "domain": "metalworking" },
+    { "id": "vinyl_cutting", "label": "Vinyl cutting", "domain": "digital_fabrication", "fablabs_io": "vinyl_cutting" },
+    { "id": "pcb_fabrication", "label": "PCB fabrication", "domain": "electronics", "fablabs_io": "circuit_production" },
+    { "id": "electronics_bench", "label": "Electronics bench / soldering / SMD rework", "domain": "electronics", "fablabs_io": "circuit_production" },
+    { "id": "amateur_radio", "label": "Amateur radio", "domain": "electronics" },
+    { "id": "woodworking_hand", "label": "Woodworking — hand tools", "domain": "woodworking" },
+    { "id": "woodworking_machine", "label": "Woodshop — table saw, jointer, planer, bandsaw", "domain": "woodworking" },
+    { "id": "wood_turning", "label": "Wood turning / lathe", "domain": "woodworking" },
+    { "id": "metalworking_machine", "label": "Machine shop — manual mill and lathe", "domain": "metalworking" },
+    { "id": "welding_mig_tig", "label": "Welding — MIG / TIG", "domain": "metalworking" },
+    { "id": "sheet_metal", "label": "Sheet metal — brake, shear, roller", "domain": "metalworking" },
+    { "id": "blacksmithing", "label": "Blacksmithing / forge", "domain": "metalworking" },
+    { "id": "foundry_casting", "label": "Foundry / metal casting", "domain": "metalworking" },
+    { "id": "jewelry", "label": "Jewelry / small metals", "domain": "craft" },
+    { "id": "textiles_sewing", "label": "Sewing and textiles", "domain": "textiles" },
+    { "id": "embroidery_machine", "label": "Machine embroidery", "domain": "textiles" },
+    { "id": "weaving_fiber", "label": "Weaving and fiber arts", "domain": "textiles" },
+    { "id": "screen_printing", "label": "Screen printing", "domain": "print" },
+    { "id": "printmaking", "label": "Printmaking — relief, intaglio, letterpress", "domain": "print" },
+    { "id": "large_format_printing", "label": "Large-format printing", "domain": "print" },
+    { "id": "ceramics", "label": "Ceramics / kiln", "domain": "craft" },
+    { "id": "glass_work", "label": "Glass — stained, fusing, lampwork", "domain": "craft" },
+    { "id": "leatherwork", "label": "Leatherwork", "domain": "craft" },
+    { "id": "painting_finishing", "label": "Paint booth / finishing", "domain": "craft" },
+    { "id": "photography_darkroom", "label": "Photography / darkroom", "domain": "media" },
+    { "id": "audio_recording", "label": "Audio recording", "domain": "media" },
+    { "id": "video_production", "label": "Video production / studio", "domain": "media" },
+    { "id": "computer_workstations", "label": "CAD / computer workstations", "domain": "media" },
+    { "id": "bike_repair", "label": "Bicycle repair", "domain": "repair" },
+    { "id": "general_repair", "label": "General repair / repair café", "domain": "repair" },
+    { "id": "biolab", "label": "Community bio lab", "domain": "science" },
+    { "id": "wet_lab", "label": "Wet lab / chemistry", "domain": "science" }
+  ],
+
+  "$comment_access": "The single most useful field the current Google Site lacks, and the one that changes what half of the safety standards mean. See STANDARDS_GAPS.md module F in tools/standards.",
+  "AccessModel": [
+    { "id": "member_24_7", "label": "Members have 24/7 unstaffed access" },
+    { "id": "member_extended_hours", "label": "Members have extended unstaffed access, not 24/7" },
+    { "id": "staffed_hours_only", "label": "Access only during staffed hours" },
+    { "id": "scheduled_open_hours", "label": "Scheduled open / community hours" },
+    { "id": "appointment_only", "label": "By appointment" },
+    { "id": "host_institution_hours", "label": "Follows host institution hours (library, school, campus)" }
+  ],
+
+  "MembershipModel": [
+    { "id": "monthly_membership", "label": "Monthly membership" },
+    { "id": "annual_membership", "label": "Annual membership" },
+    { "id": "day_pass", "label": "Day pass / drop-in" },
+    { "id": "class_only", "label": "Class or workshop enrollment only" },
+    { "id": "free_open", "label": "Free and open to the public" },
+    { "id": "free_gated", "label": "Free but restricted to an affiliated population" },
+    { "id": "sponsored", "label": "Sponsored / corporate funded" }
+  ],
+
+  "TaxStatus": [
+    { "id": "nonprofit_501c3", "label": "501(c)(3) nonprofit", "nexus": "non_profit" },
+    { "id": "nonprofit_other", "label": "Other nonprofit", "nexus": "non_profit" },
+    { "id": "for_profit", "label": "For profit", "nexus": "for_profit" },
+    { "id": "government", "label": "Government / municipal", "nexus": "government" },
+    { "id": "public_library", "label": "Public library", "nexus": "government" },
+    { "id": "public_school", "label": "Public school district", "nexus": "government" },
+    { "id": "university", "label": "College or university", "nexus": "other" },
+    { "id": "fiscally_sponsored", "label": "Fiscally sponsored", "nexus": "non_profit" },
+    { "id": "unknown", "label": "Unknown", "nexus": "other" }
+  ],
+
+  "MinorPolicy": [
+    { "id": "no_minors", "label": "Adults only" },
+    { "id": "minors_with_adult", "label": "Minors admitted with a responsible adult" },
+    { "id": "minors_in_programs", "label": "Minors in supervised programs only" },
+    { "id": "minors_members", "label": "Minors may be members in their own right" },
+    { "id": "primarily_youth", "label": "Primarily serves youth" },
+    { "id": "unknown", "label": "Unknown" }
+  ],
+
+  "$comment_verification": "The verification ladder, borrowed from OKW's DataVerificator and Maps of Making's Unclaimed/Claimed/Live progression. A record is only as good as this field says it is.",
+  "VerificationStatus": [
+    { "id": "imported", "label": "Imported from a third-party source, not checked" },
+    { "id": "steward_verified", "label": "Checked by the regional steward against public sources" },
+    { "id": "space_confirmed", "label": "Confirmed by the space itself" },
+    { "id": "self_managed", "label": "Maintained by the space via its own endpoint" }
+  ],
+
+  "SourceSystem": [
+    { "id": "fablabs_io", "label": "fablabs.io", "url": "https://www.fablabs.io", "license": "unstated — see docs/INTEROP.md" },
+    { "id": "spaceapi", "label": "SpaceAPI directory", "url": "https://spaceapi.io" },
+    { "id": "nation_of_makers", "label": "Nation of Makers", "url": "https://www.nationofmakers.us" },
+    { "id": "okw", "label": "Open Know-Where", "url": "https://map.internetofproduction.org", "license": "CC BY-SA 4.0" },
+    { "id": "maps_of_making", "label": "Maps of Making", "url": "https://mapsofmaking.org" },
+    { "id": "ct_google_site", "label": "Connecticut Makerspace Network (Google Site, superseded)", "url": "https://connecticut.makerspace.network" },
+    { "id": "space_website", "label": "The space's own website" },
+    { "id": "direct_contact", "label": "Direct contact with the space" },
+    { "id": "nexus", "label": "Entrepreneurship Nexus", "url": "https://entrepreneurship.nexus" }
+  ]
+}

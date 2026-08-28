@@ -1,0 +1,49 @@
+{
+  "id": "spark-makerspace",
+  "name": "SPARK Makerspace",
+  "kind": "community_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A community-driven 501(c)(3) in New London emphasising art and local empowerment \u2014 woodshop, printmaking, fiber arts and stained glass.",
+  "address": {
+    "county": "New London",
+    "region": "CT",
+    "country": "US"
+  },
+  "operations": {
+    "tax_status": "nonprofit_501c3"
+  },
+  "capabilities": [
+    "woodworking_machine",
+    "printmaking",
+    "screen_printing",
+    "weaving_fiber",
+    "glass_work"
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+    ]
+  }
+}

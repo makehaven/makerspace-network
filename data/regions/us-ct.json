@@ -1,0 +1,22 @@
+{
+  "id": "us-ct",
+  "name": "Connecticut",
+  "hostname": "connecticut.makerspace.network",
+  "country": "US",
+  "region_code": "CT",
+  "status": "active",
+  "summary": "The Connecticut Makerspace Network — the makerspaces, hackerspaces, fab labs, and shared workshops of Connecticut, and the shared standards and data they maintain together.",
+  "steward": {
+    "organization": "MakeHaven",
+    "contact": "info@makehaven.org",
+    "note": "Regional steward model, after Nation of Makers' Regional Champions. A region without a named steward goes stale — see docs/INTEROP.md §1."
+  },
+  "grouping": {
+    "primary": "county",
+    "$comment": "Counties are how Connecticut residents locate things, but county alone is a weak filter — capability and access model do the real work in the directory UI."
+  },
+  "counties": [
+    "Fairfield", "Hartford", "Litchfield", "Middlesex",
+    "New Haven", "New London", "Tolland", "Windham"
+  ]
+}

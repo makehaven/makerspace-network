@@ -1,0 +1,56 @@
+{
+  "id": "makerspace-ct",
+  "name": "MakerspaceCT",
+  "kind": "community_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A large, professionally equipped makerspace in Hartford with extensive metal and machine shops, woodworking, digital fabrication and textiles.",
+  "address": {
+    "county": "Hartford",
+    "region": "CT",
+    "country": "US"
+  },
+  "operations": {
+    "tax_status": "nonprofit_501c3"
+  },
+  "capabilities": [
+    "metalworking_machine",
+    "cnc_mill",
+    "cnc_lathe",
+    "welding_mig_tig",
+    "sheet_metal",
+    "woodworking_machine",
+    "wood_turning",
+    "three_d_printing_fdm",
+    "laser_cutting",
+    "cnc_router",
+    "textiles_sewing",
+    "computer_workstations"
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+    ]
+  }
+}

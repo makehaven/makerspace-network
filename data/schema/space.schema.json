@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makerspace.network/schema/space/0.1.0",
+  "title": "Makerspace Network — Space record",
+  "description": "A makerspace, hackerspace, fab lab, or comparable shared workshop. A profile of Open Know-Where's ManufacturingFacility, extended with the operational fields a directory user actually filters on and with the provenance OKW requires. Crosswalks to OKW, SpaceAPI, fablabs.io and the Entrepreneurship Nexus compact are recorded in docs/INTEROP.md; enum values live in enums.json.",
+  "type": "object",
+  "required": ["id", "name", "kind", "status", "region_ids", "sources", "verification"],
+  "additionalProperties": false,
+
+  "properties": {
+    "id":          { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Stable slug. Never reused, never renamed once published." },
+    "name":        { "type": "string", "description": "Common name, as the space writes it." },
+    "legal_name":  { "type": "string", "description": "Legal entity name, if different." },
+    "kind":        { "type": "string", "$comment": "enum: SpaceKind" },
+    "status":      { "type": "string", "$comment": "enum: OperatingStatus" },
+    "summary":     { "type": "string", "maxLength": 400, "description": "One or two sentences, for directory cards." },
+    "description": { "type": "string", "description": "Longer prose, Markdown permitted." },
+    "year_founded":{ "type": "integer", "minimum": 1900 },
+
+    "region_ids": {
+      "type": "array", "minItems": 1, "items": { "type": "string" },
+      "description": "Regions this space belongs to, e.g. ['us-ct']. The multi-state tenancy key — the analogue of ecosystem_ids in the Nexus compact."
+    },
+
+    "address": {
+      "type": "object", "additionalProperties": false,
+      "description": "OKW Address.",
+      "properties": {
+        "street":      { "type": "string" },
+        "street_2":    { "type": "string" },
+        "locality":    { "type": "string", "description": "City or town. OKW: locality." },
+        "county":      { "type": "string", "description": "County, for regional grouping." },
+        "region":      { "type": "string", "description": "State or province code, e.g. 'CT'." },
+        "postal_code": { "type": "string" },
+        "country":     { "type": "string", "description": "ISO 3166-1 alpha-2." },
+        "latitude":    { "type": "number", "minimum": -90,  "maximum": 90 },
+        "longitude":   { "type": "number", "minimum": -180, "maximum": 180 },
+        "notes":       { "type": "string", "description": "How to actually find the door." }
+      }
+    },
+
+    "contact": {
+      "type": "object", "additionalProperties": false,
+      "description": "OKW Contact.",
+      "properties": {
+        "website": { "type": "string", "format": "uri" },
+        "email":   { "type": "string", "format": "email" },
+        "phone":   { "type": "string" },
+        "social":  { "type": "object", "additionalProperties": { "type": "string", "format": "uri" } }
+      }
+    },
+
+    "logo_url":   { "type": "string", "format": "uri" },
+    "photo_url":  { "type": "string", "format": "uri" },
+
+    "operations": {
+      "type": "object", "additionalProperties": false,
+      "description": "The fields a person choosing a space actually filters on, and which the superseded Google Site did not carry.",
+      "properties": {
+        "access_model":       { "type": "string", "$comment": "enum: AccessModel" },
+        "public_access":      { "type": "boolean", "description": "Can a non-member use the space at all, by any route?" },
+        "tax_status":         { "type": "string", "$comment": "enum: TaxStatus" },
+        "membership_models":  { "type": "array", "items": { "type": "string" }, "$comment": "enum: MembershipModel" },
+        "monthly_cost_usd":   {
+          "type": "object", "additionalProperties": false,
+          "properties": { "min": { "type": "number" }, "max": { "type": "number" }, "as_of": { "type": "string", "format": "date" } },
+          "description": "Range across tiers. Always dated — prices rot faster than anything else in this record."
+        },
+        "day_pass_usd":       { "type": "number" },
+        "minor_policy":       { "type": "string", "$comment": "enum: MinorPolicy" },
+        "tool_lending":       { "type": "boolean" },
+        "square_feet":        { "type": "integer" },
+        "staff_fte":          { "type": "number", "description": "Paid full-time equivalents. 0 means volunteer-run." },
+        "hours_note":         { "type": "string" }
+      }
+    },
+
+    "capabilities": {
+      "type": "array", "items": { "type": "string" }, "uniqueItems": true,
+      "$comment": "enum: Capability",
+      "description": "What can be made here. Granular by design — fablabs.io's six values do not discriminate between spaces."
+    },
+
+    "equipment": {
+      "type": "array",
+      "description": "OKW ManufacturingEquipment. Optional and usually incomplete; capabilities[] is the field the directory filters on.",
+      "items": {
+        "type": "object", "required": ["capability"], "additionalProperties": false,
+        "properties": {
+          "capability": { "type": "string", "$comment": "enum: Capability" },
+          "brand":      { "type": "string" },
+          "model":      { "type": "string" },
+          "count":      { "type": "integer", "minimum": 1 },
+          "notes":      { "type": "string" }
+        }
+      }
+    },
+
+    "endpoints": {
+      "type": "object", "additionalProperties": false,
+      "description": "URLs the space itself publishes. Where one exists it outranks anything stored here — see the self_managed verification status.",
+      "properties": {
+        "spaceapi": { "type": "string", "format": "uri", "description": "SpaceAPI v14/v15 endpoint. Source of live open/closed state." },
+        "ical":     { "type": "string", "format": "uri", "description": "Public event calendar." },
+        "rss":      { "type": "string", "format": "uri" }
+      }
+    },
+
+    "external_refs": {
+      "type": "array",
+      "description": "This space's identity in other systems. The same reconciliation primitive as external_ref in the Nexus partner API: everyone keeps their own IDs.",
+      "items": {
+        "type": "object", "required": ["system", "id"], "additionalProperties": false,
+        "properties": {
+          "system": { "type": "string", "$comment": "enum: SourceSystem" },
+          "id":     { "type": "string" },
+          "url":    { "type": "string", "format": "uri" }
+        }
+      }
+    },
+
+    "standards": {
+      "type": "object", "additionalProperties": false,
+      "description": "Participation in the Standards of Excellence framework (tools/standards). Only ever the summary a space chose to share — per-standard scores and evidence never leave the space. See tools/standards/README.md on why.",
+      "properties": {
+        "participating":   { "type": "boolean" },
+        "level":           { "type": "string", "enum": ["foundational", "operational", "exemplary"] },
+        "assessed_on":     { "type": "string", "format": "date" },
+        "shared_publicly": { "type": "boolean", "description": "False by default. A level is published only with the space's explicit consent." }
+      }
+    },
+
+    "reciprocity": {
+      "type": "object", "additionalProperties": false,
+      "description": "Phase 3. Whether this space extends privileges to members in good standing at other network spaces, and accepts them in return. Aligns with SpaceAPI linked_spaces/spacefed and the IoPA Maker Passport spec.",
+      "properties": {
+        "offers":  { "type": "boolean" },
+        "accepts": { "type": "boolean" },
+        "terms":   { "type": "string" }
+      }
+    },
+
+    "sources": {
+      "type": "array", "minItems": 1,
+      "description": "OKW DatabaseSourceMetadata, per record. Where every claim in this file came from.",
+      "items": {
+        "type": "object", "required": ["system", "retrieved"], "additionalProperties": false,
+        "properties": {
+          "system":    { "type": "string", "$comment": "enum: SourceSystem" },
+          "url":       { "type": "string", "format": "uri" },
+          "retrieved": { "type": "string", "format": "date" },
+          "note":      { "type": "string" }
+        }
+      }
+    },
+
+    "verification": {
+      "type": "object", "required": ["status"], "additionalProperties": false,
+      "description": "OKW DataVerificator. A directory is only as trustworthy as this field, and stale records are the failure mode that killed every crowdsourced maker map surveyed in docs/INTEROP.md.",
+      "properties": {
+        "status":      { "type": "string", "$comment": "enum: VerificationStatus" },
+        "verified_by": { "type": "string", "description": "The regional steward or space contact who checked it." },
+        "verified_on": { "type": "string", "format": "date" },
+        "gaps":        { "type": "array", "items": { "type": "string" }, "description": "Fields known to be missing or unconfirmed. Being explicit here is why an incomplete record is still publishable." }
+      }
+    }
+  }
+}

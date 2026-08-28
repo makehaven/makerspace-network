@@ -1,0 +1,71 @@
+{
+  "id": "shu-makerspace",
+  "name": "SHU Makerspace",
+  "kind": "university_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "Sacred Heart University's makerspace on the West campus, with advanced manufacturing capability including metal printing and waterjet.",
+  "address": {
+    "street": "3135 Easton Turnpike",
+    "locality": "Fairfield",
+    "county": "Fairfield",
+    "region": "CT",
+    "postal_code": "06825",
+    "country": "US",
+    "latitude": 41.2166958,
+    "longitude": -73.2535135,
+    "notes": "Sacred Heart University, West campus, West Building, 1st floor."
+  },
+  "contact": {
+    "website": "https://www.sacredheart.edu/academics/schoolofcomputerscienceengineering/shumakerspace/",
+    "email": "makerspace@sacredheart.edu",
+    "phone": "+1-203-371-7070"
+  },
+  "operations": {
+    "access_model": "host_institution_hours",
+    "public_access": false,
+    "tax_status": "university",
+    "membership_models": [
+      "free_gated"
+    ],
+    "minor_policy": "unknown"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "three_d_printing_resin",
+    "three_d_printing_powder",
+    "laser_cutting",
+    "cnc_router",
+    "cnc_mill",
+    "waterjet",
+    "vinyl_cutting",
+    "pcb_fabrication",
+    "electronics_bench"
+  ],
+  "external_refs": [
+    {
+      "system": "fablabs_io",
+      "id": "2147",
+      "url": "https://www.fablabs.io/labs/shumakerspace"
+    }
+  ],
+  "sources": [
+    {
+      "system": "fablabs_io",
+      "url": "https://api.fablabs.io/0/labs.json",
+      "retrieved": "2026-08-28",
+      "note": "fablabs.io lab id 2147"
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "Not on the CT Google Site \u2014 newly surfaced from fablabs.io.",
+      "metal printing and waterjet taken from the space's own blurb, not confirmed",
+      "whether non-students may use it is unconfirmed"
+    ]
+  }
+}

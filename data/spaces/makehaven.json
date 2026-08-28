@@ -1,0 +1,92 @@
+{
+  "id": "makehaven",
+  "name": "MakeHaven",
+  "kind": "community_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A 501(c)(3) community workshop in downtown New Haven emphasising broad tool access across art, craft and engineering.",
+  "address": {
+    "street": "770 Chapel Street",
+    "street_2": "Lower Level",
+    "locality": "New Haven",
+    "county": "New Haven",
+    "region": "CT",
+    "postal_code": "06510",
+    "country": "US",
+    "latitude": 41.304866,
+    "longitude": -72.9237711,
+    "notes": "Ring the doorbell on the street, it is an intercom. The lab is in the basement."
+  },
+  "contact": {
+    "website": "https://makehaven.org",
+    "email": "info@makehaven.org",
+    "phone": "+1-203-936-9830",
+    "social": {
+      "facebook": "https://www.facebook.com/MakeHaven/",
+      "instagram": "https://www.instagram.com/makehaven/",
+      "youtube": "https://www.youtube.com/channel/UCLNtx8aVbTt9Ncm3vzGntNQ"
+    }
+  },
+  "operations": {
+    "access_model": "member_24_7",
+    "public_access": true,
+    "tax_status": "nonprofit_501c3",
+    "membership_models": [
+      "monthly_membership"
+    ],
+    "minor_policy": "minors_with_adult"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "three_d_printing_resin",
+    "laser_cutting",
+    "cnc_router",
+    "vinyl_cutting",
+    "pcb_fabrication",
+    "electronics_bench",
+    "woodworking_machine",
+    "wood_turning",
+    "metalworking_machine",
+    "welding_mig_tig",
+    "textiles_sewing",
+    "screen_printing",
+    "printmaking",
+    "jewelry",
+    "computer_workstations"
+  ],
+  "external_refs": [
+    {
+      "system": "fablabs_io",
+      "id": "984",
+      "url": "https://www.fablabs.io/labs/makehaven"
+    }
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    },
+    {
+      "system": "fablabs_io",
+      "url": "https://api.fablabs.io/0/labs.json",
+      "retrieved": "2026-08-28",
+      "note": "fablabs.io lab id 984"
+    }
+  ],
+  "verification": {
+    "status": "steward_verified",
+    "verified_by": "MakeHaven",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "monthly_cost_usd",
+      "square_feet",
+      "staff_fte",
+      "year_founded",
+      "spaceapi endpoint not yet published"
+    ]
+  }
+}

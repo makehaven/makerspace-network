@@ -1,0 +1,51 @@
+{
+  "id": "firstbuild-cocreate",
+  "name": "FirstBuild at CoCREATE",
+  "kind": "corporate_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "A GE Appliances FirstBuild facility in Stamford offering free membership, with metalworking, woodshop and advanced prototyping.",
+  "address": {
+    "county": "Fairfield",
+    "region": "CT",
+    "country": "US"
+  },
+  "operations": {
+    "tax_status": "for_profit"
+  },
+  "capabilities": [
+    "waterjet",
+    "metalworking_machine",
+    "welding_mig_tig",
+    "woodworking_machine",
+    "three_d_printing_fdm",
+    "laser_cutting"
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://connecticut.makerspace.network/",
+      "retrieved": "2026-08-28",
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
+      "free membership reported on the Google Site \u2014 confirm current terms and sponsor status"
+    ]
+  }
+}
