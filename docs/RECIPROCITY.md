@@ -62,6 +62,9 @@ edges own the data*, but *the person owns the claim*.
 
 ## 3. The part that is actually ours: shared meaning
 
+**Now specified in full in `docs/ACHIEVEMENTS.md`, with a worked example at
+`data/achievements/table-saw-operator.v1.json`.** Summary follows.
+
 Open Badges is an envelope. A signed badge reading "Laser" from one space means
 nothing at another unless both share a definition of what laser authorisation
 entails — did the issuer test a cut, or watch a video?
@@ -85,30 +88,47 @@ explicitly does *not* cover. Definitions are versioned and never mutated —
 This is the scarce work. 1EdTech settled the credential mechanics; nobody has
 written the makerspace achievement vocabulary.
 
-## 4. Why 3.0 and not 2.0
+## 4. Spec version: 2.0 now, 3.0 as a second serializer
 
-MakeHaven's existing plan
-(`makehaven-website/docs/arch/PUBLIC_BADGE_TRANSCRIPT_AND_OPEN_BADGES_FRAMEWORK_PLAN.md`)
-is written against Open Badges 2.0 vocabulary — Badge Class / Issuer /
-Assertion, recipient identity hashing, and *hosted assertion endpoints* for
-verification. The plan is otherwise a good fit and its credential ledger is the
-right foundation. But three of those choices should change:
+An earlier draft of this document argued for moving MakeHaven to Open Badges 3.0.
+That was wrong on priorities, and `makehaven-website/docs/arch/OPEN_BADGES_2_0_IMPLEMENTATION_PLAN.md`
+(2026-08-28) settles it better:
 
-| 2.0 as planned | 3.0 | Why it matters here |
-|---|---|---|
-| Hosted assertion endpoint | Cryptographic proof (JWT or Linked Data) | Hosted verification means the receiving space must reach MakeHaven's server at the moment of the decision. That is the same single point of failure as the door system. A signed credential verifies offline. |
-| Recipient identity hash | `AchievementSubject.identifier`, optionally a DID | The hash was a workaround for putting emails in public documents. A credential the member holds and presents doesn't need to be publicly enumerable at all. |
-| Badge Class / Assertion | `Achievement` / `AchievementCredential` with `alignment` | `alignment` is the mechanism for §3. Without it there is no route from a local badge to a shared definition. |
+- **2.0 is what consumers actually read.** LinkedIn "Add to Profile", Credly,
+  Badgr/Canvas Credentials and ATS parsers all expect 2.0. Nothing a member would
+  plug a badge into consumes 3.0 yet. For the résumé use case — which is most of
+  the value to members — 3.0 buys nothing.
+- **2.0 needs no key management.** Hosted verification means the assertion lives
+  at a URL and verifying is fetching it. No DIDs, no JWKS, no key rotation.
+- **The plan builds 3.0 as a second serializer over the same data**, so the option
+  is preserved at near-zero cost rather than paid for now.
 
-Everything else in that plan carries over intact: the `member_credential`
-ledger maps to credential issuance; `status` maps to `credentialStatus`;
-`expires_at` and the NMIS/WCA certification type are exactly right; opt-in
-public transcript is the wallet-shaped surface a member presents from; and the
-per-credential visibility control is the right granularity.
+The offline-verification argument in §2 was overstated for the case at hand. A
+cross-space credential check is *attended and advisory* — a staff member looks it
+up on a phone and exercises judgement — not automated, unattended, and blocking
+entry the way MakeHaven's own door system is. Hosted verification is fine there,
+and the `STANDARDS_GAPS.md` F3 analogy does not carry.
 
-One addition worth making early: the ledger needs to record **which achievement
-definition and version** each credential was issued against, or the alignment
-can't be reconstructed later.
+Two narrower places where 3.0 does eventually matter, neither urgent:
+
+1. **Automated cross-space access.** If a credential ever drives a door rather
+   than a staff decision, the reachability dependency returns and matters.
+2. **Archival survivability.** Hosted assertions die with the server. If a space
+   closes, every credential it issued stops verifying. A signed credential
+   outlives its issuer. For a network of small nonprofits this is a real
+   long-term argument, and a reason to keep the second serializer on the roadmap.
+
+**What does not depend on any of this:** the achievement framework. `alignment`
+exists in 2.0 as well as 3.0, so a BadgeClass can point at a network achievement
+definition today. See `docs/ACHIEVEMENTS.md` §7. That framework is the scarce
+work, and it is spec-version agnostic.
+
+Everything else in MakeHaven's earlier plan carries over intact: the
+`member_credential` ledger, `status` mapping onto revocation, `expires_at`, the
+NMIS/WCA certification type, opt-in public transcript, per-credential visibility.
+One addition still worth making early — the ledger should record **which
+achievement definition and version** a credential was issued against, or the
+alignment cannot be reconstructed later.
 
 ## 5. Trust: the layer only we have
 

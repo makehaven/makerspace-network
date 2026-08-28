@@ -39,11 +39,13 @@ const regionIds = new Set(
 
 const errors = [];
 const warnings = [];
+const spaceIds = new Set();
 let count = 0;
 
 for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWith('.json'))) {
   const s = read(`data/spaces/${file}`);
   const at = (msg) => errors.push(`${file}: ${msg}`);
+  spaceIds.add(s.id);
   count++;
 
   for (const req of schema.required) {
@@ -82,11 +84,89 @@ for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWi
   }
 }
 
+// --- Achievement definitions ---
+const achDir = join(root, 'data/achievements');
+const achSchema = read('data/schema/achievement.schema.json');
+const achievements = new Map();
+let achCount = 0;
+
+for (const file of readdirSync(achDir).filter((f) => f.endsWith('.json'))) {
+  const a = read(`data/achievements/${file}`);
+  const at = (msg) => errors.push(`${file}: ${msg}`);
+  achCount++;
+
+  for (const req of achSchema.required) {
+    if (a[req] === undefined) at(`missing required field "${req}"`);
+  }
+  if (`${a.id}.v${a.version}.json` !== file) at(`filename should be ${a.id}.v${a.version}.json`);
+  if (!ids('Capability').has(a.capability) && a.capability !== undefined) {
+    at(`capability: "${a.capability}" is not in the Capability vocabulary`);
+  }
+
+  const seen = new Set();
+  for (const c of a.competencies ?? []) {
+    if (seen.has(c.id)) at(`duplicate competency id "${c.id}"`);
+    seen.add(c.id);
+  }
+  achievements.set(`${a.id}/v${a.version}`, a);
+
+  // A definition nobody outside its author has reviewed is a draft, whatever it says.
+  if (a.status === 'published' && (a.authors ?? []).length < 2) {
+    at(`status "published" but fewer than two authoring spaces — a definition written by one space is a draft`);
+  }
+}
+
+// --- Local badge alignments ---
+const alignSchema = read('data/schema/alignment.schema.json');
+let alignCount = 0;
+
+for (const file of readdirSync(join(root, 'data/alignments')).filter((f) => f.endsWith('.json'))) {
+  const al = read(`data/alignments/${file}`);
+  const at = (msg) => errors.push(`${file}: ${msg}`);
+  alignCount++;
+
+  for (const req of alignSchema.required) {
+    if (al[req] === undefined) at(`missing required field "${req}"`);
+  }
+  if (al.space_id && !spaceIds.has(al.space_id)) at(`space_id "${al.space_id}" has no record in data/spaces/`);
+
+  for (const a of al.alignments ?? []) {
+    const def = achievements.get(a.achievement);
+    if (!def) { at(`unknown achievement "${a.achievement}"`); continue; }
+
+    const covered = new Map((a.coverage ?? []).map((c) => [c.competency, c]));
+    for (const c of def.competencies) {
+      if (!covered.has(c.id)) {
+        warnings.push(`${file}: ${a.local_badge} — competency ${c.id} not addressed (treated as unknown)`);
+      }
+    }
+    for (const c of a.coverage ?? []) {
+      if (!def.competencies.some((d) => d.id === c.competency)) {
+        at(`${a.local_badge}: coverage references "${c.competency}", not in ${a.achievement}`);
+      }
+    }
+    if (a.brand_delta && !(def.brand_deltas ?? []).some((b) => b.key === a.brand_delta)) {
+      at(`${a.local_badge}: brand_delta "${a.brand_delta}" is not defined on ${a.achievement}`);
+    }
+
+    // The gate that makes "aligned" mean something.
+    if (a.status === 'aligned') {
+      for (const c of def.competencies.filter((d) => d.critical)) {
+        const cov = covered.get(c.id);
+        if (!cov || cov.covered !== 'yes') {
+          at(`${a.local_badge}: status "aligned" but critical competency ${c.id} is "${cov?.covered ?? 'unknown'}"`);
+        }
+      }
+      if (!al.reviewed_with) at(`${a.local_badge}: status "aligned" requires reviewed_with — someone at the space must have confirmed it`);
+    }
+  }
+}
+
 for (const w of warnings) console.warn(`  warn  ${w}`);
 for (const e of errors) console.error(`  ERROR ${e}`);
 
 console.log(
-  `\n${count} space records · ${regionIds.size} regions · ` +
-    `${errors.length} errors · ${warnings.length} warnings`,
+  `\n${count} spaces · ${regionIds.size} regions · ${achCount} achievements · ` +
+    `${alignCount} alignment files · ${errors.length} errors · ${warnings.length} warnings`,
 );
 process.exit(errors.length ? 1 : 0);

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makerspace.network/schema/alignment/0.1.0",
+  "title": "Makerspace Network — Local badge alignment",
+  "description": "One space's mapping from its own badges to network achievement definitions, with a per-competency coverage audit. This is the working document a coordinator takes to a shop manager: here is the checklist, show us where each item is covered, here are the ones you are missing. See docs/ACHIEVEMENTS.md §5.",
+  "type": "object",
+  "required": ["space_id", "alignments"],
+  "additionalProperties": false,
+  "properties": {
+    "space_id": { "type": "string", "description": "Must match a record in data/spaces/." },
+    "reviewed_on": { "type": "string", "format": "date" },
+    "reviewed_with": { "type": "string", "description": "Who at the space walked through this. An alignment nobody at the space confirmed is a guess." },
+    "alignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["local_badge", "achievement", "status", "coverage"],
+        "additionalProperties": false,
+        "properties": {
+          "local_badge": { "type": "string", "description": "The space's own name for it. Never renamed to match us — mapping is our job, not theirs." },
+          "local_badge_id": { "type": "string", "description": "The space's stable machine id, e.g. a MakeHaven field_badge_text_id." },
+          "local_badge_url": { "type": "string", "format": "uri", "description": "The public criteria page, if there is one." },
+          "achievement": { "type": "string", "pattern": "^[a-z0-9-]+/v[0-9]+$" },
+          "status": { "type": "string", "enum": ["proposed", "under_review", "gaps_identified", "aligned", "withdrawn"],
+                      "description": "'aligned' requires every critical competency covered and confirmed by the space." },
+          "claim_scope": {
+            "type": "string",
+            "description": "How thoroughly the local badge assesses, independent of what it covers. Mirrors MakeHaven's field_badge_claim_scope — the two questions are orthogonal and a credential needs both answered.",
+            "enum": ["training_only", "training_and_checkout", "class_completion", "stewardship"]
+          },
+          "brand_delta": { "type": "string", "description": "Which brand_delta key from the achievement this space's machine corresponds to, e.g. 'sawstop'." },
+          "coverage": {
+            "type": "array",
+            "description": "One entry per competency in the achievement. Absent entries are treated as 'unknown', which blocks 'aligned'.",
+            "items": {
+              "type": "object",
+              "required": ["competency", "covered"],
+              "additionalProperties": false,
+              "properties": {
+                "competency": { "type": "string" },
+                "covered": { "type": "string", "enum": ["yes", "partial", "no", "unknown"] },
+                "where": { "type": "string", "description": "Where in the space's own material — video timestamp, quiz question, checkout step." },
+                "assessment": { "type": "string", "enum": ["self_attested", "knowledge_check", "observed_demonstration", "supervised_hours"],
+                                "description": "What the space actually does. If weaker than the competency's min_assessment, coverage is at best 'partial'." },
+                "note": { "type": "string" }
+              }
+            }
+          },
+          "actions": { "type": "array", "items": { "type": "string" },
+                       "description": "What the space agreed to add. The point of the exercise: a short, concrete list, not a rewrite of their training." }
+        }
+      }
+    }
+  }
+}

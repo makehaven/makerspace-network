@@ -1,0 +1,103 @@
+{
+  "id": "table-saw-operator",
+  "version": 1,
+  "name": "Table Saw Operator",
+  "status": "draft",
+  "summary": "Can set up and make basic rip and crosscuts on a table saw safely, recognise and avoid kickback, and refuse an unsafe cut — on any table saw, of any brand, with or without blade-brake technology.",
+  "capability": "woodworking_machine",
+  "hazard_class": "kickback_rotating_blade",
+  "published": null,
+  "authors": [],
+
+  "$comment_authors": "Empty on purpose. A definition written by one space is a draft. This becomes 'published' when two or more spaces have reviewed it against their own training.",
+
+  "competencies": [
+    { "id": "TS1", "kind": "knowledge", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Explains what kickback is, the three common causes (stock binding between blade and fence, offcut trapped against the blade, stock lifted or twisted off the table), and where the kickback path is relative to the blade." },
+
+    { "id": "TS2", "kind": "judgement", "critical": true, "min_assessment": "observed_demonstration",
+      "statement": "Stands out of the kickback path while cutting, and keeps hands out of the blade line at all times." },
+
+    { "id": "TS3", "kind": "knowledge", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Explains the purpose of the riving knife or splitter, verifies it is fitted and correctly positioned before cutting, and states what changes about the cut when it is removed." },
+
+    { "id": "TS4", "kind": "knowledge", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Explains why stock is never cut freehand — every cut is referenced against either the rip fence or the miter gauge/sled, never neither." },
+
+    { "id": "TS5", "kind": "knowledge", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Explains why the rip fence and the miter gauge are never used together for a through cut, and describes the correct method for a repeatable crosscut length (stop block clear of the blade).",
+      "note": "This single item accounts for a large share of real table saw injuries and is frequently missing from tool-specific training." },
+
+    { "id": "TS6", "kind": "psychomotor", "critical": true, "min_assessment": "observed_demonstration",
+      "statement": "Sets blade height appropriately and states the rationale for the chosen height." },
+
+    { "id": "TS7", "kind": "psychomotor", "critical": true, "min_assessment": "observed_demonstration",
+      "statement": "Performs a rip cut using the fence, with a push stick or push block once the hand would come within roughly 150 mm (6 in) of the blade, maintaining downward and lateral pressure and completing the cut past the blade." },
+
+    { "id": "TS8", "kind": "psychomotor", "critical": true, "min_assessment": "observed_demonstration",
+      "statement": "Performs a crosscut using a miter gauge or sled with the rip fence clear of the workpiece." },
+
+    { "id": "TS9", "kind": "judgement", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "States the correct response when a cut binds or the motor bogs: do not pull the stock back, shut the saw down, wait for the blade to stop, then clear." },
+
+    { "id": "TS10", "kind": "judgement", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Waits for the blade to come to a complete stop before reaching for an offcut or clearing the table." },
+
+    { "id": "TS11", "kind": "judgement", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Identifies stock that should not be cut on a table saw — warped, twisted, cupped, wet, round, or unsupported material, and pieces too small to control safely — and names an alternative method or declines the cut." },
+
+    { "id": "TS12", "kind": "knowledge", "critical": true, "min_assessment": "knowledge_check",
+      "statement": "Operates safely on a saw with NO blade-brake technology, and states that brake technology reduces the severity of blade contact but prevents neither kickback nor the contact itself.",
+      "note": "The asymmetry item. A holder trained only on a braked saw may have formed habits around a safety net that the next shop does not have. See docs/ACHIEVEMENTS.md §4 — this item exists specifically so a SawStop-based assessment can still satisfy the generic achievement." },
+
+    { "id": "TS13", "kind": "judgement", "critical": false, "min_assessment": "observed_demonstration",
+      "statement": "Uses appropriate PPE — eye protection, hearing protection — and works without gloves, loose sleeves, dangling jewellery, or untied long hair." },
+
+    { "id": "TS14", "kind": "judgement", "critical": false, "min_assessment": "knowledge_check",
+      "statement": "States when to stop and ask for help rather than proceeding with an unfamiliar or awkward cut." }
+  ],
+
+  "excludes": [
+    "Dado stacks and any non-through cut (grooves, rabbets, tenons) — see table-saw-dado",
+    "Tenoning jigs, tapering jigs, coving, and other jig-dependent operations",
+    "Blade changes and machine alignment — see table-saw-maintenance",
+    "Molding heads",
+    "Breaking down full sheet goods, which is a material-handling competence and shop-capacity question, not a saw competence",
+    "Any authority to work unsupervised outside a space's own access rules"
+  ],
+
+  "site_specific": [
+    "Location of this machine, its disconnect, and the nearest emergency stop",
+    "This shop's dust collection: how it is switched on and whether it is required",
+    "This shop's rules on who may be present, and whether the saw may be used alone or outside staffed hours",
+    "This shop's blade selection and who is permitted to change blades",
+    "This shop's material rules — what may be cut, what stock is provided, what is prohibited",
+    "How to report damage, a near miss, or an injury here",
+    "The specific machine's quirks: fence locking behaviour, arbor lock, table insert condition"
+  ],
+
+  "brand_deltas": [
+    { "key": "sawstop", "label": "SawStop (or any saw with blade-brake technology)",
+      "adds": [
+        "What the brake cartridge does, and that it destroys both cartridge and blade when it fires",
+        "That wet, green, or conductive material (including some treated lumber, foil-faced stock, and metal) will trigger it",
+        "How to test material and use bypass mode, and under whose authority bypass may be used",
+        "What it costs, and how to report an activation"
+      ],
+      "asymmetry": "Training conducted only on a braked saw may leave a holder without the habits appropriate to an unbraked one. TS12 is the item that closes this, and a SawStop-based assessment must cover it explicitly to claim alignment." },
+
+    { "key": "unbraked_cabinet", "label": "Conventional cabinet or contractor saw",
+      "adds": [
+        "That there is no blade-brake backstop, so blade contact means injury",
+        "Guard and pawl configuration on this class of saw, which is more often removed in practice"
+      ],
+      "asymmetry": "Training on an unbraked saw satisfies TS12 by default, but a holder arriving at a SawStop shop needs the sawstop delta above — which is an addendum of a few minutes, not another badge." }
+  ],
+
+  "extensions": ["table-saw-dado/v1", "table-saw-maintenance/v1"],
+
+  "references": [
+    { "label": "Makerspace Standards of Excellence — S015 hazard levels, S023 tool authorisation",
+      "url": "https://github.com/makehaven/Makerspace-Standards" }
+  ]
+}

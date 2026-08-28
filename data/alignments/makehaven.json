@@ -1,0 +1,34 @@
+{
+  "space_id": "makehaven",
+  "reviewed_on": null,
+  "reviewed_with": null,
+  "alignments": [
+    {
+      "local_badge": "SawStop Table Saw",
+      "local_badge_id": null,
+      "local_badge_url": null,
+      "achievement": "table-saw-operator/v1",
+      "status": "proposed",
+      "claim_scope": "training_and_checkout",
+      "brand_delta": "sawstop",
+      "coverage": [
+        { "competency": "TS1",  "covered": "unknown" },
+        { "competency": "TS2",  "covered": "unknown" },
+        { "competency": "TS3",  "covered": "unknown" },
+        { "competency": "TS4",  "covered": "unknown" },
+        { "competency": "TS5",  "covered": "unknown", "note": "Fence-plus-miter-gauge. Worth checking specifically — it is the item most often absent from tool-specific training." },
+        { "competency": "TS6",  "covered": "unknown" },
+        { "competency": "TS7",  "covered": "unknown" },
+        { "competency": "TS8",  "covered": "unknown" },
+        { "competency": "TS9",  "covered": "unknown" },
+        { "competency": "TS10", "covered": "unknown" },
+        { "competency": "TS11", "covered": "unknown" },
+        { "competency": "TS12", "covered": "unknown", "note": "The likeliest genuine gap. A video shot on the SawStop has little reason to discuss operating without a brake, and this is the item that makes the badge portable to a shop that has no SawStop." },
+        { "competency": "TS13", "covered": "unknown" },
+        { "competency": "TS14", "covered": "unknown" }
+      ],
+      "actions": []
+    }
+  ],
+  "$comment": "Template, not findings. Every competency is 'unknown' because nobody has watched the video against the checklist yet — recording a guess here would be exactly the fabrication CLAUDE.md forbids for directory data, and the stakes are higher. Fill this in with the shop manager, not for them."
+}

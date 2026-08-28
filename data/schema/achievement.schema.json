@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makerspace.network/schema/achievement/0.1.0",
+  "title": "Makerspace Network — Achievement definition",
+  "description": "A unit of TRANSFERABLE competence. Published by the network at a stable versioned URL, aligned to by each space's own local badge via Open Badges 3.0 Achievement.alignment. Site-specific knowledge is deliberately NOT here — see docs/ACHIEVEMENTS.md for why the split is the whole design.",
+  "type": "object",
+  "required": ["id", "version", "name", "hazard_class", "competencies", "excludes", "site_specific", "status"],
+  "additionalProperties": false,
+
+  "properties": {
+    "id":      { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "version": { "type": "integer", "minimum": 1, "description": "Never mutate a published version. Credentials are signed against it and must keep meaning what they meant." },
+    "name":    { "type": "string" },
+    "summary": { "type": "string", "maxLength": 400 },
+    "status":  { "type": "string", "enum": ["draft", "review", "published", "superseded"] },
+    "supersedes":  { "type": "string", "description": "e.g. 'table-saw-operator/v1'" },
+    "superseded_by": { "type": "string" },
+
+    "hazard_class": {
+      "type": "string",
+      "description": "The boundary that decides granularity. One achievement per hazard profile, not per brand and not per shop. If two machines can hurt you the same ways, they share an achievement.",
+      "enum": ["kickback_rotating_blade", "rotating_cutter", "abrasive", "thermal_burn", "laser_radiation",
+               "chemical_exposure", "electrical", "pressurised", "crush_pinch", "fall_lift", "low_hazard"]
+    },
+
+    "extends": { "type": "string", "description": "For extension achievements: the core achievement they build on, e.g. 'table-saw-operator/v1'." },
+
+    "competencies": {
+      "type": "array", "minItems": 1,
+      "description": "The checklist. Each item must be independently assessable and must be TRUE AT ANY SPACE — if it depends on this shop's layout, rules, or equipment, it belongs in site_specific instead.",
+      "items": {
+        "type": "object",
+        "required": ["id", "statement", "kind", "min_assessment"],
+        "additionalProperties": false,
+        "properties": {
+          "id":        { "type": "string", "pattern": "^[A-Z]+[0-9]+$" },
+          "statement": { "type": "string", "description": "What the holder can do or knows. Written so a shop manager can say yes or no." },
+          "kind":      { "type": "string", "enum": ["knowledge", "judgement", "psychomotor"] },
+          "min_assessment": {
+            "type": "string",
+            "description": "The weakest method that may be claimed for this item. A video alone does not assess a psychomotor skill.",
+            "enum": ["self_attested", "knowledge_check", "observed_demonstration", "supervised_hours"]
+          },
+          "critical": { "type": "boolean", "description": "An item whose absence makes the whole credential unsafe to honour. A local badge missing a critical item cannot claim alignment." },
+          "note":     { "type": "string" }
+        }
+      }
+    },
+
+    "excludes": {
+      "type": "array", "items": { "type": "string" }, "minItems": 1,
+      "description": "Operations explicitly NOT covered. Stating these is what stops scope creep and stops a receiving space assuming more than was assessed."
+    },
+
+    "site_specific": {
+      "type": "array", "items": { "type": "string" }, "minItems": 1,
+      "description": "Knowledge that does NOT transfer and must be delivered locally regardless of what credential the person arrives with. The credential substitutes for the competence assessment, never for the local orientation."
+    },
+
+    "brand_deltas": {
+      "type": "array",
+      "description": "Where a specific machine adds knowledge on top of the generic competence. A holder trained on one may need a short addendum at a space using another — an addendum, not another badge.",
+      "items": {
+        "type": "object", "required": ["key", "label", "adds"], "additionalProperties": false,
+        "properties": {
+          "key":   { "type": "string" },
+          "label": { "type": "string" },
+          "adds":  { "type": "array", "items": { "type": "string" }, "description": "What this machine requires beyond the core competencies." },
+          "asymmetry": { "type": "string", "description": "Where training on this machine may LEAVE A GAP against the generic competence rather than adding to it. The dangerous direction — see docs/ACHIEVEMENTS.md §4." }
+        }
+      }
+    },
+
+    "extensions": { "type": "array", "items": { "type": "string" }, "description": "Related extension achievements, e.g. 'table-saw-dado/v1'." },
+    "capability": { "type": "string", "description": "The Capability vocabulary value this achievement authorises against." },
+    "references": { "type": "array", "items": { "type": "object", "required": ["label"], "additionalProperties": false,
+                    "properties": { "label": { "type": "string" }, "url": { "type": "string", "format": "uri" } } } },
+    "authors":  { "type": "array", "items": { "type": "string" }, "description": "Which spaces co-authored this. A definition written by one space is a draft, not a standard." },
+    "published": { "type": "string", "format": "date" }
+  }
+}
