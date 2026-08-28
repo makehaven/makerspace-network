@@ -61,8 +61,42 @@ in place and **must be kept** — Firebase lists them because it reports the
 desired final state of the record set, not because they need re-adding.
 
 Certificates provision automatically once DNS resolves; allow up to 24 hours,
-though it is usually minutes. Until `connecticut` is repointed, ACME validation
-fails with a 404 because the old Google Site answers the challenge path.
+though it is usually minutes.
+
+### Two traps during cutover, both observed on 2026-08-28
+
+**1. A 200 with a valid certificate does not mean the cutover happened.**
+Google Sites also serves `connecticut.makerspace.network` over HTTPS with a
+valid cert. After the DNS change, `curl -I` returned 200 and the domain looked
+live — but `server: ESF` and `<title>Connecticut</title>` showed it was still
+the old site. Firebase Hosting answers with a Fastly `x-served-by:` header and
+the built `index.html`. Check the body, not the status code:
+
+```bash
+curl -s https://connecticut.makerspace.network/ | grep -c 'id="root"'   # 1 once cut over
+curl -sI https://connecticut.makerspace.network/ | grep -i '^server'    # ESF = still Google Sites
+```
+
+**2. Firebase caches DNS separately from you.** With the correct CNAME visible
+at `1.1.1.1`, `8.8.8.8`, `9.9.9.9` *and* the authoritative Hover nameservers,
+the Hosting API still reported `discovered: CNAME ghs.googlehosted.com` and
+kept failing ACME validation with a 404 — because the challenge was going to
+Google Sites. Nothing is misconfigured when this happens; the old record's TTL
+has to expire from Google's resolver. Wait, do not re-add records.
+
+To watch the real thing rather than the status code:
+
+```bash
+until curl -s https://connecticut.makerspace.network/ | grep -q 'id="root"'; do sleep 60; done
+```
+
+### Retiring the Google Sites mapping
+
+Once the domain is confirmed cut over, remove `connecticut.makerspace.network`
+from the old Google Site's custom-domain settings so nothing else claims the
+hostname. Do this **after** cutover is confirmed, not before — and keep the
+Google Site content itself until the new host has served for a while. The DNS
+change is the reversible step; deleting content is not.
 
 ### Checking progress
 
