@@ -22,7 +22,9 @@ Connecticut first, but multi-region in the data shape from day one:
 | CT directory records | **10 records, mixed verification** — 3 with addresses and contact, 7 descriptive only |
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
-| Website (`src/`, Vite + React + TS) | **Built** — directory with faceted filters, space pages with provenance, Standards, Badges, About |
+| Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |
+| Achievement namespace | **Live** — `makerspace.network/achievements/<id>/v<n>`, HTML + static JSON |
+| Custom domains | **Registered, awaiting DNS** — records in `docs/DEPLOY.md` |
 | Standards of Excellence tool | **Built and hosted** — `tools/standards` git subtree, served verbatim at `/tools/standards/` |
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
@@ -122,10 +124,11 @@ working site.
    model and has since faded out. Mirror the structure, but not the single
    national backbone that funded it — a federation of self-funded state
    networks has no centre to lose.
-5. **Who governs the achievement framework.** Once local badges align to
-   network definitions and credentials are signed against versioned URLs, the
-   namespace is load-bearing. Who may add a definition, who may deprecate one,
-   and what happens to credentials already signed against it?
+5. **Who governs the achievement framework.** The namespace is settled —
+   `makerspace.network/achievements/<id>/v<n>`, live and serving both HTML and
+   JSON. What is not settled is who may add a definition, who may deprecate one,
+   and what happens to credentials already signed against a superseded version.
+   Needs an answer before MakeHaven signs the first credential.
 6. **Standards as a gate.** `docs/RECIPROCITY.md` §5 makes the Standards level
    determine who is a recognised issuer. That turns a self-assessment tool into
    an access-control input, which raises the stakes on governance and appeals.

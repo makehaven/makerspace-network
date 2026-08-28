@@ -5,12 +5,21 @@ import SpacePage from './pages/SpacePage';
 import Standards from './pages/Standards';
 import About from './pages/About';
 import Achievements from './pages/Achievements';
+import AchievementDetail from './pages/AchievementDetail';
+import { ACHIEVEMENTS } from './data';
 
 // Query-string routing, no router library — same convention as the sibling
 // Entrepreneurship Nexus app.
-type Route = { page: string; id?: string };
+type Route = { page: string; id?: string; achievement?: string; version?: number };
+
+// Achievement definitions are the one thing here with a permanent, path-based
+// URL, because it is baked into signed credentials. Everything else is
+// query-string routed.
+const ACHIEVEMENT_PATH = /^\/achievements\/([a-z0-9-]+)\/v(\d+)\/?$/;
 
 const parse = (): Route => {
+  const m = ACHIEVEMENT_PATH.exec(window.location.pathname);
+  if (m) return { page: 'achievement', achievement: m[1], version: Number(m[2]) };
   const q = new URLSearchParams(window.location.search);
   return { page: q.get('page') ?? 'directory', id: q.get('space') ?? undefined };
 };
@@ -23,7 +32,9 @@ export function navigate(page: string, params: Record<string, string> = {}) {
   if (page !== 'directory') next.set('page', page);
   for (const [k, v] of Object.entries(params)) next.set(k, v);
   const qs = next.toString();
-  window.history.pushState({}, '', qs ? `?${qs}` : window.location.pathname);
+  // Always return to the site root — an achievement's permanent path must not
+  // become a base that other links hang off.
+  window.history.pushState({}, '', qs ? `/?${qs}` : '/');
   window.dispatchEvent(new PopStateEvent('popstate'));
   window.scrollTo(0, 0);
 }
@@ -36,7 +47,7 @@ export const href = (page: string, params: Record<string, string> = {}) => {
   if (page !== 'directory') next.set('page', page);
   for (const [k, v] of Object.entries(params)) next.set(k, v);
   const qs = next.toString();
-  return qs ? `?${qs}` : './';
+  return qs ? `/?${qs}` : '/';
 };
 
 function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
@@ -95,6 +106,13 @@ export default function App() {
         {route.page === 'space' && route.id && <SpacePage id={route.id} />}
         {route.page === 'standards' && <Standards />}
         {route.page === 'achievements' && <Achievements />}
+        {route.page === 'achievement' && (() => {
+          const a = ACHIEVEMENTS.find((x) => x.id === route.achievement && x.version === route.version);
+          return a ? <AchievementDetail a={a} />
+                   : <div className="wrap" style={{ paddingTop: 40 }}>
+                       <p>No achievement definition at this address.</p>
+                     </div>;
+        })()}
         {route.page === 'about' && <About region={region} />}
       </main>
 

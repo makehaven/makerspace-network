@@ -55,7 +55,8 @@ export default function Achievements() {
           <div key={`${a.id}${a.version}`} className="aside" style={{ marginBottom: 16 }}>
             <h3>{a.status}</h3>
             <h2 style={{ fontSize: '1.2rem', marginBottom: 6 }}>
-              {a.name} <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>v{a.version}</span>
+              <a href={`/achievements/${a.id}/v${a.version}`}>{a.name}</a>{' '}
+              <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>v{a.version}</span>
             </h2>
             <p style={{ marginBottom: 10 }}>{a.summary}</p>
             <p style={{ fontSize: '0.85rem', color: 'var(--ink-3)', margin: '0 0 10px' }}>

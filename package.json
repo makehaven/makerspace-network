@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/sync-tools.mjs && vite",
-    "build": "node scripts/clean-public.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/clean-public.mjs && tsc --noEmit && vite build && node scripts/build-achievements.mjs",
     "build:standards": "node scripts/build-standards.mjs",
     "build:all": "npm run build && npm run build:standards",
     "preview": "vite preview",

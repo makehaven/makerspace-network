@@ -161,10 +161,11 @@ facing a blank field.
 
 ## 8. Open questions
 
-1. **Who governs the namespace.** Once credentials are signed against
-   `table-saw-operator/v1`, that URL is load-bearing. Who may publish a
-   definition, who may deprecate one, and what happens to credentials already
-   issued against a superseded version?
+1. **Who governs the namespace.** The namespace itself is settled
+   (`makerspace.network/achievements/`). What is not settled is who may publish
+   a definition, who may deprecate one, and what happens to credentials already
+   issued against a superseded version. This needs an answer before the first
+   credential is signed, not after.
 2. **How many achievements for v1.** Suggest five, chosen by what actually comes
    up when a member visits another space: table saw, CO2 laser, 3D printing
    (FDM), MIG welding, general shop orientation.
