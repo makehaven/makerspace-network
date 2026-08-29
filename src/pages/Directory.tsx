@@ -297,6 +297,7 @@ export default function Directory({ region }: { region: Region }) {
               counties={f.counties}
               onToggleCounty={(c) => toggle('counties', c)}
               isPrimary={leads}
+              filtered={Boolean(active)}
             />
 
             {narrow && filterPanel}

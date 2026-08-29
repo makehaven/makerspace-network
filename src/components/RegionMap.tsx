@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Space } from '../types';
 import geo from '../../data/geo/us-ct.json';
 import { navigate } from '../App';
@@ -42,19 +42,31 @@ function cluster(spaces: Space[]): Dot[] {
 }
 
 export default function RegionMap({
-  regionName, all, results, counties, onToggleCounty, isPrimary,
+  regionName, all, results, counties, onToggleCounty, isPrimary, filtered,
 }: {
   regionName: string;
   all: Space[];
   results: Space[];
   counties: Set<string>;
   onToggleCounty: (county: string) => void;
-  /** Draws the open workshops as filled pins and the library, campus and
-   *  undocumented spaces as hollow ones, so the map carries the same emphasis
-   *  as the list below it. */
+  /** Separates the open workshops from the library, campus and undocumented
+   *  spaces, so the map carries the same emphasis as the list below it. */
   isPrimary: (s: Space) => boolean;
+  /** True when the visitor has filtered — that is already digging deeper, so
+   *  the map stops holding anything back. */
+  filtered: boolean;
 }) {
-  const dots = useMemo(() => cluster(all), [all]);
+  // The old Connecticut map put fifteen pins of wildly different weight on one
+  // page, so a library display case and a 28,000 sq ft workshop looked alike.
+  // Lead with the open workshops and let the rest be asked for.
+  const [showAll, setShowAll] = useState(false);
+  const reveal = showAll || filtered;
+
+  const inScope = useMemo(
+    () => (reveal ? all : all.filter(isPrimary)),
+    [all, reveal, isPrimary],
+  );
+  const dots = useMemo(() => cluster(inScope), [inScope]);
   const shown = useMemo(() => new Set(results.map((s) => s.id)), [results]);
 
   const perCounty = useMemo(() => {
@@ -66,13 +78,17 @@ export default function RegionMap({
     return m;
   }, [all]);
 
-  const located = all.filter((s) => s.address?.latitude !== undefined).length;
-  const unlocated = all.length - located;
+  const located = inScope.filter((s) => s.address?.latitude !== undefined).length;
+  const unlocated = inScope.length - located;
+  const withheld = all.length - inScope.length;
 
   return (
     <div className="map-panel">
       <svg viewBox={G.viewBox} role="img"
-           aria-label={`Map of ${regionName} showing ${located} of ${all.length} makerspaces by county`}>
+           aria-label={
+             `Map of ${regionName} showing ${located} ` +
+             (reveal ? `of ${all.length} spaces` : 'open workshops') + ' by county'
+           }>
         {G.counties.map((c) => {
           const n = perCounty.get(c.name) ?? 0;
           const on = counties.has(c.name);
@@ -139,13 +155,28 @@ export default function RegionMap({
       </svg>
 
       <p className="map-foot">
-        <span>Select a county to filter, or a pin to open the space.</span>
+        <span>
+          {reveal
+            ? `Showing all ${located} mapped spaces.`
+            : `Showing the ${located} workshops open to everyone.`}
+          {unlocated > 0 && (
+            <> {unlocated} {unlocated === 1 ? 'has' : 'have'} no location on file yet.</>
+          )}
+        </span>
         <span className="spacer" />
-        {unlocated > 0 && (
-          <span>
-            {unlocated} {unlocated === 1 ? 'space has' : 'spaces have'} no location on file yet
-          </span>
+        {withheld > 0 && !filtered && (
+          <button className="map-more" onClick={() => setShowAll(true)}>
+            Also show {withheld} library and campus {withheld === 1 ? 'space' : 'spaces'}
+          </button>
         )}
+        {showAll && !filtered && (
+          <button className="map-more" onClick={() => setShowAll(false)}>
+            Show workshops only
+          </button>
+        )}
+      </p>
+      <p className="map-foot" style={{ paddingTop: 0 }}>
+        Select a county to filter, or a pin to open the space.
       </p>
     </div>
   );
