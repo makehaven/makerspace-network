@@ -1,24 +1,34 @@
-/* Makerspace Network — a public-dataset site. Plain, dense, authoritative.
+/* Makerspace Network.
+
+   The audience for the public pages is someone deciding where to go make
+   something, not someone auditing a dataset. So: generous spacing, plain
+   sentence-case labels, the space's own logo doing the visual work, and the
+   provenance machinery kept honest but out of the way until the detail page.
+
    Deliberately not MakeHaven red: MakeHaven stewards one region, it does not
    own the network. */
 
 :root {
-  --paper: #faf8f5;
-  --paper-2: #f2eee8;
+  --paper: #fbfaf7;
+  --paper-2: #f4f1ea;
   --card: #ffffff;
-  --ink: #17191d;
-  --ink-2: #4a4f57;
-  --ink-3: #7c828c;
-  --line: #e0dbd2;
-  --line-2: #cec8bd;
-  --accent: #0f5f66;
+  --ink: #1b1d21;
+  --ink-2: #565c65;
+  --ink-3: #8a9098;
+  --line: #e9e5dc;
+  --line-2: #d6d0c4;
+  --accent: #10696f;
+  --accent-2: #0b4f54;
   --accent-ink: #ffffff;
-  --accent-soft: #e2eff0;
+  --accent-soft: #e6f1f1;
   --flag: #9a5b00;
-  --flag-soft: #fbf0dd;
-  --ok: #2f6b3d;
+  --flag-soft: #fdf4e6;
 
-  --radius: 3px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(28, 25, 20, 0.05), 0 2px 10px rgba(28, 25, 20, 0.035);
+  --shadow-lift: 0 2px 4px rgba(28, 25, 20, 0.06), 0 8px 24px rgba(28, 25, 20, 0.07);
+
   --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --display: 'Archivo', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
@@ -26,157 +36,368 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #131519;
-    --paper-2: #1a1d22;
-    --card: #1c1f25;
-    --ink: #e9e6e1;
-    --ink-2: #a8adb6;
-    --ink-3: #767c86;
-    --line: #2b2f36;
-    --line-2: #3a3f48;
-    --accent: #4fb3bd;
-    --accent-ink: #0d1416;
-    --accent-soft: #163336;
-    --flag: #d99a3f;
-    --flag-soft: #2c2418;
-    --ok: #6fbb80;
+    --paper: #15171a;
+    --paper-2: #1c1f23;
+    --card: #1e2126;
+    --ink: #ecebe7;
+    --ink-2: #aeb4bc;
+    --ink-3: #7d838c;
+    --line: #2c3037;
+    --line-2: #3d434c;
+    --accent: #5ec2ca;
+    --accent-2: #8ad8de;
+    --accent-ink: #0c1618;
+    --accent-soft: #17383b;
+    --flag: #dda552;
+    --flag-soft: #2b2519;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.22);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
   }
 }
 
 * { box-sizing: border-box; }
-
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.62;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
-h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); }
-h2 { font-size: clamp(1.3rem, 2.5vw, 1.6rem); }
-h3 { font-size: 1.05rem; }
-p { margin: 0 0 0.9em; }
-a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
-a:hover { text-decoration-thickness: 2px; }
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+h1 { font-size: clamp(2rem, 4.4vw, 2.9rem); letter-spacing: -0.025em; }
+h2 { font-size: clamp(1.35rem, 2.4vw, 1.7rem); }
+h3 { font-size: 1.12rem; }
+h4 { font-size: 0.98rem; }
+p { margin: 0 0 1em; }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
-.narrow { max-width: 760px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: var(--accent-2); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 22px; }
+.narrow { max-width: 720px; }
+
+/* `.narrow` caps the measure; it must not also re-centre it. On `.wrap.narrow`
+   the naive combination shrinks the container and `margin: 0 auto` then pushes
+   the text to the middle of the viewport, leaving the wordmark and the
+   directory hero on a different left edge. Cap the children instead. */
+.wrap.narrow { max-width: 1140px; }
+.wrap.narrow > * { max-width: 720px; }
 
 /* ---------- header ---------- */
 .site-header {
   border-bottom: 1px solid var(--line);
-  background: var(--card);
-  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 30;
 }
-.site-header .wrap { display: flex; align-items: center; gap: 24px; height: 58px; }
-.brand { font-family: var(--display); font-weight: 700; font-size: 1.02rem; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); white-space: nowrap; }
+.site-header .wrap { display: flex; align-items: center; gap: 26px; height: 62px; }
+.brand {
+  font-family: var(--display); font-weight: 700; font-size: 1.06rem;
+  letter-spacing: -0.03em; text-decoration: none; color: var(--ink); white-space: nowrap;
+}
 .brand .net { color: var(--ink-3); font-weight: 500; }
-.nav { display: flex; gap: 18px; margin-left: auto; flex-wrap: wrap; }
-.nav a { color: var(--ink-2); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 4px 0; border-bottom: 2px solid transparent; }
-.nav a:hover { color: var(--ink); }
-.nav a[aria-current='page'] { color: var(--ink); border-bottom-color: var(--accent); }
+.nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.nav a {
+  color: var(--ink-2); text-decoration: none; font-size: 0.94rem; font-weight: 500;
+  padding: 6px 11px; border-radius: 999px;
+}
+.nav a:hover { color: var(--ink); background: var(--paper-2); }
+.nav a[aria-current='page'] { color: var(--accent); background: var(--accent-soft); }
+
+/* Three nav items plus the wordmark do not fit on a phone. Let the bar grow to
+   two lines rather than overlapping itself. */
+@media (max-width: 620px) {
+  /* flex-wrap has to be set here too: without it the nav cannot move to its own
+     line, it just shrinks and wraps its items around the wordmark. */
+  .site-header .wrap {
+    height: auto; flex-wrap: wrap; align-items: center;
+    padding-top: 9px; padding-bottom: 9px; row-gap: 2px; gap: 0;
+  }
+  .brand { width: 100%; }
+  .nav { margin-left: -10px; width: 100%; }
+  .nav a { padding: 5px 10px; }
+}
 
 /* ---------- hero ---------- */
-.hero { padding: 44px 0 32px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
-.hero p.lede { font-size: 1.08rem; color: var(--ink-2); max-width: 62ch; margin-top: 12px; }
-.eyebrow { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 10px; }
+.hero { padding: 56px 0 44px; background: linear-gradient(var(--paper-2), var(--paper)); }
+.hero h1 { max-width: 18ch; }
+.hero p.lede { font-size: 1.16rem; color: var(--ink-2); max-width: 58ch; margin-top: 14px; }
+.eyebrow {
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--accent); margin-bottom: 12px;
+}
+
+main { padding: 0 0 80px; }
+
+/* On a phone the hero was eating the whole first screen before a visitor saw a
+   single space. Tighten it hard; the map is the thing worth showing early. */
+@media (max-width: 620px) {
+  .hero { padding: 26px 0 22px; }
+  .hero h1 { font-size: 1.72rem; max-width: none; }
+  .hero p.lede { font-size: 1rem; margin-top: 9px; }
+  .eyebrow { margin-bottom: 7px; font-size: 0.79rem; }
+  main { padding-bottom: 52px; }
+  .wrap { padding: 0 16px; }
+}
+
+/* ---------- region map ---------- */
+.map-panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 8px 8px 4px;
+  max-width: 620px; margin: 0 auto 26px;
+}
+.map-panel svg { display: block; width: 100%; height: auto; }
+.map-county { fill: var(--paper-2); stroke: var(--line-2); stroke-width: 1.4; cursor: pointer; transition: fill 0.12s; }
+.map-county:hover { fill: var(--accent-soft); }
+.map-county.on { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.4; }
+.map-county.empty { cursor: default; opacity: 0.55; }
+.map-county.empty:hover { fill: var(--paper-2); }
+.map-label { font-size: 15px; fill: var(--ink-3); pointer-events: none; font-family: var(--sans); }
+.map-pin { fill: var(--accent); stroke: var(--card); stroke-width: 2.4; cursor: pointer; }
+.map-pin:hover, .map-pin.on { fill: var(--accent-2); }
+.map-pin.secondary { fill: var(--card); stroke: var(--accent); stroke-width: 3; }
+.map-pin.secondary:hover { fill: var(--accent-soft); }
+.map-foot {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  padding: 6px 10px 8px; font-size: 0.86rem; color: var(--ink-3);
+}
+.map-foot .spacer { margin-left: auto; }
 
 /* ---------- layout ---------- */
-/* The hero supplies the top spacing; pages without one add their own. */
-main { padding: 0 0 64px; }
-.cols { display: grid; grid-template-columns: 244px 1fr; gap: 30px; align-items: start; }
-@media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+.cols { display: grid; grid-template-columns: 250px 1fr; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 24px; } }
 
 /* ---------- filters ---------- */
-.filters { position: sticky; top: 72px; font-size: 0.88rem; }
-@media (max-width: 820px) { .filters { position: static; } }
-.filter-group { border-top: 1px solid var(--line); padding: 12px 0; }
+.filters { position: sticky; top: 78px; font-size: 0.94rem; }
+@media (max-width: 860px) { .filters { position: static; } }
+
+/* On a phone the filter rail sits above the results, and unfolded it is a
+   screenful of checkboxes between the visitor and the first space. Collapse it
+   to one line there; on a wide screen the rail is rendered plainly instead. */
+.filter-shell { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.filter-shell > summary {
+  cursor: pointer; list-style: none; padding: 13px 16px; font-weight: 600;
+  display: flex; align-items: center; gap: 9px; color: var(--ink);
+}
+.filter-shell > summary::-webkit-details-marker { display: none; }
+.filter-shell > summary::after {
+  content: ''; margin-left: auto; width: 7px; height: 7px; flex: none;
+  border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3);
+  transform: rotate(45deg) translate(-2px, -2px); transition: transform 0.15s;
+}
+.filter-shell[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.filter-shell > summary .count {
+  font-weight: 500; font-size: 0.85rem; color: var(--accent);
+  background: var(--accent-soft); padding: 1px 9px; border-radius: 999px;
+}
+.filter-shell > div { padding: 4px 16px 16px; border-top: 1px solid var(--line); }
+.filter-group { border-top: 1px solid var(--line); padding: 16px 0; }
 .filter-group:first-child { border-top: none; padding-top: 0; }
-.filter-group > h4 { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-3); margin-bottom: 8px; font-weight: 600; }
-.check { display: flex; align-items: flex-start; gap: 7px; padding: 2px 0; cursor: pointer; color: var(--ink-2); }
+.filter-group > h4 { color: var(--ink); margin-bottom: 10px; font-size: 0.95rem; }
+.check {
+  display: flex; align-items: flex-start; gap: 9px; padding: 3px 0;
+  cursor: pointer; color: var(--ink-2); line-height: 1.45;
+}
 .check:hover { color: var(--ink); }
-.check input { margin: 3px 0 0; accent-color: var(--accent); flex-shrink: 0; }
-.check .count { color: var(--ink-3); font-variant-numeric: tabular-nums; margin-left: auto; font-size: 0.82em; padding-left: 6px; }
-.subhead { font-size: 0.76rem; color: var(--ink-3); margin: 8px 0 3px; font-weight: 600; }
-.search { width: 100%; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--card); color: var(--ink); font: inherit; font-size: 0.9rem; }
+.check input { margin: 4px 0 0; accent-color: var(--accent); flex-shrink: 0; }
+.check .count { color: var(--ink-3); font-variant-numeric: tabular-nums; margin-left: auto; font-size: 0.85em; padding-left: 8px; }
+
+/* Capability lists are long and are the most specialist thing on the page, so
+   each domain stays folded until someone actually wants it. */
+.fold { border: none; padding: 0; margin: 0 0 2px; }
+.fold > summary {
+  cursor: pointer; list-style: none; padding: 4px 0; color: var(--ink-2);
+  display: flex; align-items: center; gap: 7px;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before {
+  content: ''; width: 6px; height: 6px; flex: none;
+  border-right: 1.6px solid var(--ink-3); border-bottom: 1.6px solid var(--ink-3);
+  transform: rotate(-45deg); transition: transform 0.15s;
+}
+.fold[open] > summary::before { transform: rotate(45deg); }
+.fold > summary:hover { color: var(--ink); }
+.fold > summary .count { margin-left: auto; color: var(--ink-3); font-size: 0.85em; }
+.fold > div { padding: 2px 0 8px 15px; }
+
+.search {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.96rem;
+}
+.search::placeholder { color: var(--ink-3); }
 .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
-.clear { background: none; border: none; color: var(--accent); font: inherit; font-size: 0.85rem; cursor: pointer; padding: 0; text-decoration: underline; }
+.clear { background: none; border: none; color: var(--accent); font: inherit; font-size: 0.9rem; cursor: pointer; padding: 0; text-decoration: underline; }
 
 /* ---------- cards ---------- */
-.result-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-.result-count { font-family: var(--mono); font-size: 0.82rem; color: var(--ink-3); }
-.cards { display: grid; gap: 12px; }
+.result-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.result-count { font-size: 0.92rem; color: var(--ink-3); }
+
+.cards { display: grid; gap: 14px; }
 .card {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 16px 18px; text-decoration: none; color: inherit; display: block;
+  box-shadow: var(--shadow); padding: 20px 22px; text-decoration: none; color: inherit;
+  display: block; transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
 }
-.card:hover { border-color: var(--accent); }
+a.card:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); border-color: var(--line-2); }
+@media (prefers-reduced-motion: reduce) { a.card:hover { transform: none; } }
+
+.card-head { display: flex; gap: 16px; align-items: flex-start; }
 .card-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.card h3 { font-size: 1.12rem; }
-.card .where { color: var(--ink-3); font-size: 0.86rem; }
-.card .summary { color: var(--ink-2); font-size: 0.92rem; margin: 7px 0 10px; }
-.facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.83rem; color: var(--ink-2); }
-.fact { display: inline-flex; align-items: center; gap: 5px; }
+.card h3 { font-size: 1.2rem; }
+.card .where { color: var(--ink-3); font-size: 0.92rem; }
+.card .summary { color: var(--ink-2); font-size: 0.97rem; margin: 8px 0 12px; }
+
+/* Logo chip. Spaces' marks come in every shape and background, so each one sits
+   centred on a neutral tile rather than being cropped to fit. */
+.logo {
+  flex: none; width: 62px; height: 62px; border-radius: var(--radius-sm);
+  background: #fff; border: 1px solid var(--line);
+  display: grid; place-items: center; overflow: hidden;
+}
+.logo img { max-width: 84%; max-height: 84%; object-fit: contain; display: block; }
+.logo.mono {
+  background: var(--accent-soft); color: var(--accent); border-color: transparent;
+  font-family: var(--display); font-weight: 700; font-size: 1.35rem; letter-spacing: -0.03em;
+}
+.logo.lg { width: 96px; height: 96px; border-radius: var(--radius); }
+.logo.lg.mono { font-size: 2rem; }
+.logo.sm { width: 42px; height: 42px; }
+.logo.sm.mono { font-size: 0.95rem; }
+
+/* The second tier — campus, library and barely-recorded spaces — is real
+   information but not what someone looking for a workshop came for, so it is
+   listed compactly under its own heading rather than mixed into the main run. */
+.tier-head { margin: 42px 0 6px; }
+.tier-note { color: var(--ink-2); font-size: 0.95rem; max-width: 62ch; margin-bottom: 16px; }
+.cards.compact { grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 10px; }
+.card.mini { padding: 12px 14px; display: flex; gap: 13px; align-items: center; }
+.card.mini h3 { font-size: 1rem; }
+.card.mini .where { font-size: 0.85rem; display: block; }
+.reason { font-size: 0.78rem; color: var(--ink-3); }
+
+.facts { display: flex; flex-wrap: wrap; gap: 7px 18px; font-size: 0.9rem; color: var(--ink-2); }
+.fact { display: inline-flex; align-items: center; gap: 6px; }
 .fact .k { color: var(--ink-3); }
 
 /* ---------- tags ---------- */
-.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-.tag { font-size: 0.76rem; padding: 2px 7px; border: 1px solid var(--line-2); border-radius: 2px; color: var(--ink-2); background: var(--paper-2); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag {
+  font-size: 0.82rem; padding: 3px 10px; border-radius: 999px;
+  color: var(--ink-2); background: var(--paper-2); border: 1px solid transparent;
+}
 .tag.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.tag.more { border-style: dashed; color: var(--ink-3); }
+.tag.more { color: var(--ink-3); background: transparent; border: 1px dashed var(--line-2); }
 
-.pill { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px; white-space: nowrap; }
+.pill {
+  font-size: 0.75rem; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+  white-space: nowrap; letter-spacing: 0.005em;
+}
 .pill.flag { background: var(--flag-soft); color: var(--flag); }
 .pill.ok { background: var(--accent-soft); color: var(--accent); }
 
 /* ---------- detail page ---------- */
-.detail-grid { display: grid; grid-template-columns: 1fr 300px; gap: 36px; align-items: start; }
-@media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr; } }
-.section { margin-bottom: 30px; }
-.section > h2 { margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-.kv { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 6px 16px; font-size: 0.93rem; }
+.detail-grid { display: grid; grid-template-columns: 1fr 300px; gap: 44px; align-items: start; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; gap: 28px; } }
+.section { margin-bottom: 36px; }
+.section > h2 { margin-bottom: 14px; }
+.kv { display: grid; grid-template-columns: minmax(130px, auto) 1fr; gap: 9px 20px; font-size: 0.98rem; }
 .kv dt { color: var(--ink-3); }
 .kv dd { margin: 0; }
-.aside { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; font-size: 0.9rem; }
-.aside h3 { font-size: 0.82rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin-bottom: 10px; }
-.cap-domain { margin-bottom: 12px; }
-.cap-domain h4 { font-size: 0.76rem; color: var(--ink-3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+.aside {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px; font-size: 0.94rem;
+}
+.aside h3 { font-size: 0.98rem; margin-bottom: 12px; }
+.cap-domain { margin-bottom: 16px; }
+.cap-domain h4 { font-size: 0.85rem; color: var(--ink-3); font-weight: 600; margin-bottom: 7px; }
 
-.notice { border-left: 3px solid var(--flag); background: var(--flag-soft); padding: 12px 14px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.9rem; }
+.notice {
+  border: 1px solid var(--line); border-left: 3px solid var(--flag);
+  background: var(--flag-soft); padding: 15px 18px; border-radius: var(--radius);
+  font-size: 0.95rem;
+}
 .notice.info { border-left-color: var(--accent); background: var(--accent-soft); }
-.notice h4 { margin-bottom: 5px; font-size: 0.92rem; }
-.notice ul { margin: 6px 0 0; padding-left: 18px; }
-.notice li { margin-bottom: 2px; }
+.notice h4 { margin-bottom: 6px; }
+.notice ul { margin: 8px 0 0; padding-left: 20px; }
+.notice li { margin-bottom: 3px; }
+.notice > :last-child { margin-bottom: 0; }
 
-.meter { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0; }
-.meter > span { display: block; height: 100%; background: var(--accent); }
+.meter { height: 5px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 10px 0; }
+.meter > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 
 .btn {
   display: inline-block; background: var(--accent); color: var(--accent-ink);
-  padding: 9px 16px; border-radius: var(--radius); text-decoration: none;
-  font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent);
+  padding: 11px 20px; border-radius: 999px; text-decoration: none;
+  font-weight: 600; font-size: 0.95rem; border: 1px solid var(--accent);
 }
-.btn:hover { opacity: 0.9; }
-.btn.ghost { background: transparent; color: var(--accent); }
+.btn:hover { background: var(--accent-2); border-color: var(--accent-2); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--accent); border-color: var(--line-2); }
+.btn.ghost:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
 
-table.data { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-table.data th, table.data td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-table.data th { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); font-weight: 600; }
+table.data { width: 100%; border-collapse: collapse; font-size: 0.96rem; }
+table.data th, table.data td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data th { font-size: 0.85rem; color: var(--ink-3); font-weight: 600; }
 .scroll-x { overflow-x: auto; }
 
-code { font-family: var(--mono); font-size: 0.86em; background: var(--paper-2); padding: 1px 4px; border-radius: 2px; }
+code { font-family: var(--mono); font-size: 0.87em; background: var(--paper-2); padding: 1px 5px; border-radius: 4px; }
 
-.site-footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--ink-3); font-size: 0.86rem; background: var(--card); }
+.site-footer { border-top: 1px solid var(--line); padding: 34px 0 48px; color: var(--ink-3); font-size: 0.92rem; background: var(--card); }
 .site-footer a { color: var(--ink-2); }
-.footer-cols { display: flex; gap: 32px; flex-wrap: wrap; justify-content: space-between; }
+.footer-cols { display: flex; gap: 40px; flex-wrap: wrap; justify-content: space-between; }
 
-.prose h2 { margin-top: 28px; margin-bottom: 8px; }
-.prose h3 { margin-top: 20px; margin-bottom: 6px; }
-.prose ul { padding-left: 20px; }
-.prose li { margin-bottom: 5px; }
+.prose h2 { margin-top: 36px; margin-bottom: 10px; }
+.prose h3 { margin-top: 26px; margin-bottom: 7px; }
+.prose ul { padding-left: 22px; }
+.prose li { margin-bottom: 7px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- phone ----------
+   Kept at the end deliberately. A media query adds no specificity, so a mobile
+   override placed above the rule it is overriding simply loses — which is
+   exactly how the card layout below silently failed the first time. */
+@media (max-width: 620px) {
+  .card { padding: 16px; }
+  .card .summary { font-size: 0.94rem; }
+  .tag { font-size: 0.79rem; padding: 3px 9px; }
+
+  .logo { width: 50px; height: 50px; }
+  .logo.lg { width: 66px; height: 66px; }
+  .logo.lg.mono { font-size: 1.4rem; }
+
+  /* The logo held a 63px column out of a 430px screen, which squeezed the
+     capability tags to one per row and made every card enormous. Float it: the
+     heading sits beside it, the summary and tags run the full width below. */
+  .card-head { display: block; }
+  .card-head::after { content: ''; display: block; clear: both; }
+  .card-head > .logo { float: left; margin: 2px 12px 6px 0; }
+  .card-head > div { flex: none !important; }
+  .card-top { display: block; }
+  .card-top .where { display: block; }
+  /* Only the heading sits beside the logo; everything below starts full width
+     rather than ragging around it for one line and then jumping left. */
+  .card .summary, .card .facts, .card .tags { clear: left; }
+
+  .map-panel { margin-bottom: 18px; }
+  .map-foot { font-size: 0.82rem; }
+  .tier-head { margin-top: 34px; }
+}

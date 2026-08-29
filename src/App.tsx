@@ -6,6 +6,7 @@ import Standards from './pages/Standards';
 import About from './pages/About';
 import Achievements from './pages/Achievements';
 import Home from './pages/Home';
+import ForSpaces from './pages/ForSpaces';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
 
@@ -94,10 +95,8 @@ export default function App() {
           </a>
           <nav className="nav">
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
-            <Link page="standards">Standards</Link>
-            <Link page="achievements">Badges</Link>
+            <Link page="for-spaces">For makerspaces</Link>
             <Link page="about">About</Link>
-            <a href={REPO_URL}>Source</a>
           </nav>
         </div>
       </header>
@@ -105,6 +104,7 @@ export default function App() {
       <main>
         {route.page === 'directory' && (region ? <Directory region={region} /> : <Home />)}
         {route.page === 'space' && route.id && <SpacePage id={route.id} />}
+        {route.page === 'for-spaces' && <ForSpaces />}
         {route.page === 'standards' && <Standards />}
         {route.page === 'achievements' && <Achievements />}
         {route.page === 'achievement' && (() => {

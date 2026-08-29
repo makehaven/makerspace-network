@@ -1,5 +1,6 @@
 import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, REPO_URL } from '../data';
 import { href, navigate } from '../App';
+import Logo from '../components/Logo';
 
 export default function SpacePage({ id }: { id: string }) {
   const s = spaceById(id);
@@ -16,36 +17,24 @@ export default function SpacePage({ id }: { id: string }) {
   return (
     <>
       <section className="hero">
-        <div className="wrap">
-          <p className="eyebrow">
-            <a href={href('directory')} onClick={(e) => { e.preventDefault(); navigate('directory'); }}>
-              Directory
-            </a>
-            {' · '}{label('SpaceKind', s.kind)}
-          </p>
-          <h1>{s.name}</h1>
-          {s.summary && <p className="lede">{s.summary}</p>}
+        <div className="wrap" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          <Logo space={s} large />
+          <div style={{ minWidth: 0 }}>
+            <p className="eyebrow">
+              <a href={href('directory')} onClick={(e) => { e.preventDefault(); navigate('directory'); }}>
+                Directory
+              </a>
+              {' · '}{label('SpaceKind', s.kind)}
+            </p>
+            <h1>{s.name}</h1>
+            {s.summary && <p className="lede">{s.summary}</p>}
+          </div>
         </div>
       </section>
 
       <div className="wrap" style={{ paddingTop: 26 }}>
         <div className="detail-grid">
           <div>
-            {missing.length > 0 && (
-              <div className="notice section">
-                <h4>What we don't know about this space</h4>
-                <p style={{ margin: '4px 0 6px' }}>
-                  Recorded as missing rather than guessed:
-                </p>
-                <ul>{missing.map((m) => <li key={m}>{m}</li>)}</ul>
-                <p style={{ margin: '8px 0 0' }}>
-                  <a href={`${REPO_URL}/blob/main/data/spaces/${s.id}.json`}>Fill any of these in</a> —
-                  one file, one pull request. If you run this space, say so and the record
-                  becomes space-confirmed.
-                </p>
-              </div>
-            )}
-
             {(s.capabilities?.length ?? 0) > 0 && (
               <section className="section">
                 <h2>What you can make here</h2>
@@ -92,6 +81,24 @@ export default function SpacePage({ id }: { id: string }) {
                 {ops.hours_note && (<><dt>Hours</dt><dd>{ops.hours_note}</dd></>)}
               </dl>
             </section>
+
+            {missing.length > 0 && (
+              <div className="notice section">
+                <h4>Still to confirm</h4>
+                <p style={{ margin: '4px 0 6px' }}>
+                  Written down as missing rather than guessed at:
+                </p>
+                <ul>{missing.map((m) => <li key={m}>{m}</li>)}</ul>
+                <p style={{ margin: '10px 0 0' }}>
+                  If you run this space,{' '}
+                  <a href={href('for-spaces')}
+                     onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('for-spaces'); }}>
+                    claim the listing
+                  </a>{' '}and the record becomes yours to correct — or{' '}
+                  <a href={`${REPO_URL}/blob/main/data/spaces/${s.id}.json`}>edit the file directly</a>.
+                </p>
+              </div>
+            )}
 
             <section className="section">
               <h2>Where this record comes from</h2>
