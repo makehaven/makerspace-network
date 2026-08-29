@@ -3,17 +3,31 @@
   "name": "MakerspaceCT",
   "kind": "community_makerspace",
   "status": "active",
+  "summary": "A large, professionally equipped makerspace in Hartford with extensive metal and machine shops, woodworking, digital fabrication and textiles.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A large, professionally equipped makerspace in Hartford with extensive metal and machine shops, woodworking, digital fabrication and textiles.",
   "address": {
+    "street": "36 Talcott Street",
+    "locality": "Hartford",
     "county": "Hartford",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06103",
+    "country": "US",
+    "latitude": 41.7683982,
+    "longitude": -72.6724243
   },
+  "contact": {
+    "website": "https://makerspacect.com",
+    "phone": "+1-860-619-6254",
+    "email": "info@makerspacect.com"
+  },
+  "logo_url": "/logos/makerspace-ct.png",
   "operations": {
-    "tax_status": "nonprofit_501c3"
+    "tax_status": "nonprofit_501c3",
+    "square_feet": 28000,
+    "hours_note": "Fri 10am–9pm, Sat 10am–6pm, closed Sun–Thu (hours posted as changing from 22 July).",
+    "access_model": "staffed_hours_only"
   },
   "capabilities": [
     "metalworking_machine",
@@ -32,25 +46,35 @@
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'MakerspaceCT' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "space_website",
+      "url": "https://makerspacect.com/join-the-movement/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: 28,000 sq ft in the G. Fox Building; operating hours Fri 10am–9pm, Sat 10am–6pm, closed Sun–Thu."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
-      "email",
-      "phone",
-      "access_model",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "membership_models",
       "monthly_cost_usd",
       "minor_policy",
-      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
+      "membership prices are behind app.makerspacect.com and were not published at a fetchable URL",
+      "the posted hours say 'starting 7/22' without a year — confirm they are current",
+      "reported as both 28,000 sq ft (own site) and 20,000 sq ft (Hartford Business Journal); the space's own figure is used"
     ]
   }
 }

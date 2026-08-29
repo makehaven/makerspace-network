@@ -1,49 +1,126 @@
 {
   "id": "danbury-makerspace",
   "name": "Danbury Makerspace",
-  "kind": "library_makerspace",
+  "legal_name": "Danbury Hackerspace, Inc.",
+  "kind": "community_makerspace",
   "status": "active",
+  "summary": "A 501(c)(3) nonprofit makerspace and coworking facility next to the Danbury Library, with its own entrance and 24/7 member access — and a 25,000 sq ft second site in development at the former Crowne Plaza.",
+  "description": "Grew out of Mad Hatter Hackers. Occupies its own space alongside the Danbury Library with independent 24/7 member access, and is building out a second, much larger site at the former Crowne Plaza.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A 501(c)(3) makerspace integrated into the Danbury Public Library.",
   "address": {
+    "street": "158 Main Street",
+    "locality": "Danbury",
     "county": "Fairfield",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06810",
+    "country": "US",
+    "latitude": 41.3927882,
+    "longitude": -73.4509487,
+    "notes": "Connected to the Danbury Library building, but a separate facility with independent member access rather than library hours."
   },
+  "contact": {
+    "website": "https://danburyhackerspace.com",
+    "email": "danburyhackerspace@gmail.com"
+  },
+  "logo_url": "/logos/danbury-makerspace.png",
   "operations": {
-    "tax_status": "nonprofit_501c3"
+    "tax_status": "nonprofit_501c3",
+    "access_model": "member_24_7",
+    "public_access": true,
+    "membership_models": [
+      "monthly_membership",
+      "annual_membership"
+    ],
+    "monthly_cost_usd": {
+      "min": 25,
+      "max": 50,
+      "as_of": "2026-08-29"
+    },
+    "hours_note": "Free public open house every Thursday 7–10pm except holidays."
   },
   "capabilities": [
     "three_d_printing_fdm",
     "laser_cutting",
     "cnc_router",
-    "electronics_bench"
+    "electronics_bench",
+    "three_d_printing_resin",
+    "woodworking_machine"
+  ],
+  "equipment": [
+    {
+      "capability": "three_d_printing_fdm",
+      "brand": "Lulzbot",
+      "count": 11,
+      "notes": "Eleven filament printers including Lulzbot Mini and Taz, and three delta-style machines"
+    },
+    {
+      "capability": "laser_cutting",
+      "brand": "Epilog",
+      "model": "Helix",
+      "notes": "50W CO2"
+    },
+    {
+      "capability": "cnc_router",
+      "brand": "ShopBot"
+    },
+    {
+      "capability": "woodworking_machine",
+      "notes": "Table saw, chop saw, router table, drill press"
+    }
   ],
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'Danbury Hackerspace' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "space_website",
+      "url": "https://danburyhackerspace.com/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: 158 Main Street, connected to the Danbury Library; free open house Thursdays 7–10pm; expanding into the former Crowne Plaza at Exit 2 as Bright Ravens Innovation Studios, a 25,000 sq ft facility."
+    },
+    {
+      "system": "space_website",
+      "url": "https://danburyhackerspace.com/membership/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: $50/month or $500/year regular, $25/month student, with 24×7 access to the facility."
+    },
+    {
+      "system": "space_website",
+      "url": "https://danburyhackerspace.com/equipment/",
+      "retrieved": "2026-08-29",
+      "note": "Own equipment page, transcribed: eleven FDM printers (Lulzbot Mini/Taz, three delta-style) plus SLA; Epilog Helix 50W CO2 laser; ShopBot CNC router; drill press, chop saw, table saw, router table. Their Bridgeport mill is listed as out of order, so no machine-shop capability is recorded. The page says it is 'by no means an exhaustive list'."
+    },
+    {
+      "system": "direct_contact",
+      "retrieved": "2026-08-29",
+      "note": "Regional steward (MakeHaven) reports the organisation is officially changing its name to Danbury Makerspace, and that it grew out of Mad Hatter Hackers. The display name follows the steward; legal_name keeps 'Danbury Hackerspace, Inc.' until the entity itself is renamed. Their site, domain and logo still say Hackerspace."
     }
   ],
   "verification": {
-    "status": "imported",
-    "verified_on": "2026-08-28",
+    "status": "steward_verified",
+    "verified_on": "2026-08-29",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
-      "email",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "phone",
-      "access_model",
-      "membership_models",
-      "monthly_cost_usd",
       "minor_policy",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
-      "library integration means access model likely follows library hours \u2014 confirm"
-    ]
+      "under-18 policy is not stated on their site",
+      "the superseded Google Site gave 174 Main Street; their own site says 158 — 158 is used here",
+      "the Bright Ravens second site is in development; no opening date or equipment list is confirmed",
+      "their equipment page says it is not exhaustive, and lists the Bridgeport mill as out of order — no machine-shop capability is recorded here as a result",
+      "the rename to Danbury Makerspace is in progress — danburyhackerspace.com, the logo and the legal name still say Hackerspace; recheck and update legal_name once it is filed"
+    ],
+    "verified_by": "MakeHaven"
   }
 }

@@ -3,17 +3,39 @@
   "name": "SPARK Makerspace",
   "kind": "community_makerspace",
   "status": "active",
+  "summary": "A community-driven 501(c)(3) in New London emphasising art and local empowerment — woodshop, printmaking, fiber arts and stained glass.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A community-driven 501(c)(3) in New London emphasising art and local empowerment \u2014 woodshop, printmaking, fiber arts and stained glass.",
   "address": {
+    "street": "7 Union Street",
+    "locality": "New London",
     "county": "New London",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06320",
+    "country": "US",
+    "latitude": 41.3537115,
+    "longitude": -72.0969692
   },
+  "contact": {
+    "website": "https://sparkmakerspace.org",
+    "phone": "+1-860-572-6253"
+  },
+  "logo_url": "/logos/spark-makerspace.png",
   "operations": {
-    "tax_status": "nonprofit_501c3"
+    "tax_status": "nonprofit_501c3",
+    "access_model": "member_extended_hours",
+    "public_access": true,
+    "membership_models": [
+      "monthly_membership"
+    ],
+    "monthly_cost_usd": {
+      "min": 30,
+      "max": 65,
+      "as_of": "2026-08-29"
+    },
+    "minor_policy": "minors_with_adult",
+    "hours_note": "Member access 6am–10pm daily. Weekly public meetups (Open Sew, electronics) on a $5 suggested donation."
   },
   "capabilities": [
     "woodworking_machine",
@@ -25,24 +47,29 @@
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'Spark Makerspace' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.sparkmakerspace.org/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: 7 Union Street; sliding-scale membership $30–$65/month; facility access 6am–10pm daily; public meetups with a $5 suggested donation, open to ages 12 and up with under-18s accompanied by an adult."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "email",
-      "phone",
-      "access_model",
-      "membership_models",
-      "monthly_cost_usd",
-      "minor_policy",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
     ]
   }

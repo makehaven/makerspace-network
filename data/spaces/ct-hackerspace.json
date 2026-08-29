@@ -1,0 +1,110 @@
+{
+  "id": "ct-hackerspace",
+  "name": "CT Hackerspace",
+  "kind": "hackerspace",
+  "status": "closed",
+  "summary": "Closed. A 4,000 sq ft volunteer-run hackerspace in Watertown, for years the oldest in Connecticut. Its website was still live and current-looking after it shut.",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "Litchfield",
+    "region": "CT",
+    "country": "US",
+    "latitude": 41.6030143,
+    "longitude": -73.1153803,
+    "street": "30 Echo Lake Road",
+    "locality": "Watertown",
+    "postal_code": "06795"
+  },
+  "contact": {
+    "website": "https://cthacker.space",
+    "email": "contact.cthackerspace@gmail.com",
+    "phone": "+1-804-601-4225"
+  },
+  "operations": {
+    "public_access": true,
+    "square_feet": 4000,
+    "hours_note": "Free public open night every Wednesday 7–10pm — tours, and visitors may use tools at no cost."
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "laser_cutting",
+    "cnc_router",
+    "electronics_bench",
+    "metalworking_machine",
+    "woodworking_machine",
+    "wood_turning"
+  ],
+  "equipment": [
+    {
+      "capability": "three_d_printing_fdm",
+      "brand": "Lulzbot",
+      "model": "Mini"
+    },
+    {
+      "capability": "laser_cutting",
+      "brand": "Universal Laser Systems",
+      "model": "M300",
+      "notes": "50W CO2, 24×12 in work area"
+    },
+    {
+      "capability": "cnc_router",
+      "notes": "4×8 ft cutting area, plus a 4×4 in CNC engraver"
+    },
+    {
+      "capability": "metalworking_machine",
+      "brand": "Bridgeport",
+      "notes": "Milling machine with DRO, large metal lathe, metal shaper, power hacksaw, arbor press, media blast cabinet"
+    },
+    {
+      "capability": "woodworking_machine",
+      "notes": "Radial arm saw, table saw, band saw, belt and spindle sanders, scroll saw"
+    },
+    {
+      "capability": "electronics_bench",
+      "notes": "Soldering stations, oscilloscopes, multimeters, power supplies, dedicated Arduino station"
+    }
+  ],
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'CT Hackerspace' pin and nothing else — the pin carried a name and a location, no other detail."
+    },
+    {
+      "system": "space_website",
+      "url": "https://cthacker.space/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: 30 Echo Lake Road, Watertown CT 06795; a 4,000 sq ft space; free public open night Wednesdays 7–10pm; phone (804) 601-4225."
+    },
+    {
+      "system": "makerspacect_directory",
+      "url": "https://makerspacect.com/makerspaces/",
+      "retrieved": "2026-08-29",
+      "note": "Independently listed as CT Hackerspace, Watertown — corroborating that the map pin recovered from the old site is a currently operating space."
+    },
+    {
+      "system": "space_website",
+      "url": "https://cthacker.space/tools",
+      "retrieved": "2026-08-29",
+      "note": "Own equipment page, transcribed: Lulzbot Mini; Universal Laser Systems M300 50W CO2; CNC wood router (4×8 ft) and CNC engraver; Bridgeport mill with DRO, large metal lathe, metal shaper, power hacksaw; table saw, band saw, radial arm saw, sanders, scroll saw; electronics bench and Arduino station; small lathe for pen turning."
+    },
+    {
+      "system": "direct_contact",
+      "retrieved": "2026-08-29",
+      "note": "Regional steward (MakeHaven) reports the space has closed. Recorded on the steward's word against a still-live website — cthacker.space was serving an ordinary, current-looking site with a weekly open night on it days before this, and carried no closure notice."
+    }
+  ],
+  "verification": {
+    "status": "steward_verified",
+    "verified_by": "MakeHaven",
+    "verified_on": "2026-08-29",
+    "gaps": [
+      "closing date is not recorded",
+      "whether the equipment was dispersed, sold or moved to another space is unknown",
+      "the equipment and address below describe the space as it operated, not as it is now"
+    ]
+  }
+}

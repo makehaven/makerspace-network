@@ -1,0 +1,42 @@
+{
+  "id": "simsbury-public-library",
+  "name": "Simsbury Public Library",
+  "kind": "library_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "Hartford",
+    "region": "CT",
+    "country": "US",
+    "latitude": 41.8727076,
+    "longitude": -72.8034963
+  },
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'Simsbury Public Library' pin and nothing else — the pin carried a name and a location, no other detail."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-28",
+    "gaps": [
+      "this record is a map pin recovered from the superseded Google Site — the name and approximate location are all that is sourced",
+      "the space kind is inferred from the pin's name and is not confirmed",
+      "confirm the space still operates, and under this name",
+      "street address",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities"
+    ]
+  }
+}

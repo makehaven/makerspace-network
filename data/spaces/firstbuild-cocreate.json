@@ -3,17 +3,30 @@
   "name": "FirstBuild at CoCREATE",
   "kind": "corporate_makerspace",
   "status": "active",
+  "summary": "A GE Appliances FirstBuild facility in Stamford offering free membership, with metalworking, woodshop and advanced prototyping.",
+  "year_founded": 2023,
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A GE Appliances FirstBuild facility in Stamford offering free membership, with metalworking, woodshop and advanced prototyping.",
   "address": {
+    "street": "47 John St",
+    "locality": "Stamford",
     "county": "Fairfield",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06902",
+    "country": "US",
+    "latitude": 41.0456038,
+    "longitude": -73.5349829
   },
+  "contact": {
+    "website": "https://www.stamfordcocreate.com/firstbuild/"
+  },
+  "logo_url": "/logos/firstbuild-cocreate.png",
   "operations": {
-    "tax_status": "for_profit"
+    "tax_status": "for_profit",
+    "membership_models": [
+      "free_open"
+    ]
   },
   "capabilities": [
     "waterjet",
@@ -26,18 +39,28 @@
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'FirstBuild' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "news_media",
+      "url": "https://www.businesswire.com/news/home/20231012485567/en/GE-Appliances-Celebrates-Opening-of-CoCREATE-in-Connecticut",
+      "retrieved": "2026-08-29",
+      "note": "GE Appliances announcement of the CoCREATE opening, 12 October 2023 — a combined microfactory, community makerspace and design centre in Stamford."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "email",
       "phone",
       "access_model",
@@ -45,7 +68,8 @@
       "monthly_cost_usd",
       "minor_policy",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
-      "free membership reported on the Google Site \u2014 confirm current terms and sponsor status"
+      "cocreate.firstbuild.com now serves a certificate for wpengine.com; stamfordcocreate.com is used instead — confirm the canonical address",
+      "membership terms, hours and under-18 policy are not published at a fetchable URL"
     ]
   }
 }

@@ -1,0 +1,39 @@
+{
+  "id": "studio-20-south",
+  "name": "Studio 20 South",
+  "kind": "library_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "Hartford",
+    "region": "CT",
+    "country": "US"
+  },
+  "sources": [
+    {
+      "system": "news_media",
+      "url": "https://www.ctpublic.org/show/where-we-live/2024-11-19/connecticut-makerspaces-act-as-hubs-for-creativity-innovation-and-lifelong-learning",
+      "retrieved": "2026-08-29",
+      "note": "Connecticut Public, 19 November 2024: described as a digital maker studio at the West Hartford Library, coordinated by Samuel Ferri."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-29",
+    "gaps": [
+      "everything except the name, the host library and the town — this record comes from a single radio piece and has not been checked against the library",
+      "street address",
+      "coordinates",
+      "website",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "mad-hatter-hackers",
+  "name": "Mad Hatter Hackers",
+  "kind": "hackerspace",
+  "status": "closed",
+  "summary": "Superseded, not shut down: this organisation became what is now Danbury Hackerspace. Kept as a record so the old name and its map pin resolve to the right place.",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "Fairfield",
+    "region": "CT",
+    "country": "US",
+    "latitude": 41.4299058,
+    "longitude": -73.4166728
+  },
+  "sources": [
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'Mad Hatter Hackers' pin and nothing else — the pin carried a name and a location, no other detail."
+    },
+    {
+      "system": "direct_contact",
+      "retrieved": "2026-08-29",
+      "note": "Regional steward (MakeHaven) reports that Mad Hatter Hackers became Danbury Hackerspace. The two pins sat 4km apart on the superseded Google Site's map, which is why they were imported as separate spaces."
+    }
+  ],
+  "verification": {
+    "status": "steward_verified",
+    "verified_by": "MakeHaven",
+    "verified_on": "2026-08-29",
+    "gaps": [
+      "the date of the transition is not recorded",
+      "whether this was a rename, a merger or a refounding is not recorded"
+    ]
+  }
+}

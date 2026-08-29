@@ -22,18 +22,18 @@
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
+      "the superseded Google Site listed SPARK Makerspace's New London address under this Litchfield County entry — a copy-paste error there, so no address is recorded here",
       "street address",
       "coordinates",
-      "website",
       "email",
       "phone",
       "access_model",
@@ -41,7 +41,10 @@
       "monthly_cost_usd",
       "minor_policy",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
-      "listed as in development \u2014 confirm whether status should be 'forming' rather than 'active'"
+      "listed as in development — confirm whether status should be 'forming' rather than 'active'"
     ]
+  },
+  "contact": {
+    "website": "https://www.nchic.org/projectoverview"
   }
 }

@@ -5,7 +5,7 @@
   "country": "US",
   "region_code": "CT",
   "status": "active",
-  "summary": "The Connecticut Makerspace Network — the makerspaces, hackerspaces, fab labs, and shared workshops of Connecticut, and the shared standards and data they maintain together.",
+  "summary": "Connecticut's makerspaces, hackerspaces and shared workshops — where they are, what you can make at each one, and how to get in.",
   "steward": {
     "organization": "MakeHaven",
     "contact": "info@makehaven.org",
@@ -16,7 +16,13 @@
     "$comment": "Counties are how Connecticut residents locate things, but county alone is a weak filter — capability and access model do the real work in the directory UI."
   },
   "counties": [
-    "Fairfield", "Hartford", "Litchfield", "Middlesex",
-    "New Haven", "New London", "Tolland", "Windham"
+    "Fairfield",
+    "Hartford",
+    "Litchfield",
+    "Middlesex",
+    "New Haven",
+    "New London",
+    "Tolland",
+    "Windham"
   ]
 }

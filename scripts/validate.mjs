@@ -75,6 +75,12 @@ for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWi
   // quietly omits them is not. This is the whole point of the OKW provenance
   // model; see docs/INTEROP.md.
   const gaps = s.verification?.gaps ?? [];
+
+  // A closed space is history, not a stub waiting to be finished. Prompting
+  // someone to go and find its missing website would be asking them to fill in
+  // a blank that no longer has an answer.
+  if (s.status === 'closed') continue;
+
   const hasAddress = s.address?.street && s.address?.latitude !== undefined;
   if (!hasAddress && !gaps.some((g) => /address|coordinate/i.test(g))) {
     warnings.push(`${file}: no street address or coordinates, and verification.gaps does not say so`);

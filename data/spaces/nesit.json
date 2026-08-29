@@ -3,47 +3,72 @@
   "name": "NESIT",
   "kind": "hackerspace",
   "status": "active",
+  "summary": "A technology-focused 501(c)(3) hackerspace in Meriden, strong in electronics, digital fabrication and amateur radio.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A technology-focused 501(c)(3) hackerspace in Meriden, strong in electronics, digital fabrication and amateur radio.",
   "address": {
+    "street": "290 Pratt Street",
+    "locality": "Meriden",
     "county": "New Haven",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06450",
+    "country": "US",
+    "latitude": 41.542019,
+    "longitude": -72.791068
   },
+  "contact": {
+    "website": "https://nesit.org"
+  },
+  "logo_url": "/logos/nesit.png",
   "operations": {
-    "tax_status": "nonprofit_501c3"
+    "tax_status": "nonprofit_501c3",
+    "public_access": true,
+    "hours_note": "Public open house Fridays 7–10pm — tours and meeting members."
   },
   "capabilities": [
     "electronics_bench",
     "pcb_fabrication",
     "three_d_printing_fdm",
     "laser_cutting",
-    "amateur_radio"
+    "amateur_radio",
+    "leatherwork",
+    "metalworking_machine"
   ],
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'NESIT Makerspace' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "space_website",
+      "url": "https://nesit.org/",
+      "retrieved": "2026-08-29",
+      "note": "Own site: Fridays 7–10pm are member nights open to the public. Equipment named includes 3D printers (Prusa i3 MK3), two 60W Epilog laser cutters, CNC, woodworking, metalworking, electronics benches and leatherworking."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "email",
       "phone",
       "access_model",
       "membership_models",
       "monthly_cost_usd",
       "minor_policy",
-      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
+      "membership prices and member access hours are not published on their site",
+      "NESIT announced an equipment refresh for 2026 — recheck the capability list after it lands"
     ]
   }
 }

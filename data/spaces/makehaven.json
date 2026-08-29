@@ -3,10 +3,10 @@
   "name": "MakeHaven",
   "kind": "community_makerspace",
   "status": "active",
+  "summary": "A 501(c)(3) community workshop in downtown New Haven emphasising broad tool access across art, craft and engineering.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A 501(c)(3) community workshop in downtown New Haven emphasising broad tool access across art, craft and engineering.",
   "address": {
     "street": "770 Chapel Street",
     "street_2": "Lower Level",
@@ -29,6 +29,7 @@
       "youtube": "https://www.youtube.com/channel/UCLNtx8aVbTt9Ncm3vzGntNQ"
     }
   },
+  "logo_url": "/logos/makehaven.png",
   "operations": {
     "access_model": "member_24_7",
     "public_access": true,
@@ -36,7 +37,12 @@
     "membership_models": [
       "monthly_membership"
     ],
-    "minor_policy": "minors_with_adult"
+    "minor_policy": "minors_with_adult",
+    "monthly_cost_usd": {
+      "min": 30,
+      "max": 62,
+      "as_of": "2026-08-29"
+    }
   },
   "capabilities": [
     "three_d_printing_fdm",
@@ -68,13 +74,19 @@
       "system": "ct_google_site",
       "url": "https://connecticut.makerspace.network/",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there. The logo is the space's own mark, recovered from the same page."
     },
     {
       "system": "fablabs_io",
       "url": "https://api.fablabs.io/0/labs.json",
       "retrieved": "2026-08-28",
       "note": "fablabs.io lab id 984"
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.makehaven.org/join",
+      "retrieved": "2026-08-29",
+      "note": "Own site: $62/month standard, with an income-based sliding scale at $30, $40 or $50. Membership requires being 18 or older and able to sign a waiver."
     }
   ],
   "verification": {
@@ -82,11 +94,11 @@
     "verified_by": "MakeHaven",
     "verified_on": "2026-08-28",
     "gaps": [
-      "monthly_cost_usd",
       "square_feet",
       "staff_fte",
       "year_founded",
-      "spaceapi endpoint not yet published"
+      "spaceapi endpoint not yet published",
+      "members must be 18+; the recorded minor policy covers visitors accompanied by a member, not membership"
     ]
   }
 }

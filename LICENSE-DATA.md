@@ -22,6 +22,18 @@ Two reasons, both practical:
 Code is MIT precisely so it can be embedded anywhere, including in commercial
 and proprietary systems, with no obligation.
 
+## Logos are not covered by this licence
+
+`public/logos/` holds each space's own logo, shown beside its directory record
+so a visitor can recognise the place. Those marks belong to the spaces, are
+**not** CC BY-SA, and are used here nominatively — to identify the organisation
+the record is about, at the request of the regional network that lists it.
+
+They are reproduced from the superseded Connecticut Google Site, which the same
+network ran and which the spaces supplied them to. Any space that would rather
+not appear with its mark can have it removed on request; nothing else about the
+record depends on it.
+
 ## Attribution
 
 > Makerspace Network directory data, MakeHaven and contributors,

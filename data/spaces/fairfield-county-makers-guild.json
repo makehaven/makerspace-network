@@ -3,17 +3,29 @@
   "name": "Fairfield County Makers' Guild",
   "kind": "community_makerspace",
   "status": "active",
+  "summary": "A membership-based nonprofit makerspace in Norwalk covering digital fabrication, jewelry and textiles.",
   "region_ids": [
     "us-ct"
   ],
-  "summary": "A membership-based nonprofit makerspace in Norwalk covering digital fabrication, jewelry and textiles.",
   "address": {
+    "street": "3 Belden Ave",
+    "locality": "Norwalk",
     "county": "Fairfield",
     "region": "CT",
-    "country": "US"
+    "postal_code": "06850",
+    "country": "US",
+    "latitude": 41.1170326,
+    "longitude": -73.4155547
   },
+  "contact": {
+    "website": "https://www.fcmakers.org",
+    "email": "info@fcmakers.org"
+  },
+  "logo_url": "/logos/fairfield-county-makers-guild.png",
   "operations": {
-    "tax_status": "nonprofit_other"
+    "tax_status": "nonprofit_other",
+    "public_access": true,
+    "hours_note": "Public Open Night every Tuesday at 7pm."
   },
   "capabilities": [
     "three_d_printing_fdm",
@@ -25,25 +37,35 @@
   "sources": [
     {
       "system": "ct_google_site",
-      "url": "https://connecticut.makerspace.network/",
+      "url": "https://sites.google.com/makerspace.network/connecticut",
       "retrieved": "2026-08-28",
-      "note": "Superseded Google Site. Descriptive text only; addresses and operations were not published there."
+      "note": "Superseded Google Site, recovered 2026-08-28 from its still-live sites.google.com address. Street address, website and descriptive text are transcribed from it verbatim. The logo is the space's own mark, recovered from the same page."
+    },
+    {
+      "system": "ct_google_site",
+      "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
+      "retrieved": "2026-08-28",
+      "note": "'CT Makerspaces Map' My Map attached to the superseded site. Coordinates are the 'Fairfield County Makers' Guild' pin, transcribed from its KML, not geocoded."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.fcmakers.org/",
+      "retrieved": "2026-08-29",
+      "note": "Own site (fcmakers.com now redirects here): 3 Belden Ave, Norwalk; Open Nights every Tuesday at 7pm; info@fcmakers.org."
     }
   ],
   "verification": {
     "status": "imported",
     "verified_on": "2026-08-28",
     "gaps": [
-      "street address",
-      "coordinates",
-      "website",
-      "email",
+      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "phone",
       "access_model",
       "membership_models",
       "monthly_cost_usd",
       "minor_policy",
-      "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
+      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
+      "membership prices, member access hours and under-18 policy are not published on their site"
     ]
   }
 }

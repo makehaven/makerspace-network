@@ -1,0 +1,40 @@
+{
+  "id": "makehartford",
+  "name": "MakeHartford",
+  "kind": "community_makerspace",
+  "status": "closed",
+  "summary": "Closed. A Hartford makerspace that wound down when MakerspaceCT opened downtown. Still listed as current by MakerspaceCT's own directory.",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "Hartford",
+    "region": "CT",
+    "country": "US"
+  },
+  "contact": {
+    "website": "https://makehartford.com"
+  },
+  "sources": [
+    {
+      "system": "makerspacect_directory",
+      "url": "https://makerspacect.com/makerspaces/",
+      "retrieved": "2026-08-29",
+      "note": "Listed as MakeHartford, Hartford CT, in MakerspaceCT's own 'Makerspaces and Maker Resources Near You' directory."
+    },
+    {
+      "system": "direct_contact",
+      "retrieved": "2026-08-29",
+      "note": "Regional steward (MakeHaven) reports MakeHartford closed when MakerspaceCT opened. It was added here a day earlier on the strength of MakerspaceCT's own published directory, which still lists it — a peer directory outliving the space it displaced."
+    }
+  ],
+  "verification": {
+    "status": "steward_verified",
+    "verified_by": "MakeHaven",
+    "verified_on": "2026-08-29",
+    "gaps": [
+      "closing date is not recorded",
+      "this record never had more than a name, a town and a URL, and now never will"
+    ]
+  }
+}

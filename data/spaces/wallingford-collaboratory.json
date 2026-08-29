@@ -1,0 +1,42 @@
+{
+  "id": "wallingford-collaboratory",
+  "name": "Collaboratory at Wallingford Public Library",
+  "kind": "library_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "address": {
+    "county": "New Haven",
+    "region": "CT",
+    "country": "US"
+  },
+  "contact": {
+    "website": "https://wallingfordlibrary.org"
+  },
+  "sources": [
+    {
+      "system": "makerspacect_directory",
+      "url": "https://makerspacect.com/makerspaces/",
+      "retrieved": "2026-08-29",
+      "note": "Listed as 'Collaboratory at the Wallingford Public Library', Wallingford CT, in MakerspaceCT's own directory. The URL it gives (wallingford.lioninc.org) no longer resolves."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-08-29",
+    "gaps": [
+      "the directory's link for this space no longer resolves; the website recorded here is the library's current domain and has not been checked for a Collaboratory page",
+      "street address",
+      "coordinates",
+      "email",
+      "phone",
+      "access_model",
+      "membership_models",
+      "monthly_cost_usd",
+      "minor_policy",
+      "capabilities",
+      "whether use is restricted to Wallingford library card holders"
+    ]
+  }
+}
