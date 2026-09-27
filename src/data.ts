@@ -74,7 +74,7 @@ export const regionHref = (r: Region): string =>
   r.hostname ? `https://${r.hostname}/` : `/?region=${r.id}`;
 
 export const spacesIn = (region: Region): Space[] =>
-  SPACES.filter((s) => s.region_ids.includes(region.id) && s.status !== 'closed');
+  SPACES.filter((s) => (s.region_ids ?? []).includes(region.id) && s.status !== 'closed');
 
 export const spaceById = (id: string): Space | undefined => SPACES.find((s) => s.id === id);
 

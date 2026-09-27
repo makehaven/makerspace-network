@@ -1,10 +1,16 @@
 # Who may edit a record
 
-**Status: specified, not built.** The vocabulary and the flows below are settled
-and deliberately mirror `~/development/Entrepreneurship-Nexus`, which has already
-built this. Nothing here is running yet — today the site is static and claiming
-happens by email and pull request. This file exists so that when the machinery
-does get built, it is built once and the same way in both projects.
+**Status: specified, scheduled (phase 0b).** The vocabulary and the flows below
+are settled and deliberately mirror `~/development/Entrepreneurship-Nexus`,
+which has already built this. Nothing here is running yet — today the site is
+static and claiming happens by email and pull request. This file exists so that
+when the machinery does get built, it is built once and the same way in both
+projects.
+
+Revised 2026-09-23 after the network meeting. The original scope was *who may
+edit a record*. The meeting added a second purpose that turns out to be the
+more important one: **who is at each space, so people can be convened and can
+find each other.** See §Roster below.
 
 ## The problem
 
@@ -35,6 +41,13 @@ Four roles, scoped by what they can reach. The names correspond to Nexus's
 | `region_steward` | One region | Verify any record in the region, invite spaces, approve contested claims, edit unclaimed records | `ecosystem_manager` |
 | `space_admin` | One space | Edit every field on that record; invite, promote and remove that space's other people | `eso_admin` |
 | `space_editor` | One space | Edit every field on that record | `eso_staff` |
+| `space_contact` | One space | Edit their own roster entry; receive invitations; see and contact verified people at other spaces. Cannot edit the listing | — |
+
+`space_contact` is the role most people will hold. A board member, a safety
+lead or an instructor who wants to be in the loop is not thereby the person who
+should be editing the hours. It is also the role that makes succession work:
+when the `space_admin` leaves, a `space_contact` is already known to the
+network and can be promoted by the steward without starting from zero.
 
 A person may hold roles at more than one space — someone on the board of two
 makerspaces is normal and should not need two accounts.
@@ -85,8 +98,90 @@ leak:
 - A second invitation to the same address for the same space returns the existing
   one rather than creating a duplicate.
 - Nobody may invite above their own authority: a `space_admin` can create
-  `space_admin` and `space_editor` at their own space and nothing else.
+  `space_admin`, `space_editor` and `space_contact` at their own space and
+  nothing else. A `space_contact` may propose another `space_contact`; the
+  space admin or the steward confirms it.
 - Every claim, invitation, acceptance and role change writes an audit event.
+
+## Roster
+
+Every active membership row carries a roster entry: what this person does at
+the space and how they want to be reached.
+
+| Field | Who edits | Notes |
+|---|---|---|
+| `functions[]` | the person, the space admin | Controlled list, versioned in `enums.json`: `director`, `board`, `staff`, `safety`, `instruction`, `membership`, `facilities`, `finance`, `youth`, `volunteer`. Several allowed |
+| `contact_preference` | the person | `email`, `phone`, `relay` — how other people in the network may reach them. Honoured for organiser roles; `space_contact` is always relayed (see Contact rule) |
+| `invitations` | the person | Whether they want meeting invitations at all |
+| `status` | lifecycle | Same as the membership row: `invited → pending_acceptance → active → suspended | revoked` |
+
+**Purpose.** Two things, and the second is the one the network asked for:
+
+1. *Convening.* Invitation lists are queries — every active person with
+   `invitations` on, at spaces with `size_tier: large`, or in one county, or
+   holding the `safety` function. The steward never keeps a separate list.
+2. *Interconnection.* A person at one space can find and reach the people at
+   another. A youth-programme lead should be able to find the other
+   youth-programme leads in the state without going through the steward.
+
+**Visibility.** The roster is never public. Three levels:
+
+| Who | Sees |
+|---|---|
+| Anyone on the public site | Nothing. The public sees `contact.email` on the space record and no people |
+| A **verified person** — an active membership row at a space whose record is `space_confirmed` or `steward_verified` | Name, space, functions, and a way to contact every other verified person **in the whole network, across regions**, honouring their `contact_preference` |
+| A region steward | Everything in their region, including status and who invited whom; the verified-person view of other regions |
+| `network_admin` | Everything |
+
+**The people graph is national; regions are how it is stewarded.** The
+2026-09-23 meeting had spaces from several states, and the connections people
+wanted were between a youth lead in Connecticut and one in Ohio, not only
+between neighbours. So visibility and contact never stop at a region boundary.
+Regions decide *who verifies a record* and *how a meeting is sliced*
+("Connecticut only", "all large spaces nationally"), nothing more.
+
+**Contact rule, settled 2026-09-23.** How another verified person reaches you
+depends on your role, not only your preference:
+
+| Role | Reachable by other verified people via |
+|---|---|
+| `region_steward`, `space_admin`, `space_editor` | Direct email address shown, if `contact_preference` is `email` or `phone`. These are the organisers; being reachable is part of the job |
+| `space_contact` | Relay only, whatever the preference says. The network passes the message on and never exposes the address |
+
+The split exists because `space_contact` is the door through which ordinary
+members will join, and a members' directory with visible email addresses is
+harvestable. Organisers are few and already public on their own sites.
+
+**No hiding.** A person on the roster is visible to every other verified person
+in the network. There is no invitations-only mode that keeps someone off the
+roster; if that is what they want, the steward keeps them on a plain mailing
+list outside this system. Being findable is the point of joining.
+
+**Continuity.** A space with fewer than two active people is a space one
+departure away from going dark. The steward view flags those, and a space admin
+is prompted to invite a second person at claim time.
+
+**Size tier.** Convening by size needs a `size_tier` on the space record
+(`small`, `medium`, `large`), set by the space admin or the steward. This is a
+minor bump to `data/schema/enums.json`. Thresholds are a network decision, not a
+schema one; the field records the tier, the region record documents the rule.
+
+## The network first, regions on request
+
+Sign-in, the roster and the people view live at **makerspace.network**, the
+apex, not under any state. A space belongs to the network first. `region_ids`
+becomes optional: a space in a state with no region record simply has none,
+and its address carries the state. Its record is verified by `network_admin`
+until a region exists.
+
+A region is created when a state, or a group of states, asks for one and names
+a steward. That is a data change — one region record, `region_ids` added to
+the spaces already there, a hostname if they want one — and the existing
+records and people become the steward's. Nothing about joining waits on it.
+
+Convening never needed regions to exist: "all large spaces", "everyone in
+Ohio", and "the youth leads" are queries over the roster and the space
+records, and the state comes from the address.
 
 ## What a space controls, and what it does not
 
@@ -105,10 +200,11 @@ rules in `CLAUDE.md`.
 
 ## When to build it
 
-Not yet. The static site costs nothing to run and has no accounts to breach,
-and the current bottleneck is phone calls to seven spaces, not software. Build
-this when a space asks to maintain its own listing and a pull request is a real
-obstacle for them — that is the signal, and it has not happened yet.
+Now. The earlier position was to wait until a space asked to maintain its own
+listing. At the 2026-09-23 network meeting the spaces asked for something
+broader — sign up as connected to a space, update what your role allows, be
+invited to the right meetings, and leave someone behind who can carry on. That
+is the signal, and it is a stronger one than a listing edit.
 
 When it does, the stack should be the one Nexus already runs — Firebase Auth for
 identity, Firestore for the membership rows, Cloud Functions for the invite and

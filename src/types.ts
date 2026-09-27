@@ -39,7 +39,8 @@ export interface Space {
   id: string; name: string; legal_name?: string;
   kind: string; status: string;
   summary?: string; description?: string; year_founded?: number;
-  region_ids: string[];
+  region_ids?: string[];
+  size_tier?: 'small' | 'medium' | 'large';
   address?: Address;
   contact?: Contact;
   logo_url?: string; photo_url?: string;

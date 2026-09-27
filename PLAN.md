@@ -1,6 +1,6 @@
 # Makerspace Network — Roadmap
 
-**Status as of 2026-08-28.** What actually exists and what comes next. Keep this
+**Status as of 2026-09-27.** What actually exists and what comes next. Keep this
 file accurate; it is the starting point for "what is real here."
 
 ## Thesis
@@ -12,19 +12,21 @@ two, and should interoperate with the existing standards rather than replace
 them. See `docs/INTEROP.md` for the survey that produced this position.
 
 Connecticut first, but multi-region in the data shape from day one:
-`<region>.makerspace.network`, `region_ids` on every record.
+`<region>.makerspace.network`, `region_ids` on every record. The people layer
+(phase 0b) is national from day one: regions steward records and slice
+meetings, but a person can see and reach a verified person in any state.
 
 ## Current state
 
 | Area | Status |
 |---|---|
 | Space schema + vocabularies (`data/schema/`) | **Built** — OKW profile, 42 capabilities, 14 space kinds, provenance model |
-| CT directory records | **17 records, all unverified or better** — 9 with street addresses, 16 mappable, 10 with websites |
+| CT directory records | **20 records**, 5 steward-verified, 15 imported — 10 with street addresses, 16 mappable, 13 with websites |
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
 | Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |
 | Region map (`data/geo/`, `src/components/RegionMap.tsx`) | **Built** — inline SVG county map, no tiles and no CSP exemption |
-| Claim / roles model (`docs/GOVERNANCE.md`) | **Specified, not built** — mirrors Nexus's roles, invites and domain-match claim |
+| Claim / roles model (`docs/GOVERNANCE.md`) | **Built, not yet switched on** — sign-in, claim, roster, steward page and rules tests landed 2026-09-23; needs Firestore and Auth enabled in the console (`docs/PEOPLE.md`) |
 | Achievement namespace | **Live** — `makerspace.network/achievements/<id>/v<n>`, HTML + static JSON |
 | Custom domains | **Live** — apex, `connecticut.` and `standards.` all resolve to Firebase and serve 200 over TLS (checked 2026-08-29) |
 | Standards of Excellence tool | **Built and hosted** — `tools/standards` git subtree, served verbatim at `/tools/standards/` |
@@ -67,6 +69,63 @@ cost, can my kid come — were never captured.
       the steward that no website reflected (`docs/NOT-LISTED.md`)
 - [ ] Script the fablabs.io import; add a Nation of Makers import
 
+### Phase 0b — People, sign-in and the roster *(next)*
+
+Added after the 2026-09-23 network meeting. The ask from the room was simple:
+let a person sign up as connected to a space, update what they are allowed to
+update, and be reachable for the right meetings. The point is to **interconnect
+people between spaces**, not only to keep records current. Spec:
+`docs/GOVERNANCE.md`, which the meeting turned from "not yet" into "now".
+
+Three things it has to do, in order of why anyone asked for it:
+
+1. **Convening.** Who at each space should be invited to what. Meetings will
+   sometimes be all spaces, sometimes only the large ones, sometimes one
+   county. Invitation lists are queries over the roster and the space record,
+   not a spreadsheet someone maintains by hand.
+2. **Continuity.** A space is represented by its people, plural. When the
+   person who came to the meetings leaves, someone else at the same space
+   already has standing to pick up the record, the assessment and the seat.
+3. **Editing.** A verified person updates their own space's listing directly.
+   Pull requests stay open for everyone else.
+
+- [x] Sign-in with Firebase Auth (Google, email link), on the Nexus pattern
+- [x] Claim flow as specified: domain match is immediate, everything else is
+      reviewed by the steward. Enforced in `firestore.rules`, tested in
+      `test/rules.test.mjs`
+- [x] Membership rows (`person_id`, `space_id`, `region_id`, `role`, `status`)
+      with the `space_contact` role added for people who belong to a space but
+      do not edit its listing
+- [x] Roster entry per person: function at the space, contact preference,
+      whether they want meeting invitations. Editable by the person and the
+      space admin; readable per the visibility rules in GOVERNANCE §Roster
+- [x] `size_tier` on the space record (minor schema bump, enums 0.3.0), so
+      "large spaces" is a filter and not a judgement call. Set by stewards on
+      the Steward page; county already derives from `address`
+- [x] Steward view: people in scope, filter by state, size tier, function,
+      status; copy an invitation list; see which spaces have fewer than two
+      active people. County filter not yet — state is
+- [x] Network view for verified people: see who is at the other spaces and
+      reach them, **across states**. The meeting had spaces from several
+      states; the graph is national and regions are only how it is stewarded
+      and how meetings are sliced
+- [x] Join at the apex, `makerspace.network`, not under a state. `region_ids`
+      becomes optional on a space record, so a space anywhere in the US can be
+      added and its people can join now. A region is created when a state or
+      group asks for one and names a steward. See GOVERNANCE §The network
+      first, regions on request
+- [x] Enforce every rule server-side from the first commit — see the Nexus
+      custom-claims warning at the end of GOVERNANCE. There is no Function in
+      the write path; the rules are the server
+- [ ] **Switch it on**: Firestore and Auth in the console, deploy, bootstrap
+      the network admin, sync the index. Steps in `docs/PEOPLE.md`
+- [ ] Email delivery for relayed messages (`functions/`, needs Blaze + Postmark)
+- [ ] Edit the listing from the site; invitations by email
+
+Once this exists the Standards tool can save an assessment against a space
+instead of a browser, which removes the "export a file and email it" step that
+stalls pilot feedback. That is phase 1's remaining item, and it depends on this.
+
 ### Phase 1 — Host the Standards tool *(mostly done)*
 
 The assessment tool is a single self-contained HTML file with `localStorage` and
@@ -79,6 +138,9 @@ no backend, so hosting it costs nothing.
       `scripts/sync-tools.mjs`, never bundled through the site's React
 - [ ] Link participating spaces from their directory records via `standards.level`,
       published only with explicit consent
+- [ ] Save assessments server-side, attached to the space, for signed-in people
+      (needs phase 0b). Pilot feedback in Sept 2026 stalled on file exports
+      being the only way data leaves the browser
 
 ### Phase 2 — Annual data and the network benchmark
 
@@ -118,9 +180,10 @@ space with no developers can verify on a hosted page.
 
 ### Later — second region
 
-Nothing here should require a code change to add a state. The test: a Rhode
-Island steward can add `data/regions/us-ri.json`, a folder of spaces, and get a
-working site.
+Regions are added when a state or group asks and names a steward. Nothing here
+should require a code change to add one. The test: a Rhode Island steward can
+add `data/regions/us-ri.json`, tag the Rhode Island spaces that are already in
+the network with `region_ids`, and get a working site.
 
 ## Open decisions
 
@@ -142,7 +205,14 @@ working site.
    JSON. What is not settled is who may add a definition, who may deprecate one,
    and what happens to credentials already signed against a superseded version.
    Needs an answer before MakeHaven signs the first credential.
-6. **Standards as a gate.** `docs/RECIPROCITY.md` §5 makes the Standards level
+6. **Roster visibility.** Settled at the 2026-09-23 meeting: the roster is
+   never public. The steward sees all of it. A verified person at any space in
+   the region can see the people at other spaces and contact them, because
+   connecting people across spaces is the reason the roster exists. Contact
+   is by role: organisers (`space_admin`, `space_editor`, steward) show a
+   direct address; `space_contact`, the role ordinary members will hold, is
+   always relayed. No hiding from peers. Spec in `docs/GOVERNANCE.md` §Roster.
+7. **Standards as a gate.** `docs/RECIPROCITY.md` §5 makes the Standards level
    determine who is a recognised issuer. That turns a self-assessment tool into
    an access-control input, which raises the stakes on governance and appeals.
    Settle this before asking a non-MakeHaven space to trust it.

@@ -120,6 +120,14 @@ GCP project `makerspace-network-243918` ("Makerspace Network", created 2019) is
 unrelated to hosting — it has only the Maps APIs enabled and presumably backs
 the old site's embedded map. Left alone.
 
+## Firestore and Authentication (people layer)
+
+`npm run deploy` now also pushes `firestore.rules`. The project needs Firestore
+and Authentication enabled once by hand; the steps are in `docs/PEOPLE.md`
+§Turning it on. The rules tests (`npm run test:rules`) need Java for the
+emulator and use ports 8180 and 9199 because Nexus's emulators take the
+defaults.
+
 ## Not yet set up
 
 - **CI deploys.** A GitHub Actions workflow deploying on push to `main` needs a

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { resolveRegion, REPO_URL } from './data';
 import Directory from './pages/Directory';
 import SpacePage from './pages/SpacePage';
@@ -9,6 +9,11 @@ import Home from './pages/Home';
 import ForSpaces from './pages/ForSpaces';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
+
+// The people layer (join, people, steward) needs Firebase. It is loaded only
+// when one of those pages is opened, so the public directory stays static.
+const NetworkPages = lazy(() => import('./network/NetworkPages'));
+const NETWORK_PAGES = new Set(['join', 'people', 'steward']);
 
 // Query-string routing, no router library — same convention as the sibling
 // Entrepreneurship Nexus app.
@@ -96,6 +101,7 @@ export default function App() {
           <nav className="nav">
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="for-spaces">For makerspaces</Link>
+            <Link page="people">People</Link>
             <Link page="about">About</Link>
           </nav>
         </div>
@@ -115,6 +121,11 @@ export default function App() {
                      </div>;
         })()}
         {route.page === 'about' && <About region={region} />}
+        {NETWORK_PAGES.has(route.page) && (
+          <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
+            <NetworkPages page={route.page} spaceId={route.id} />
+          </Suspense>
+        )}
       </main>
 
       <footer className="site-footer">

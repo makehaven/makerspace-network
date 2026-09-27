@@ -179,6 +179,18 @@ export default function SpacePage({ id }: { id: string }) {
                 ))}
               </div>
             )}
+            <div className="card" style={{ marginTop: 14 }}>
+              <h3>Part of {s.name}?</h3>
+              <p className="muted" style={{ margin: '6px 0 10px' }}>
+                Join the network as someone connected to this space: get invited to the
+                meetings that concern it, find your counterparts at other spaces, and keep the
+                listing current.
+              </p>
+              <a className="btn ghost" href={href('join', { space: s.id })}
+                 onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join', { space: s.id }); }}>
+                Join as someone at this space
+              </a>
+            </div>
           </aside>
         </div>
       </div>

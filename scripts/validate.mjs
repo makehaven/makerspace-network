@@ -25,6 +25,7 @@ const ENUM_FIELDS = [
   ['operations.tax_status', 'TaxStatus', (s) => [s.operations?.tax_status]],
   ['operations.membership_models', 'MembershipModel', (s) => s.operations?.membership_models ?? []],
   ['operations.minor_policy', 'MinorPolicy', (s) => [s.operations?.minor_policy]],
+  ['size_tier', 'SizeTier', (s) => [s.size_tier]],
   ['verification.status', 'VerificationStatus', (s) => [s.verification?.status]],
   ['sources[].system', 'SourceSystem', (s) => (s.sources ?? []).map((x) => x.system)],
   ['external_refs[].system', 'SourceSystem', (s) => (s.external_refs ?? []).map((x) => x.system)],
@@ -66,6 +67,12 @@ for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWi
 
   for (const r of s.region_ids ?? []) {
     if (!regionIds.has(r)) at(`region_ids: unknown region "${r}"`);
+  }
+  // A space outside any region is fine (the network comes first, regions on
+  // request) but it must at least say which state it is in, or nobody can
+  // convene it.
+  if (!(s.region_ids ?? []).length && !s.address?.region) {
+    at('no region_ids and no address.region — a space outside a region must name its state');
   }
 
   const known = new Set(Object.keys(schema.properties));

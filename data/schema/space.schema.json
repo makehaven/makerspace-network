@@ -9,7 +9,6 @@
     "name",
     "kind",
     "status",
-    "region_ids",
     "sources",
     "verification"
   ],
@@ -51,11 +50,15 @@
     },
     "region_ids": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "type": "string"
       },
-      "description": "Regions this space belongs to, e.g. ['us-ct']. The multi-state tenancy key \u2014 the analogue of ecosystem_ids in the Nexus compact."
+      "description": "Regions this space belongs to, e.g. ['us-ct']. The multi-state tenancy key \u2014 the analogue of ecosystem_ids in the Nexus compact. Optional since 0.3.0: a space belongs to the network first and to a region once one exists for its state (docs/GOVERNANCE.md). Its state is address.region."
+    },
+    "size_tier": {
+      "type": "string",
+      "$comment": "enum: SizeTier",
+      "description": "How the network convenes by size. Thresholds are a network decision recorded on the region, not here."
     },
     "address": {
       "type": "object",

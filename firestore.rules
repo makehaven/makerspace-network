@@ -1,0 +1,291 @@
+rules_version = '2';
+
+// The people layer (docs/GOVERNANCE.md, docs/PEOPLE.md). These rules are the
+// authority: everything the browser does is checked here, and there is no
+// Cloud Function in the write path. Nexus learned the hard way that custom
+// claims written by Functions and never read by rules are decoration; here
+// the only source of role is the documents themselves.
+//
+// Collections
+//   people/{uid}              who a signed-in person is; email is their own
+//   memberships/{uid}_{space} a person's standing at one space
+//   stewardships/{uid}        region stewards and network admins
+//   spaces_index/{space}      mirror of data/spaces the rules can read, plus proposals
+//   roster/{uid}              what verified people may see about each other
+//   messages/{id}             relayed messages between verified people
+//   audit/{id}                append-only
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- identity ----------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function tokenEmail() { return request.auth.token.email.lower(); }
+    function emailVerified() { return signedIn() && request.auth.token.email_verified == true; }
+    function emailDomain() { return tokenEmail().split('@')[1]; }
+
+    // The first network admin has to come from somewhere. These addresses may
+    // grant themselves network_admin once; everything after that is granted.
+    function isBootstrapAdmin() {
+      return emailVerified() && tokenEmail() in ['jrlogan@makehaven.org'];
+    }
+
+    // ---------- lookups ----------
+    function path(col, id) { return /databases/$(database)/documents/$(col)/$(id); }
+
+    function stewardDoc() { return get(path('stewardships', uid())); }
+    function hasStewardship() { return signedIn() && exists(path('stewardships', uid())); }
+    function isNetworkAdmin() { return hasStewardship() && stewardDoc().data.network_admin == true; }
+    function isSteward() { return hasStewardship() && stewardDoc().data.region_ids.size() > 0; }
+    function isStewardOf(regionId) {
+      return hasStewardship() && regionId != null && regionId in stewardDoc().data.region_ids;
+    }
+
+    function membershipPath(u, spaceId) { return path('memberships', u + '_' + spaceId); }
+    function hasMembership(u, spaceId) { return exists(membershipPath(u, spaceId)); }
+    function membership(u, spaceId) { return get(membershipPath(u, spaceId)).data; }
+    function activeRoleAt(spaceId) {
+      return hasMembership(uid(), spaceId) && membership(uid(), spaceId).status == 'active'
+        ? membership(uid(), spaceId).role : null;
+    }
+    function isSpaceAdmin(spaceId) { return activeRoleAt(spaceId) == 'space_admin'; }
+    function isOrganiserAt(spaceId) { return activeRoleAt(spaceId) in ['space_admin', 'space_editor']; }
+
+    function personDoc() { return get(path('people', uid())).data; }
+    function hasPerson() { return signedIn() && exists(path('people', uid())); }
+
+    // "Verified": an active membership at the person's primary space.
+    function isVerified() {
+      return hasPerson()
+        && personDoc().primary_space_id != null
+        && hasMembership(uid(), personDoc().primary_space_id)
+        && membership(uid(), personDoc().primary_space_id).status == 'active';
+    }
+
+    function spaceExists(spaceId) { return exists(path('spaces_index', spaceId)); }
+    function space(spaceId) { return get(path('spaces_index', spaceId)).data; }
+    function domainMatches(spaceId) {
+      return emailVerified()
+        && space(spaceId).domain != null
+        && space(spaceId).domain == emailDomain();
+    }
+
+    function isIso(v) { return v is string && v.size() >= 20 && v.size() <= 40; }
+
+    // ---------- people ----------
+    match /people/{personId} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['name', 'email', 'email_domain', 'phone', 'primary_space_id', 'created_at', 'updated_at'])
+          && d().name is string && d().name.size() > 0 && d().name.size() <= 120
+          && d().email == tokenEmail()
+          && d().email_domain == emailDomain()
+          && (d().phone == null || (d().phone is string && d().phone.size() <= 40))
+          && (d().primary_space_id == null
+              || existsAfter(membershipPath(personId, d().primary_space_id)))
+          && isIso(d().updated_at);
+      }
+      allow get: if signedIn() && (uid() == personId || isSteward() || isNetworkAdmin() || isVerified());
+      allow list: if isSteward() || isNetworkAdmin();
+      allow create: if signedIn() && uid() == personId && shape() && isIso(d().created_at);
+      allow update: if signedIn() && (
+          (uid() == personId && shape()
+            && d().diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'primary_space_id', 'updated_at']))
+          // A confirmer may set someone's primary space, once, so the roster
+          // entry can be written for them. Nothing else about them.
+          || ((isSteward() || isNetworkAdmin() || isSpaceAdmin(d().primary_space_id))
+            && d().diff(resource.data).affectedKeys().hasOnly(['primary_space_id', 'updated_at'])
+            && resource.data.primary_space_id == null
+            && existsAfter(membershipPath(personId, d().primary_space_id))
+            && isIso(d().updated_at))
+        );
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- memberships ----------
+    match /memberships/{mid} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['person_id', 'space_id', 'role', 'status', 'functions', 'contact_preference',
+                                   'invitations', 'state', 'region_id', 'confirmed_by', 'created_at', 'updated_at'])
+          && d().person_id is string && d().space_id is string
+          && d().role in ['space_admin', 'space_editor', 'space_contact']
+          && d().status in ['pending', 'active', 'suspended', 'revoked']
+          && d().functions is list && d().functions.size() <= 10
+          && d().contact_preference in ['email', 'phone', 'relay']
+          && d().invitations is bool
+          && isIso(d().updated_at);
+      }
+      // The copied space fields must agree with the index, or a person could
+      // file themselves under a region whose steward never sees them.
+      function agreesWithSpace() {
+        return d().state == space(d().space_id).state && d().region_id == space(d().space_id).region_id;
+      }
+      function claimsInSameBatch() {
+        return space(d().space_id).claimed == false
+          && getAfter(path('spaces_index', d().space_id)).data.claimed == true;
+      }
+
+      allow read: if signedIn() && (
+          resource.data.person_id == uid()
+          || isOrganiserAt(resource.data.space_id)
+          || isStewardOf(resource.data.region_id)
+          || isNetworkAdmin());
+
+      // Self-join. What you get depends on whether your verified email is at
+      // the space's own domain (GOVERNANCE §Claiming).
+      allow create: if signedIn() && shape()
+        && mid == uid() + '_' + d().space_id
+        && d().person_id == uid()
+        && spaceExists(d().space_id)
+        && agreesWithSpace()
+        && d().confirmed_by == null
+        && isIso(d().created_at)
+        && (
+          // Domain-matched at a real space: admin if unclaimed (and claim it
+          // in the same batch), editor/contact right away, or choose to wait.
+          (domainMatches(d().space_id) && space(d().space_id).proposed == false && (
+              (d().role == 'space_admin' && d().status == 'active' && claimsInSameBatch())
+              || (d().role in ['space_editor', 'space_contact'] && d().status == 'active')
+              || d().status == 'pending'))
+          // Everyone else is a contact waiting for confirmation.
+          || (d().role == 'space_contact' && d().status == 'pending')
+        );
+
+      allow update: if signedIn() && shape()
+        && d().person_id == resource.data.person_id
+        && d().space_id == resource.data.space_id
+        && d().created_at == resource.data.created_at
+        && (
+          // Yourself: profile fields only, never your own standing.
+          (resource.data.person_id == uid()
+            && d().diff(resource.data).affectedKeys().hasOnly(['functions', 'contact_preference', 'invitations', 'updated_at']))
+          // A space admin: anyone's standing at that space, and nothing above admin exists.
+          || (isSpaceAdmin(resource.data.space_id)
+            && d().diff(resource.data).affectedKeys().hasOnly(['role', 'status', 'confirmed_by', 'updated_at']))
+          || isStewardOf(resource.data.region_id)
+          || isNetworkAdmin()
+        );
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- stewardships ----------
+    match /stewardships/{personId} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['region_ids', 'network_admin', 'granted_by', 'created_at'])
+          && d().region_ids is list && d().network_admin is bool && d().granted_by is string;
+      }
+      allow read: if signedIn() && (uid() == personId || isSteward() || isNetworkAdmin());
+      allow create, update: if shape() && (
+          isNetworkAdmin()
+          || (isBootstrapAdmin() && uid() == personId && d().network_admin == true && !exists(path('stewardships', personId))));
+      allow delete: if isNetworkAdmin() && uid() != personId;
+    }
+
+    // ---------- spaces_index ----------
+    match /spaces_index/{spaceId} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['name', 'domain', 'state', 'region_id', 'size_tier', 'proposed', 'proposed_by',
+                                   'website', 'city', 'claimed', 'updated_at'])
+          && d().name is string && d().name.size() > 0 && d().name.size() <= 160
+          && (d().domain == null || d().domain is string)
+          && (d().state == null || (d().state is string && d().state.size() == 2))
+          && (d().size_tier == null || d().size_tier in ['small', 'medium', 'large'])
+          && d().proposed is bool && d().claimed is bool
+          && isIso(d().updated_at);
+      }
+      allow read: if signedIn();
+      allow create: if shape() && (
+          (isNetworkAdmin() && d().proposed == false)
+          // Anyone may propose a space that is not listed. It stays marked
+          // proposed, nobody can be more than a pending contact at it, and
+          // the network admin turns it into a directory record or deletes it.
+          || (signedIn() && d().proposed == true && d().proposed_by == uid() && d().claimed == false
+              && d().region_id == null && d().state != null
+              && spaceId.matches('^proposed-[a-z0-9-]{3,60}$')));
+      allow update: if shape() && (
+          isNetworkAdmin()
+          || ((isStewardOf(resource.data.region_id) || isSpaceAdmin(spaceId))
+              && d().diff(resource.data).affectedKeys().hasOnly(['size_tier', 'updated_at']))
+          // The claim: only ever false → true, only by a domain match, only
+          // together with the admin membership that justifies it.
+          || (domainMatches(spaceId)
+              && resource.data.proposed == false && resource.data.claimed == false && d().claimed == true
+              && d().diff(resource.data).affectedKeys().hasOnly(['claimed', 'updated_at'])
+              && getAfter(membershipPath(uid(), spaceId)).data.role == 'space_admin'
+              && getAfter(membershipPath(uid(), spaceId)).data.status == 'active'));
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- roster ----------
+    match /roster/{personId} {
+      function d() { return request.resource.data; }
+      function m() { return getAfter(membershipPath(personId, d().space_id)).data; }
+      function p() { return getAfter(path('people', personId)).data; }
+      function organiser() { return m().role in ['space_admin', 'space_editor']; }
+      // The projection must agree with its sources, after this batch.
+      function faithful() {
+        return d().keys().hasOnly(['name', 'space_id', 'space_name', 'state', 'region_id', 'role', 'functions',
+                                   'email', 'phone', 'updated_at'])
+          && existsAfter(membershipPath(personId, d().space_id))
+          && m().status == 'active'
+          && p().primary_space_id == d().space_id
+          && d().name == p().name
+          && d().role == m().role
+          && d().functions == m().functions
+          && d().state == m().state
+          && d().region_id == m().region_id
+          && d().space_name == space(d().space_id).name
+          && (d().email == null || (organiser() && m().contact_preference == 'email' && d().email == p().email))
+          && (d().phone == null || (organiser() && m().contact_preference == 'phone' && d().phone == p().phone))
+          && isIso(d().updated_at);
+      }
+      // National, not regional: any verified person sees every other one.
+      allow read: if isVerified() || isSteward() || isNetworkAdmin();
+      allow create, update: if faithful() && (
+          uid() == personId
+          || isSpaceAdmin(d().space_id)
+          || isStewardOf(d().region_id)
+          || isNetworkAdmin());
+      allow delete: if signedIn() && (
+          uid() == personId
+          || isSpaceAdmin(resource.data.space_id)
+          || isStewardOf(resource.data.region_id)
+          || isNetworkAdmin());
+    }
+
+    // ---------- messages ----------
+    match /messages/{id} {
+      function d() { return request.resource.data; }
+      allow create: if (isVerified() || isSteward() || isNetworkAdmin())
+        && d().keys().hasOnly(['from_uid', 'from_name', 'to_uid', 'subject', 'body', 'created_at', 'status', 'read'])
+        && d().from_uid == uid()
+        && d().from_name == personDoc().name
+        && d().to_uid is string && d().to_uid != uid()
+        && exists(path('roster', d().to_uid))
+        && d().subject is string && d().subject.size() <= 200
+        && d().body is string && d().body.size() > 0 && d().body.size() <= 4000
+        && d().status == 'queued' && d().read == false
+        && isIso(d().created_at);
+      allow read: if signedIn() && (resource.data.to_uid == uid() || resource.data.from_uid == uid());
+      allow update: if signedIn() && resource.data.to_uid == uid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- audit ----------
+    match /audit/{id} {
+      allow create: if signedIn() && request.resource.data.actor == uid()
+        && request.resource.data.keys().hasOnly(['actor', 'action', 'details', 'created_at']);
+      allow read: if isSteward() || isNetworkAdmin();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
