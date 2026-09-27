@@ -1,7 +1,8 @@
-// The one Cloud Function the people layer has: deliver a relayed message by
-// email. Everything else is browser + Firestore rules. This is optional —
-// without it, messages still appear on the recipient's People page; with it,
-// they also get an email. Needs the Blaze plan and a Postmark server token:
+// The people layer's only Cloud Functions, both mailers: deliver a relayed
+// message by email, and email meeting invitations. Everything else is browser +
+// Firestore rules. Both are optional — without them, messages and meetings
+// still appear on the recipient's People page; with them, they also get an
+// email. Needs the Blaze plan and a Postmark server token:
 //
 //   firebase functions:secrets:set POSTMARK_SERVER_TOKEN
 //   firebase functions:secrets:set POSTMARK_FROM_EMAIL     # e.g. relay@makerspace.network
@@ -9,9 +10,10 @@
 // Same provider Nexus uses, so one sender signature and one bill.
 
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { defineSecret } from 'firebase-functions/params';
+import { meetingIcs, type IcsMeeting } from './ics';
 
 initializeApp();
 const db = getFirestore();
@@ -60,5 +62,94 @@ export const relayMessage = onDocumentCreated(
       await snap.ref.update({ status: 'failed', error: `postmark ${res.status}` });
     }
     void from; // the sender doc is fetched so a future version can CC them; unused today
+  },
+);
+
+// ---------- meeting invitations ----------
+
+type MeetingDoc = IcsMeeting & {
+  organiser_uid: string; organiser_name: string; invitee_uids: string[];
+  email_requested_at: string | null; emailed_uids: string[];
+};
+
+const when = (m: MeetingDoc) => new Date(m.starts_at).toLocaleString('en-US', {
+  timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+});
+
+/** Postmark's batch endpoint takes up to 500 messages; returns how many were accepted per recipient uid. */
+async function sendBatch(messages: { uid: string; body: Record<string, unknown> }[]): Promise<string[]> {
+  const sent: string[] = [];
+  for (let i = 0; i < messages.length; i += 500) {
+    const chunk = messages.slice(i, i + 500);
+    const res = await fetch('https://api.postmarkapp.com/email/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_SERVER_TOKEN.value() },
+      body: JSON.stringify(chunk.map((c) => c.body)),
+    });
+    if (!res.ok) continue;
+    const results = await res.json() as { ErrorCode: number }[];
+    results.forEach((r, j) => { if (r.ErrorCode === 0) sent.push(chunk[j].uid); });
+  }
+  return sent;
+}
+
+async function emailsOf(uids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const refs = uids.map((u) => db.doc(`people/${u}`));
+  for (let i = 0; i < refs.length; i += 100) {
+    for (const snap of await db.getAll(...refs.slice(i, i + 100))) {
+      const e = snap.get('email') as string | undefined;
+      if (e) out.set(snap.id, e);
+    }
+  }
+  return out;
+}
+
+/** Emails invitations when a convener sets email_requested_at, to every
+ *  invitee not already emailed, so adding people and pressing send again
+ *  reaches only the new ones. Tells the emailed invitees when a meeting is
+ *  cancelled. Replies go to the organiser: conveners are organisers, and
+ *  organisers are reachable directly (GOVERNANCE §Roster). */
+export const meetingMailer = onDocumentWritten(
+  { document: 'meetings/{id}', secrets: [POSTMARK_SERVER_TOKEN, POSTMARK_FROM_EMAIL], region: 'us-central1' },
+  async (event) => {
+    const before = event.data?.before.data() as MeetingDoc | undefined;
+    const after = event.data?.after.data() as MeetingDoc | undefined;
+    if (!after || !event.data) return;
+    const m: MeetingDoc = { ...after, id: event.params.id };
+
+    const cancelling = after.status === 'cancelled' && before?.status === 'scheduled';
+    const requested = after.status === 'scheduled' && !!after.email_requested_at
+      && after.email_requested_at !== before?.email_requested_at;
+    if (!cancelling && !requested) return;
+
+    const to = cancelling ? after.emailed_uids : after.invitee_uids.filter((u) => !after.emailed_uids.includes(u));
+    if (!to.length) return;
+    const [emails, organiser] = await Promise.all([emailsOf(to), db.doc(`people/${after.organiser_uid}`).get()]);
+    const replyTo = organiser.get('email') as string | undefined;
+    const ics = Buffer.from(meetingIcs(m)).toString('base64');
+    const link = `${SITE}/?page=people&meeting=${encodeURIComponent(m.id)}`;
+
+    const text = cancelling
+      ? [`${m.title}, ${when(m)}, has been cancelled by ${m.organiser_name}.`, '', `Details: ${link}`]
+      : [`${m.organiser_name} has invited you to ${m.title}.`, '', `When: ${when(m)} (${m.duration_min} minutes)`,
+         ...(m.location ? [`Where: ${m.location}`] : []), ...(m.agenda ? ['', m.agenda] : []), '',
+         `Let them know if you can come: ${link}`];
+    text.push('', `You are receiving this because you are on the Makerspace Network roster with meeting invitations on. Change that at ${SITE}/?page=join.`);
+
+    const messages = to.filter((u) => emails.has(u)).map((u) => ({
+      uid: u,
+      body: {
+        From: POSTMARK_FROM_EMAIL.value(), To: emails.get(u), ...(replyTo ? { ReplyTo: replyTo } : {}),
+        Subject: `[Makerspace Network] ${cancelling ? 'Cancelled: ' : ''}${m.title}`,
+        TextBody: text.join('\n'), MessageStream: 'outbound',
+        Attachments: [{ Name: 'meeting.ics', Content: ics, ContentType: `text/calendar; method=${cancelling ? 'CANCEL' : 'PUBLISH'}` }],
+      },
+    }));
+    const sent = await sendBatch(messages);
+    if (!cancelling && sent.length) {
+      // This write re-triggers the function; email_requested_at is unchanged, so it returns.
+      await event.data.after.ref.update({ emailed_uids: FieldValue.arrayUnion(...sent) });
+    }
   },
 );

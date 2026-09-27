@@ -11,8 +11,8 @@ import { db } from './firebase';
 import type { Space, Region } from '../types';
 import {
   domainOfEmail, domainOfUrl, isCommonEmailDomain, membershipId, ORGANISER_ROLES,
-  type ContactPreference, type Membership, type Message, type Person, type RosterEntry,
-  type SizeTier, type SpaceIndex, type SpaceRole, type Stewardship,
+  type ContactPreference, type Meeting, type Membership, type Message, type Person, type RosterEntry,
+  type Rsvp, type RsvpResponse, type SizeTier, type SpaceIndex, type SpaceRole, type Stewardship,
 } from './model';
 
 const now = () => new Date().toISOString();
@@ -57,9 +57,16 @@ export async function listMembershipsVisibleTo(s: {
   return [...seen.values()];
 }
 
-export async function loadPeople(ids: string[]): Promise<Map<string, Person>> {
+/** Stewards may list people; a space admin may only get the people whose
+ *  primary space is theirs, one at a time, and the rest are simply absent. */
+export async function loadPeople(ids: string[], opts: { canList: boolean } = { canList: true }): Promise<Map<string, Person>> {
   const out = new Map<string, Person>();
   const unique = [...new Set(ids)];
+  if (!opts.canList) {
+    const got = await Promise.all(unique.map((id) => getDoc(doc(db, 'people', id)).catch(() => null)));
+    got.forEach((g, i) => { if (g?.exists()) out.set(unique[i], g.data() as Person); });
+    return out;
+  }
   for (let i = 0; i < unique.length; i += 30) {
     const chunk = unique.slice(i, i + 30);
     const s = await getDocs(query(collection(db, 'people'), where(documentId(), 'in', chunk)));
@@ -121,6 +128,8 @@ export interface JoinInput {
   name: string;
   phone: string | null;
   existingPerson: Person | null;
+  /** Status of the membership at existingPerson.primary_space_id, if any. */
+  primaryStatus: Membership['status'] | null;
   /** Either a directory space id, or a proposal for one that is not listed. */
   spaceId: string;
   proposal?: { name: string; website: string | null; city: string | null; state: string };
@@ -204,11 +213,18 @@ export async function joinSpace(input: JoinInput): Promise<JoinOutcome> {
   };
   batch.set(doc(db, 'memberships', membershipId(uid, input.spaceId)), membership);
 
+  // The primary space is set on request, not on confirmation: it is what lets
+  // that space's admin read who is asking (firestore.rules, people get). An
+  // active primary is never displaced; a pending one gives way to an active
+  // join, and a dead one to anything.
+  const current = input.existingPerson?.primary_space_id ?? null;
+  const keep = current != null && (input.primaryStatus === 'active'
+    || (input.primaryStatus === 'pending' && status !== 'active'));
+  const primary = keep ? current : input.spaceId;
   const person: Person = input.existingPerson
-    ? { ...input.existingPerson, name: input.name.trim(), phone: input.phone, updated_at: t,
-        primary_space_id: input.existingPerson.primary_space_id ?? (status === 'active' ? input.spaceId : null) }
+    ? { ...input.existingPerson, name: input.name.trim(), phone: input.phone, updated_at: t, primary_space_id: primary }
     : { name: input.name.trim(), email, email_domain: emailDomain, phone: input.phone,
-        primary_space_id: status === 'active' ? input.spaceId : null, created_at: t, updated_at: t };
+        primary_space_id: primary, created_at: t, updated_at: t };
   batch.set(doc(db, 'people', uid), person);
 
   if (claim) batch.update(doc(db, 'spaces_index', input.spaceId), { claimed: true, updated_at: t });
@@ -246,20 +262,22 @@ export async function updateRosterSettings(uid: string, person: Person, m: WithI
 }
 
 /** Steward or space admin changes someone's standing. When a membership goes
- *  active and the person has no primary space yet, this becomes it and the
- *  roster entry is written for them, so they appear without having to come
- *  back and press a button. */
-export async function setMembership(actor: string, m: WithId<Membership>, person: Person, spaceName: string,
+ *  active at the person's primary space (or they have none yet), the roster
+ *  entry is written for them, so they appear without having to come back and
+ *  press a button. `person` is null when the actor may not read it, which
+ *  means the person's primary space is elsewhere and their roster entry is
+ *  not this membership's to touch. */
+export async function setMembership(actor: string, m: WithId<Membership>, person: Person | null, spaceName: string,
   patch: { role?: SpaceRole; status?: Membership['status'] }) {
   const t = now();
   const next: Membership = { ...m, ...patch, updated_at: t, confirmed_by: patch.status === 'active' ? actor : m.confirmed_by };
   const batch = writeBatch(db);
   batch.update(doc(db, 'memberships', m.id), { ...patch, confirmed_by: next.confirmed_by, updated_at: t });
-  const becomesPrimary = next.status === 'active' && (person.primary_space_id == null || person.primary_space_id === m.space_id);
-  if (becomesPrimary) {
+  const becomesPrimary = !!person && next.status === 'active' && (person.primary_space_id == null || person.primary_space_id === m.space_id);
+  if (person && becomesPrimary) {
     if (person.primary_space_id == null) batch.update(doc(db, 'people', m.person_id), { primary_space_id: m.space_id, updated_at: t });
     batch.set(doc(db, 'roster', m.person_id), rosterFrom(person, next, spaceName));
-  } else if (next.status !== 'active' && person.primary_space_id === m.space_id) {
+  } else if (person && next.status !== 'active' && person.primary_space_id === m.space_id) {
     batch.delete(doc(db, 'roster', m.person_id));
   }
   await batch.commit();
@@ -320,4 +338,63 @@ export async function sendMessage(from: { uid: string; name: string }, toUid: st
 
 export async function markRead(id: string) {
   await updateDoc(doc(db, 'messages', id), { read: true });
+}
+
+// ---------- meetings ----------
+
+/** Stewards and network admins see every meeting. */
+export async function listAllMeetings(): Promise<WithId<Meeting>[]> {
+  const s = await getDocs(collection(db, 'meetings'));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as Meeting) }))
+    .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+}
+
+/** The meetings a person was invited to. */
+export async function listMyMeetings(uid: string): Promise<WithId<Meeting>[]> {
+  const s = await getDocs(query(collection(db, 'meetings'), where('invitee_uids', 'array-contains', uid)));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as Meeting) }))
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+}
+
+export async function listRsvps(meetingId: string): Promise<Map<string, Rsvp>> {
+  const s = await getDocs(collection(db, 'meetings', meetingId, 'rsvps'));
+  return new Map(s.docs.map((d) => [d.id, d.data() as Rsvp]));
+}
+
+export type MeetingDraft = Pick<Meeting, 'title' | 'agenda' | 'starts_at' | 'duration_min' | 'location' | 'audience' | 'region_id' | 'invitee_uids'>;
+
+export async function createMeeting(organiser: { uid: string; name: string }, draft: MeetingDraft, sendEmail: boolean) {
+  const t = now();
+  const m: Meeting = {
+    ...draft,
+    organiser_uid: organiser.uid, organiser_name: organiser.name,
+    status: 'scheduled',
+    email_requested_at: sendEmail ? t : null,
+    emailed_uids: [],
+    created_at: t, updated_at: t,
+  };
+  const ref = await addDoc(collection(db, 'meetings'), m);
+  await audit(organiser.uid, 'meeting_created', { meeting: ref.id, invitees: draft.invitee_uids.length, audience: draft.audience });
+  return ref.id;
+}
+
+export async function updateMeeting(actor: string, id: string,
+  patch: Partial<Pick<Meeting, 'title' | 'agenda' | 'starts_at' | 'duration_min' | 'location' | 'status' | 'invitee_uids'>> & { requestEmail?: boolean }) {
+  const { requestEmail, ...fields } = patch;
+  const t = now();
+  await updateDoc(doc(db, 'meetings', id), { ...fields, ...(requestEmail ? { email_requested_at: t } : {}), updated_at: t });
+  await audit(actor, 'meeting_updated', { meeting: id, ...fields, requestEmail: !!requestEmail });
+}
+
+/** The invitee's answer. Attendance is carried over untouched, which the
+ *  rules require. */
+export async function setRsvp(meetingId: string, uid: string, response: RsvpResponse, existing: Rsvp | undefined) {
+  const r: Rsvp = { response, attended: existing?.attended ?? null, updated_at: now() };
+  await setDoc(doc(db, 'meetings', meetingId, 'rsvps', uid), r);
+}
+
+/** The convener's record of who came. The answer is carried over untouched. */
+export async function setAttended(meetingId: string, uid: string, attended: boolean, existing: Rsvp | undefined) {
+  const r: Rsvp = { response: existing?.response ?? null, attended, updated_at: now() };
+  await setDoc(doc(db, 'meetings', meetingId, 'rsvps', uid), r);
 }

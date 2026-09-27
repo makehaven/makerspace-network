@@ -3,18 +3,21 @@ import { useSession } from '../session';
 import { can } from '../capabilities';
 import { REGIONS, SPACES } from '../../data';
 import {
-  listMembershipsVisibleTo, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
+  listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
   listStewardships, findPersonByEmail, grantStewardship,
 } from '../db';
 import { stateName, type Membership, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
 import { FUNCTIONS, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, roleLabel } from './shared';
+import { MeetingForm, MeetingsTab } from './Meetings';
 
-type Row = Membership & { id: string; person?: Person; space?: SpaceIndex };
+/** `rosterName` covers a space admin looking at someone whose primary space
+ *  is elsewhere: their people document is not readable, their roster entry is. */
+type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; rosterName?: string };
 
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  const [tab, setTab] = useState<'people' | 'spaces' | 'stewards'>('people');
+  const [tab, setTab] = useState<'people' | 'meetings' | 'spaces' | 'stewards'>('people');
 
   return (
     <>
@@ -38,10 +41,12 @@ export default function Steward() {
           <>
             <div className="tabs">
               <button className={tab === 'people' ? 'on' : ''} onClick={() => setTab('people')}>People</button>
+              {can(s, 'meeting.convene') && <button className={tab === 'meetings' ? 'on' : ''} onClick={() => setTab('meetings')}>Meetings</button>}
               <button className={tab === 'spaces' ? 'on' : ''} onClick={() => setTab('spaces')}>Spaces</button>
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
             </div>
             {tab === 'people' && <PeopleTab />}
+            {tab === 'meetings' && <MeetingsTab />}
             {tab === 'spaces' && <SpacesTab />}
             {tab === 'stewards' && <StewardsTab />}
           </>
@@ -58,7 +63,8 @@ function useVisible() {
   const [error, setError] = useState<string | null>(null);
   const load = async () => {
     try {
-      const [ms, idx] = await Promise.all([
+      const canList = !!s.stewardship && (s.stewardship.network_admin || s.stewardship.region_ids.length > 0);
+      const [ms, idx, roster] = await Promise.all([
         listMembershipsVisibleTo({
           uid: s.user!.uid,
           networkAdmin: !!s.stewardship?.network_admin,
@@ -66,11 +72,13 @@ function useVisible() {
           adminSpaceIds: s.memberships.filter((m) => m.status === 'active' && m.role === 'space_admin').map((m) => m.space_id),
         }),
         listSpaceIndex(),
+        listRoster().catch(() => []),
       ]);
-      const people = await loadPeople(ms.map((m) => m.person_id));
+      const people = await loadPeople(ms.map((m) => m.person_id), { canList });
+      const names = new Map(roster.map((r) => [r.id, r.name]));
       const byId = new Map(idx.map((x) => [x.id, x]));
       setSpaces(byId);
-      setRows(ms.map((m) => ({ ...m, person: people.get(m.person_id), space: byId.get(m.space_id) })));
+      setRows(ms.map((m) => ({ ...m, person: people.get(m.person_id), rosterName: names.get(m.person_id), space: byId.get(m.space_id) })));
       setError(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
@@ -87,6 +95,7 @@ function PeopleTab() {
   const [fn, setFn] = useState('');
   const [invitesOnly, setInvitesOnly] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [convening, setConvening] = useState(false);
 
   const states = useMemo(() => [...new Set((rows ?? []).map((r) => r.state).filter(Boolean))].sort() as string[], [rows]);
   const shown = useMemo(() => (rows ?? []).filter((r) =>
@@ -97,9 +106,15 @@ function PeopleTab() {
     [rows, status, state, tier, fn, invitesOnly]);
 
   const emails = shown.filter((r) => r.person?.email && r.invitations && r.status === 'active').map((r) => r.person!.email);
+  // One seat per person, however many spaces they belong to.
+  const invitees = [...new Map(shown.filter((r) => r.invitations && r.status === 'active')
+    .map((r) => [r.person_id, { uid: r.person_id, name: r.person?.name ?? r.rosterName ?? r.person_id }])).values()];
+  const audience = [
+    state ? stateName(state) : 'Every state', tier && `${tier} spaces`, fn && functionLabel(fn),
+  ].filter(Boolean).join(' · ');
   const act = async (r: Row, patch: { role?: SpaceRole; status?: Membership['status'] }) => {
-    if (!r.person || !r.space) return;
-    await setMembership(s.user!.uid, r, r.person, r.space.name, patch);
+    if (!r.space) return;
+    await setMembership(s.user!.uid, r, r.person ?? null, r.space.name, patch);
     await reload();
   };
   const exportCsv = () => {
@@ -136,7 +151,13 @@ function PeopleTab() {
           await navigator.clipboard.writeText(emails.join(', ')); setCopied(true); setTimeout(() => setCopied(false), 2000);
         }}>{copied ? 'Copied' : `Copy ${emails.length} invitation email${emails.length === 1 ? '' : 's'}`}</button>
         <button className="btn ghost small" disabled={!shown.length} onClick={exportCsv}>Download CSV</button>
+        {can(s, 'meeting.convene') && (
+          <button className="btn small" disabled={!invitees.length} onClick={() => setConvening(true)}>
+            Invite these {invitees.length} to a meeting</button>
+        )}
       </div>
+      {convening && <MeetingForm invitees={invitees} audience={audience}
+        onDone={() => setConvening(false)} onCancel={() => setConvening(false)} />}
       {error && <p className="error">{error}</p>}
       {rows && rows.length === 0 && <p className="muted">Nobody has joined in your scope yet.</p>}
       {shown.length > 0 && (
@@ -148,7 +169,8 @@ function PeopleTab() {
                 const canAct = can(s, 'membership.confirm', { spaceId: r.space_id, regionId: r.region_id });
                 return (
                   <tr key={r.id} className={r.status === 'pending' ? 'warn-row' : ''}>
-                    <td><strong>{r.person?.name ?? r.person_id}</strong><br /><span className="muted">{r.person?.email}</span></td>
+                    <td><strong>{r.person?.name ?? r.rosterName ?? r.person_id}</strong><br />
+                        <span className="muted">{r.person?.email ?? (r.person ? '' : 'primary space is elsewhere')}</span></td>
                     <td>{r.space?.name ?? r.space_id}{r.space?.proposed && <span className="pill flag" style={{ marginLeft: 6 }}>proposed</span>}<br />
                         <span className="muted">{stateName(r.state)}{r.space?.size_tier ? ` · ${r.space.size_tier}` : ''}</span></td>
                     <td>{canAct

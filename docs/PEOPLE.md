@@ -13,16 +13,23 @@ here the rules read the documents directly and the client is untrusted.
 
 | Collection | One document per | Who writes it |
 |---|---|---|
-| `people/{uid}` | signed-in person: name, email, phone, `primary_space_id` | the person; a confirmer may set the primary space |
+| `people/{uid}` | signed-in person: name, email, phone, `primary_space_id`. Read by the person, stewards, and the admin of their primary space — **never by verified peers**, because it holds the address the roster withholds | the person; a confirmer may set the primary space |
 | `memberships/{uid}_{space_id}` | a person's standing at one space: role, status, functions, contact preference, invitations | the person on join and for their own settings; space admin, steward or network admin for standing |
 | `stewardships/{uid}` | region steward or network admin | network admin; the bootstrap address once |
 | `spaces_index/{space_id}` | mirror of `data/spaces` the rules can read (name, domain, state, region), plus proposed spaces | network admin syncs; anyone proposes; a claim flips `claimed` |
 | `roster/{uid}` | what verified people see about each other | the person or a confirmer; rules refuse a projection that disagrees with its sources |
 | `messages/{id}` | a relayed message | verified sender; recipient marks read; the optional Function emails it |
+| `meetings/{id}` | a convened meeting: when, where, the audience in words, and the invitee uids frozen at creation | stewards in the meeting's region, network admins; `emailed_uids` only by the mailer Function |
+| `meetings/{id}/rsvps/{uid}` | one invitee's answer and whether they came | the invitee writes `response`; the convener writes `attended` |
 | `audit/{id}` | append-only | anyone about themselves; stewards read |
 
 "Verified" is an active membership at the person's primary space. That is
 what opens the roster and the People page.
+
+**Primary space is set on request.** `joinSpace()` points `primary_space_id`
+at the space being joined even while the membership is pending, so that
+space's admin can read who is asking before confirming them. An active
+primary is never displaced; a pending one gives way to an active join.
 
 The document id `{uid}_{space_id}` is not decoration: it lets the rules find a
 membership with `get()` instead of a query, which rules cannot run.
@@ -60,6 +67,25 @@ A contact's email can therefore never reach the roster, whatever the client
 sends. That is the "relay for members, direct for organisers" rule from
 GOVERNANCE, held by the database rather than by good behaviour.
 
+## Meetings
+
+Convening, GOVERNANCE §Roster purpose 1. On the Steward page, filter the
+People tab to who should come and press **Invite these to a meeting**. The
+invitation list is the filtered, active people with invitations on — one seat
+per person — and it is saved on the meeting, so the record shows who was asked.
+
+Invitees see the meeting on their People page, answer yes / maybe / no, see
+who else is coming, and download an `.ics`. After the meeting the steward ticks
+who came; the Meetings tab reports how many spaces were represented.
+
+Email is optional. With the mailer deployed, **Email invitations** sends each
+invitee not yet emailed a message with the `.ics` attached (`METHOD:PUBLISH`,
+so calendars add it without an accept button — answers are given on the site),
+and cancelling tells everyone already emailed. Replies go to the steward who
+called it. Without the mailer, **Copy invitee emails** and **Download .ics**
+cover it by hand. The `.ics` builder is `functions/src/ics.ts`, imported by
+both sides so they cannot disagree.
+
 ## Nexus → Network
 
 | Nexus | Here | Change |
@@ -82,7 +108,7 @@ GOVERNANCE, held by the database rather than by good behaviour.
   never loads the SDK.
 - `firestore.rules`, `test/rules.test.mjs` — `npm run test:rules` runs the
   suite in the emulator. Every row of the join table above has a test.
-- `functions/` — the relay mailer. Not required.
+- `functions/` — the mailers: `relayMessage` and `meetingMailer`. Not required.
 - `data/schema/enums.json` 0.3.0 — `NetworkRole`, `MembershipStatus`,
   `PersonFunction`, `ContactPreference`, `SizeTier`.
 - `data/schema/space.schema.json` — `region_ids` optional, `size_tier` added.
@@ -103,8 +129,9 @@ Done by hand in the Firebase console, once, under `jrlogan@makehaven.org`:
 5. Sign in at `makerspace.network/?page=join` as the bootstrap address, press
    **Set up network admin**, then on the Steward page **Sync directory into
    the index**. Until that sync, nobody can join a directory space.
-6. Optional, later: Blaze plan, `firebase functions:secrets:set` for Postmark,
-   `firebase deploy --only functions`.
+6. Optional, later: Blaze plan, `firebase functions:secrets:set` for
+   `POSTMARK_SERVER_TOKEN` and `POSTMARK_FROM_EMAIL`, then
+   `firebase deploy --only functions` (it builds `functions/` first).
 
 ## Not built yet, on purpose
 

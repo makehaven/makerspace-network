@@ -13,6 +13,7 @@ rules_version = '2';
 //   spaces_index/{space}      mirror of data/spaces the rules can read, plus proposals
 //   roster/{uid}              what verified people may see about each other
 //   messages/{id}             relayed messages between verified people
+//   meetings/{id}             convened meetings; rsvps/{uid} beneath each
 //   audit/{id}                append-only
 
 service cloud.firestore {
@@ -86,7 +87,12 @@ service cloud.firestore {
               || existsAfter(membershipPath(personId, d().primary_space_id)))
           && isIso(d().updated_at);
       }
-      allow get: if signedIn() && (uid() == personId || isSteward() || isNetworkAdmin() || isVerified());
+      // Not readable by verified peers: this document holds the email and
+      // phone that the roster withholds from anyone relayed. A space admin
+      // may read the people whose primary space is theirs, which includes
+      // someone waiting for them to confirm (joinSpace sets it on request).
+      allow get: if signedIn() && (uid() == personId || isSteward() || isNetworkAdmin()
+                                   || isSpaceAdmin(resource.data.primary_space_id));
       allow list: if isSteward() || isNetworkAdmin();
       allow create: if signedIn() && uid() == personId && shape() && isIso(d().created_at);
       allow update: if signedIn() && (
@@ -274,6 +280,72 @@ service cloud.firestore {
       allow update: if signedIn() && resource.data.to_uid == uid()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- meetings ----------
+    // Convening (GOVERNANCE §Roster). A steward turns a roster query into an
+    // invitation list; the list is frozen on the meeting so the record shows
+    // who was asked, not who happens to match the filter today.
+    function convenes(regionId) { return isNetworkAdmin() || isStewardOf(regionId); }
+
+    match /meetings/{mid} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['title', 'agenda', 'starts_at', 'duration_min', 'location', 'audience',
+                                   'region_id', 'organiser_uid', 'organiser_name', 'invitee_uids', 'status',
+                                   'email_requested_at', 'emailed_uids', 'created_at', 'updated_at'])
+          && d().title is string && d().title.size() > 0 && d().title.size() <= 200
+          && d().agenda is string && d().agenda.size() <= 4000
+          && isIso(d().starts_at)
+          && d().duration_min is int && d().duration_min >= 5 && d().duration_min <= 600
+          && d().location is string && d().location.size() <= 300
+          && d().audience is string && d().audience.size() <= 300
+          && d().organiser_name is string && d().organiser_name.size() <= 120
+          && d().invitee_uids is list && d().invitee_uids.size() <= 1000
+          && d().status in ['scheduled', 'cancelled']
+          && (d().email_requested_at == null || isIso(d().email_requested_at))
+          && d().emailed_uids is list
+          && isIso(d().updated_at);
+      }
+      allow read: if signedIn() && (
+          isSteward() || isNetworkAdmin()
+          || resource.data.organiser_uid == uid()
+          || (uid() in resource.data.invitee_uids && isVerified()));
+      allow create: if shape() && convenes(d().region_id)
+        && d().organiser_uid == uid()
+        && d().status == 'scheduled'
+        && d().emailed_uids.size() == 0
+        && isIso(d().created_at);
+      // emailed_uids belongs to the mailer Function; clients never move it.
+      allow update: if shape() && convenes(resource.data.region_id)
+        && d().organiser_uid == resource.data.organiser_uid
+        && d().region_id == resource.data.region_id
+        && d().created_at == resource.data.created_at
+        && d().emailed_uids == resource.data.emailed_uids;
+      allow delete: if convenes(resource.data.region_id);
+
+      // One per invitee. The invitee answers; the convener records attendance.
+      match /rsvps/{pid} {
+        function r() { return request.resource.data; }
+        function meeting() { return get(path('meetings', mid)).data; }
+        function rsvpShape() {
+          return r().keys().hasOnly(['response', 'attended', 'updated_at'])
+            && (r().response == null || r().response in ['yes', 'no', 'maybe'])
+            && (r().attended == null || r().attended is bool)
+            && isIso(r().updated_at);
+        }
+        function invitee() { return signedIn() && uid() == pid && uid() in meeting().invitee_uids && isVerified(); }
+        function convener() { return convenes(meeting().region_id); }
+        allow read: if signedIn() && (isSteward() || isNetworkAdmin()
+          || (uid() in meeting().invitee_uids && isVerified()));
+        allow create: if rsvpShape() && (
+            (invitee() && r().attended == null)
+            || (convener() && r().response == null && pid in meeting().invitee_uids));
+        allow update: if rsvpShape() && (
+            (invitee() && r().diff(resource.data).affectedKeys().hasOnly(['response', 'updated_at']))
+            || (convener() && r().diff(resource.data).affectedKeys().hasOnly(['attended', 'updated_at'])));
+        allow delete: if convener();
+      }
     }
 
     // ---------- audit ----------

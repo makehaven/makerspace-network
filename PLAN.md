@@ -119,8 +119,19 @@ Three things it has to do, in order of why anyone asked for it:
       the write path; the rules are the server
 - [ ] **Switch it on**: Firestore and Auth in the console, deploy, bootstrap
       the network admin, sync the index. Steps in `docs/PEOPLE.md`
-- [ ] Email delivery for relayed messages (`functions/`, needs Blaze + Postmark)
-- [ ] Edit the listing from the site; invitations by email
+- [x] Meetings: a steward turns a roster filter into a meeting with a frozen
+      invitation list; invitees answer and add it to their calendar on the
+      People page; the steward records attendance and sees how many spaces
+      were represented. See PEOPLE.md §Meetings
+- [ ] Email delivery (`functions/`: relayed messages and meeting invitations
+      with `.ics`). Written and building; needs Blaze + Postmark to deploy
+- [ ] County filter on the roster — membership carries state, not county
+- [ ] Edit the listing from the site; invitations to join by email
+- [ ] "Join with your space's account" — OIDC against a space's own member
+      system, reusing Nexus's `makehaven-sso-plan.md` flow, so members arrive
+      verified instead of waiting for a space admin to confirm each one.
+      MakeHaven first. Spec before code, shared with Nexus
+- [ ] Rate limits on messages and proposals before opening sign-up to members
 
 Once this exists the Standards tool can save an assessment against a space
 instead of a browser, which removes the "export a file and email it" step that

@@ -259,3 +259,78 @@ test('people documents are private to the person and stewards', async () => {
   await assertFails(getDocs(collection(user('oh', 'oh@ohiomakers.org'), 'people')));
   await assertFails(deleteDoc(doc(user('oh', 'oh@ohiomakers.org'), 'people', 'jo')));
 });
+
+test('a verified peer cannot read another person\'s document, so a relayed email stays hidden', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await activate('oh', 'oh@ohiomakers.org', 'ohio-makers', 'space_contact');
+  // Both are verified and can read each other's roster entries...
+  await assertSucceeds(getDoc(doc(user('jo', 'jo@makehaven.org'), 'roster', 'oh')));
+  // ...but not the people document behind them, which carries the address.
+  await assertFails(getDoc(doc(user('jo', 'jo@makehaven.org'), 'people', 'oh')));
+  await assertFails(getDoc(doc(user('oh', 'oh@ohiomakers.org'), 'people', 'jo')));
+});
+
+test('a pending joiner names the space as primary, and that space\'s admin can then see who is asking', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  const pat = user('pat', 'pat@gmail.com');
+  const b = writeBatch(pat);
+  b.set(doc(pat, 'people', 'pat'), person('Pat', 'pat@gmail.com', 'makehaven'));
+  b.set(doc(pat, 'memberships', 'pat_makehaven'), membership('pat', 'makehaven', 'space_contact', 'pending'));
+  await assertSucceeds(b.commit());
+  await assertSucceeds(getDoc(doc(user('jo', 'jo@makehaven.org'), 'people', 'pat')));
+  // Pending is not verified: no roster for Pat yet.
+  await assertFails(getDocs(collection(pat, 'roster')));
+  // Another space's admin cannot read Pat.
+  await activate('sp', 'sp@sparkmakerspace.org', 'spark', 'space_admin');
+  await assertFails(getDoc(doc(user('sp', 'sp@sparkmakerspace.org'), 'people', 'pat')));
+});
+
+// ---------- meetings ----------
+
+const meeting = (o = {}) => ({
+  title: 'CT safety leads', agenda: '', starts_at: '2026-10-05T16:00:00.000Z', duration_min: 60, location: '',
+  audience: 'Connecticut · Safety', region_id: 'us-ct', organiser_uid: 'ctsteward', organiser_name: 'Steward',
+  invitee_uids: ['jo'], status: 'scheduled', email_requested_at: null, emailed_uids: [], created_at: T, updated_at: T, ...o,
+});
+
+test('a steward convenes in their own region; nobody else convenes', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'meetings', 'm1'), meeting()));
+  await assertFails(setDoc(doc(st, 'meetings', 'm2'), meeting({ region_id: null })));
+  await assertFails(setDoc(doc(st, 'meetings', 'm3'), meeting({ organiser_uid: 'admin' })));
+  await assertFails(setDoc(doc(user('jo', 'jo@makehaven.org'), 'meetings', 'm4'), meeting({ organiser_uid: 'jo' })));
+  await assertSucceeds(setDoc(doc(user('admin', 'a@x.org'), 'meetings', 'm5'), meeting({ region_id: null, organiser_uid: 'admin' })));
+  // The mailer's record of who was emailed is not the client's to write.
+  await assertFails(updateDoc(doc(st, 'meetings', 'm1'), { emailed_uids: ['jo'], updated_at: T }));
+  await assertSucceeds(updateDoc(doc(st, 'meetings', 'm1'), { status: 'cancelled', updated_at: T }));
+});
+
+test('invitees see and answer their meetings; others see nothing', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await activate('oh', 'oh@ohiomakers.org', 'ohio-makers', 'space_contact');
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'meetings', 'm1'), meeting()); });
+  const jo = user('jo', 'jo@makehaven.org');
+  const oh = user('oh', 'oh@ohiomakers.org');
+  await assertSucceeds(getDocs(query(collection(jo, 'meetings'), where('invitee_uids', 'array-contains', 'jo'))));
+  await assertFails(getDoc(doc(oh, 'meetings', 'm1')));
+  await assertFails(getDocs(collection(oh, 'meetings')));
+
+  await assertSucceeds(setDoc(doc(jo, 'meetings', 'm1', 'rsvps', 'jo'), { response: 'yes', attended: null, updated_at: T }));
+  await assertFails(setDoc(doc(jo, 'meetings', 'm1', 'rsvps', 'jo'), { response: 'yes', attended: true, updated_at: T }));
+  await assertFails(setDoc(doc(oh, 'meetings', 'm1', 'rsvps', 'oh'), { response: 'yes', attended: null, updated_at: T }));
+  await assertFails(setDoc(doc(jo, 'meetings', 'm1', 'rsvps', 'oh'), { response: 'no', attended: null, updated_at: T }));
+});
+
+test('the convener records attendance but cannot answer for anyone', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'meetings', 'm1'), meeting());
+    await setDoc(doc(ctx.firestore(), 'meetings', 'm1', 'rsvps', 'jo'), { response: 'maybe', attended: null, updated_at: T });
+  });
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'meetings', 'm1', 'rsvps', 'jo'), { response: 'maybe', attended: true, updated_at: T }));
+  await assertFails(setDoc(doc(st, 'meetings', 'm1', 'rsvps', 'jo'), { response: 'yes', attended: true, updated_at: T }));
+  // Attendance for someone not invited is refused.
+  await assertFails(setDoc(doc(st, 'meetings', 'm1', 'rsvps', 'stranger'), { response: null, attended: true, updated_at: T }));
+});

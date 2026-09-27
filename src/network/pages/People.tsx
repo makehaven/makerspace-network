@@ -4,6 +4,7 @@ import { can } from '../capabilities';
 import { listRoster, listInbox, sendMessage, markRead } from '../db';
 import { stateName, ORGANISER_ROLES, type RosterEntry, type Message } from '../model';
 import { FUNCTIONS, PageLink, SignIn, functionLabel, roleLabel } from './shared';
+import { MyMeetings } from './Meetings';
 
 type Entry = RosterEntry & { id: string };
 
@@ -55,6 +56,7 @@ export default function People() {
         )}
         {allowed && (
           <>
+            <MyMeetings roster={roster} />
             {inbox.length > 0 && <Inbox items={inbox} me={s.user!.uid} onRead={reload} />}
             <div className="filters">
               <input type="search" placeholder="Name or space" value={q} onChange={(e) => setQ(e.target.value)} />

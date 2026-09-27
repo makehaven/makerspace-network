@@ -90,6 +90,40 @@ export interface Message {
   read: boolean;
 }
 
+export type RsvpResponse = 'yes' | 'no' | 'maybe';
+
+/** A convened meeting. `invitee_uids` is frozen when the meeting is made,
+ *  so the record says who was asked rather than who matches the filter now. */
+export interface Meeting {
+  title: string;
+  agenda: string;
+  starts_at: string;
+  duration_min: number;
+  /** A video link or a street address. */
+  location: string;
+  /** The filter the invitation list came from, in words, e.g. "Connecticut · large spaces". */
+  audience: string;
+  /** The region whose stewards may manage it; null for a network-wide meeting. */
+  region_id: string | null;
+  organiser_uid: string;
+  organiser_name: string;
+  invitee_uids: string[];
+  status: 'scheduled' | 'cancelled';
+  /** Set by the convener to ask the mailer Function to email invitations. */
+  email_requested_at: string | null;
+  /** Written only by the mailer Function. */
+  emailed_uids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** Document id is the invitee's uid. */
+export interface Rsvp {
+  response: RsvpResponse | null;
+  attended: boolean | null;
+  updated_at: string;
+}
+
 export const membershipId = (uid: string, spaceId: string) => `${uid}_${spaceId}`;
 
 export const domainOfEmail = (email: string): string =>

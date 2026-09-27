@@ -98,6 +98,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
       const out = await joinSpace({
         uid: user.uid, email, emailVerified: user.emailVerified,
         name, phone: phone.trim() || null, existingPerson: s.person,
+        primaryStatus: s.memberships.find((m) => m.space_id === s.person?.primary_space_id)?.status ?? null,
         spaceId: target,
         proposal: proposing ? {
           name: proposal.name, website: proposal.website.trim() || null,

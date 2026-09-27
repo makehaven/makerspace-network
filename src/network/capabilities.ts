@@ -19,6 +19,7 @@ export const CAPABILITIES = {
   'steward.view': 'steward.view',          // the steward page
   'index.sync': 'index.sync',              // mirror data/spaces into Firestore
   'stewardship.grant': 'stewardship.grant',
+  'meeting.convene': 'meeting.convene',    // call a meeting from a roster query
 } as const;
 export type Capability = keyof typeof CAPABILITIES;
 
@@ -26,7 +27,7 @@ const VERIFIED_BASE: Capability[] = ['roster.read', 'roster.contact'];
 
 export const ROLE_CAPABILITIES: Record<NetworkRole, Capability[]> = {
   network_admin: Object.keys(CAPABILITIES) as Capability[],
-  region_steward: [...VERIFIED_BASE, 'membership.confirm', 'membership.set_role', 'space.set_size_tier', 'steward.view'],
+  region_steward: [...VERIFIED_BASE, 'membership.confirm', 'membership.set_role', 'space.set_size_tier', 'steward.view', 'meeting.convene'],
   space_admin: [...VERIFIED_BASE, 'membership.confirm', 'membership.set_role', 'listing.update', 'space.set_size_tier'],
   space_editor: [...VERIFIED_BASE, 'listing.update'],
   space_contact: [...VERIFIED_BASE],
