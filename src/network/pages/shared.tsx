@@ -7,6 +7,8 @@ import type { EnumEntry } from '../../types';
 const enums = enumsJson as unknown as Record<string, EnumEntry[]>;
 export const FUNCTIONS = enums.PersonFunction ?? [];
 export const ROLES = enums.NetworkRole ?? [];
+export const PARTNER_TYPES = enums.PartnerType ?? [];
+export const partnerTypeLabel = (id?: string | null) => PARTNER_TYPES.find((p) => p.id === id)?.label ?? id ?? '';
 export const functionLabel = (id: string) => FUNCTIONS.find((f) => f.id === id)?.label ?? id;
 export const roleLabel = (id: string) => ROLES.find((r) => r.id === id)?.label ?? id;
 

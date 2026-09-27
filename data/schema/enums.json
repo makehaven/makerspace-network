@@ -1,13 +1,14 @@
 {
   "$comment": "Controlled vocabularies for the Makerspace Network directory. Versioned: adding a value is a minor bump, removing or renaming one is a major bump. okw and fablabs_io keys record the crosswalk to those standards; see docs/INTEROP.md.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "$comment_people": "Vocabularies for the people layer (phase 0b, docs/GOVERNANCE.md). NetworkRole maps onto Nexus SystemRole so a person in both systems has one obvious mapping.",
   "NetworkRole": [
     { "id": "network_admin", "label": "Network admin", "nexus": "platform_admin" },
     { "id": "region_steward", "label": "Region steward", "nexus": "ecosystem_manager" },
     { "id": "space_admin", "label": "Space admin", "nexus": "eso_admin" },
     { "id": "space_editor", "label": "Space editor", "nexus": "eso_staff" },
-    { "id": "space_contact", "label": "Space contact" }
+    { "id": "space_contact", "label": "Space contact" },
+    { "id": "partner", "label": "Ecosystem partner", "$comment": "Someone at an organisation that works with makerspaces but is not one: an agency, funder, support organisation, school, company or network. Always confirmed by a steward." }
   ],
   "MembershipStatus": [
     { "id": "pending", "label": "Waiting for confirmation" },
@@ -25,12 +26,25 @@
     { "id": "facilities", "label": "Facilities / equipment" },
     { "id": "finance", "label": "Finance / fundraising" },
     { "id": "youth", "label": "Youth programmes" },
-    { "id": "volunteer", "label": "Volunteer" }
+    { "id": "volunteer", "label": "Volunteer" },
+    { "id": "policy", "label": "Policy / government relations" },
+    { "id": "funding", "label": "Grants / funding" },
+    { "id": "entrepreneurship", "label": "Entrepreneurship / business support" },
+    { "id": "workforce", "label": "Workforce / training programmes" }
   ],
   "ContactPreference": [
     { "id": "email", "label": "Show my email to verified people" },
     { "id": "phone", "label": "Show my phone to verified people" },
     { "id": "relay", "label": "Relay messages, never show my address" }
+  ],
+  "PartnerType": [
+    { "id": "government", "label": "Government agency or office", "nexus": "org_type:government_agency" },
+    { "id": "funder", "label": "Funder or foundation", "nexus": "role:funder" },
+    { "id": "support_org", "label": "Entrepreneur or business support organisation", "nexus": "role:eso" },
+    { "id": "education", "label": "School, college or university", "nexus": "org_type:nonprofit" },
+    { "id": "industry", "label": "Company or industry group", "nexus": "org_type:business" },
+    { "id": "network", "label": "Makerspace network or association", "nexus": "role:resource" },
+    { "id": "other", "label": "Other", "nexus": "org_type:other" }
   ],
   "SizeTier": [
     { "id": "small", "label": "Small" },

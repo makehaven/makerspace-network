@@ -4,10 +4,10 @@ import { can } from '../capabilities';
 import { REGIONS, SPACES } from '../../data';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
-  listStewardships, findPersonByEmail, grantStewardship,
+  listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg,
 } from '../db';
-import { stateName, type Membership, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
-import { FUNCTIONS, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, roleLabel } from './shared';
+import { stateName, US_STATES, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
+import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 
 /** `rosterName` covers a space admin looking at someone whose primary space
@@ -93,6 +93,7 @@ function PeopleTab() {
   const [state, setState] = useState('');
   const [tier, setTier] = useState('');
   const [fn, setFn] = useState('');
+  const [kind, setKind] = useState('');
   const [invitesOnly, setInvitesOnly] = useState(false);
   const [copied, setCopied] = useState(false);
   const [convening, setConvening] = useState(false);
@@ -101,16 +102,20 @@ function PeopleTab() {
   const shown = useMemo(() => (rows ?? []).filter((r) =>
     (!status || r.status === status) && (!state || r.state === state)
     && (!tier || r.space?.size_tier === tier) && (!fn || r.functions.includes(fn))
+    && (!kind || (kind === 'makerspace' ? r.space?.kind !== 'partner' : r.space?.kind === 'partner'
+        && (kind === 'partner' || r.space?.partner_type === kind)))
     && (!invitesOnly || (r.invitations && r.status === 'active')))
     .sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1) || (a.person?.name ?? '').localeCompare(b.person?.name ?? '')),
-    [rows, status, state, tier, fn, invitesOnly]);
+    [rows, status, state, tier, fn, kind, invitesOnly]);
 
   const emails = shown.filter((r) => r.person?.email && r.invitations && r.status === 'active').map((r) => r.person!.email);
   // One seat per person, however many spaces they belong to.
   const invitees = [...new Map(shown.filter((r) => r.invitations && r.status === 'active')
     .map((r) => [r.person_id, { uid: r.person_id, name: r.person?.name ?? r.rosterName ?? r.person_id }])).values()];
   const audience = [
-    state ? stateName(state) : 'Every state', tier && `${tier} spaces`, fn && functionLabel(fn),
+    state ? stateName(state) : 'Every state',
+    kind === 'makerspace' ? 'Makerspaces' : kind === 'partner' ? 'Partners' : kind && partnerTypeLabel(kind),
+    tier && `${tier} spaces`, fn && functionLabel(fn),
   ].filter(Boolean).join(' · ');
   const act = async (r: Row, patch: { role?: SpaceRole; status?: Membership['status'] }) => {
     if (!r.space) return;
@@ -118,8 +123,9 @@ function PeopleTab() {
     await reload();
   };
   const exportCsv = () => {
-    const head = ['Name', 'Email', 'Phone', 'Space', 'State', 'Region', 'Size tier', 'Role', 'Status', 'Functions', 'Invitations'];
-    const lines = shown.map((r) => [r.person?.name, r.person?.email, r.person?.phone, r.space?.name, r.state, r.region_id,
+    const head = ['Name', 'Email', 'Phone', 'Organisation', 'Kind', 'State', 'Region', 'Size tier', 'Role', 'Status', 'Functions', 'Invitations'];
+    const lines = shown.map((r) => [r.person?.name, r.person?.email, r.person?.phone, r.space?.name,
+      r.space?.kind === 'partner' ? partnerTypeLabel(r.space.partner_type) : 'Makerspace', r.state, r.region_id,
       r.space?.size_tier, r.role, r.status, r.functions.map(functionLabel).join('; '), r.invitations ? 'yes' : 'no']);
     download('network-people.csv', [head, ...lines].map((l) => l.map(csvEsc).join(',')).join('\n'));
   };
@@ -134,6 +140,12 @@ function PeopleTab() {
         <select value={state} onChange={(e) => setState(e.target.value)}>
           <option value="">Every state</option>
           {states.map((st) => <option key={st} value={st}>{stateName(st)}</option>)}
+        </select>
+        <select value={kind} onChange={(e) => setKind(e.target.value)}>
+          <option value="">Makerspaces and partners</option>
+          <option value="makerspace">Makerspaces only</option>
+          <option value="partner">Partners only</option>
+          {PARTNER_TYPES.map((t) => <option key={t.id} value={t.id}>Partners: {t.label}</option>)}
         </select>
         <select value={tier} onChange={(e) => setTier(e.target.value)}>
           <option value="">Any size</option>
@@ -172,8 +184,9 @@ function PeopleTab() {
                     <td><strong>{r.person?.name ?? r.rosterName ?? r.person_id}</strong><br />
                         <span className="muted">{r.person?.email ?? (r.person ? '' : 'primary space is elsewhere')}</span></td>
                     <td>{r.space?.name ?? r.space_id}{r.space?.proposed && <span className="pill flag" style={{ marginLeft: 6 }}>proposed</span>}<br />
-                        <span className="muted">{stateName(r.state)}{r.space?.size_tier ? ` · ${r.space.size_tier}` : ''}</span></td>
-                    <td>{canAct
+                        <span className="muted">{stateName(r.state)}{r.space?.kind === 'partner' ? ` · ${partnerTypeLabel(r.space.partner_type)}`
+                          : r.space?.size_tier ? ` · ${r.space.size_tier}` : ''}</span></td>
+                    <td>{canAct && r.role !== 'partner'
                       ? <select value={r.role} onChange={(e) => void act(r, { role: e.target.value as SpaceRole })}>
                           {(['space_admin', 'space_editor', 'space_contact'] as const).map((x) => <option key={x} value={x}>{roleLabel(x)}</option>)}
                         </select>
@@ -206,7 +219,7 @@ function SpacesTab() {
     for (const r of rows ?? []) if (r.status === 'active') m.set(r.space_id, (m.get(r.space_id) ?? 0) + 1);
     return m;
   }, [rows]);
-  const list = [...spaces.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const list = [...spaces.values()].sort((a, b) => (a.kind === 'partner' ? 1 : 0) - (b.kind === 'partner' ? 1 : 0) || a.name.localeCompare(b.name));
   const unsynced = SPACES.filter((sp) => !spaces.has(sp.id)).length;
 
   return (
@@ -223,21 +236,21 @@ function SpacesTab() {
         </div>
       )}
       {error && <p className="error">{error}</p>}
-      <p className="muted">A space with fewer than two active people is one departure from going dark.</p>
+      <p className="muted">A space with fewer than two active people is one departure from going dark. Partner organisations are listed after the spaces.</p>
       <div className="scroll-x">
         <table className="data">
-          <thead><tr><th>Space</th><th>State</th><th>Region</th><th>Size</th><th>Active people</th><th>Claimed</th></tr></thead>
+          <thead><tr><th>Organisation</th><th>State</th><th>Region</th><th>Size or type</th><th>Active people</th><th>Claimed</th></tr></thead>
           <tbody>
             {list.map((sp) => {
               const n = counts.get(sp.id) ?? 0;
               const editable = can(s, 'space.set_size_tier', { spaceId: sp.id, regionId: sp.region_id });
               return (
-                <tr key={sp.id} className={n < 2 && !sp.proposed ? 'warn-row' : ''}>
+                <tr key={sp.id} className={n < 2 && !sp.proposed && sp.kind !== 'partner' ? 'warn-row' : ''}>
                   <td><strong>{sp.name}</strong>{sp.proposed && <span className="pill flag" style={{ marginLeft: 6 }}>proposed</span>}<br />
                       <span className="muted">{sp.city}{sp.website ? ` · ${sp.website.replace(/^https?:\/\//, '')}` : ''}</span></td>
                   <td>{stateName(sp.state)}</td>
                   <td>{sp.region_id ?? <span className="muted">none yet</span>}</td>
-                  <td>{editable
+                  <td>{sp.kind === 'partner' ? <span className="tag">{partnerTypeLabel(sp.partner_type)}</span> : editable
                     ? <select value={sp.size_tier ?? ''} onChange={async (e) => { await setSizeTier(sp.id, (e.target.value || null) as SizeTier | null); await reload(); }}>
                         <option value="">—</option>{['small', 'medium', 'large'].map((x) => <option key={x} value={x}>{x}</option>)}
                       </select>
@@ -250,7 +263,57 @@ function SpacesTab() {
           </tbody>
         </table>
       </div>
+      {(s.stewardship?.network_admin || (s.stewardship?.region_ids.length ?? 0) > 0) && <PartnerForm onAdded={reload} />}
     </>
+  );
+}
+
+/** Agencies, funders, support organisations and the like: in the network, not
+ *  in the directory. A steward adds them for their region; people at them then
+ *  join as partners and the steward confirms them. */
+function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
+  const s = useSession();
+  const regions = s.stewardship?.region_ids ?? [];
+  const [f, setF] = useState({ name: '', partner_type: '' as PartnerType | '', website: '', city: '', state: '', region_id: regions[0] ?? '' });
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <form className="card form-card" style={{ marginTop: 20 }} onSubmit={async (e) => {
+      e.preventDefault(); setMsg(null);
+      try {
+        await addPartnerOrg(s.user!.uid, {
+          name: f.name, partner_type: f.partner_type as PartnerType, website: f.website.trim() || null,
+          city: f.city.trim() || null, state: f.state, region_id: f.region_id || null,
+        });
+        setMsg(`Added ${f.name}. People there can now find it when they join.`);
+        setF({ ...f, name: '', website: '', city: '' });
+        await onAdded();
+      } catch (x) { setMsg(x instanceof Error ? x.message : String(x)); }
+    }}>
+      <h2>Add a partner organisation</h2>
+      <p className="muted">An agency, funder, support organisation, school, company or network that works with the spaces. It is not listed in the public directory.</p>
+      <label className="field"><span>Name</span><input required maxLength={160} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+      <div className="inline-fields">
+        <label className="field"><span>Kind</span>
+          <select required value={f.partner_type} onChange={(e) => setF({ ...f, partner_type: e.target.value as PartnerType })}>
+            <option value="">Choose</option>{PARTNER_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </select></label>
+        <label className="field"><span>State</span>
+          <select required value={f.state} onChange={(e) => setF({ ...f, state: e.target.value })}>
+            <option value="">Choose</option>{US_STATES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          </select></label>
+        <label className="field"><span>Region</span>
+          <select value={f.region_id} onChange={(e) => setF({ ...f, region_id: e.target.value })}>
+            {regions.map((r) => <option key={r} value={r}>{REGIONS.find((g) => g.id === r)?.name ?? r}</option>)}
+            {s.stewardship?.network_admin && <option value="">No region (network admin)</option>}
+          </select></label>
+      </div>
+      <div className="inline-fields">
+        <label className="field"><span>Website</span><input type="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} placeholder="https://" /></label>
+        <label className="field"><span>City</span><input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></label>
+      </div>
+      {msg && <p className="muted">{msg}</p>}
+      <div className="btn-row"><button className="btn">Add organisation</button></div>
+    </form>
   );
 }
 

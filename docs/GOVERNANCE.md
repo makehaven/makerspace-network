@@ -42,6 +42,7 @@ Four roles, scoped by what they can reach. The names correspond to Nexus's
 | `space_admin` | One space | Edit every field on that record; invite, promote and remove that space's other people | `eso_admin` |
 | `space_editor` | One space | Edit every field on that record | `eso_staff` |
 | `space_contact` | One space | Edit their own roster entry; receive invitations; see and contact verified people at other spaces. Cannot edit the listing | — |
+| `partner` | One partner organisation | As `space_contact`, at an organisation that works with makerspaces but is not one — see §Ecosystem partners | — |
 
 `space_contact` is the role most people will hold. A board member, a safety
 lead or an instructor who wants to be in the loop is not thereby the person who
@@ -145,7 +146,7 @@ depends on your role, not only your preference:
 
 | Role | Reachable by other verified people via |
 |---|---|
-| `region_steward`, `space_admin`, `space_editor` | Direct email address shown, if `contact_preference` is `email` or `phone`. These are the organisers; being reachable is part of the job |
+| `region_steward`, `space_admin`, `space_editor`, `partner` | Direct email address shown, if `contact_preference` is `email` or `phone`. These are the organisers and vetted partners; being reachable is part of the job |
 | `space_contact` | Relay only, whatever the preference says. The network passes the message on and never exposes the address |
 
 The split exists because `space_contact` is the door through which ordinary
@@ -165,6 +166,32 @@ is prompted to invite a second person at claim time.
 (`small`, `medium`, `large`), set by the space admin or the steward. This is a
 minor bump to `data/schema/enums.json`. Thresholds are a network decision, not a
 schema one; the field records the tier, the region record documents the rule.
+
+## Ecosystem partners
+
+Added 2026-09-27. The groups this network grew out of were never only
+makerspaces: the Connecticut list carries state agency staff, legislative
+staff, Forge and the Entrepreneurship Foundation, and the national calls have
+included the Urban Manufacturing Alliance. They are convened alongside the
+spaces and should be reachable the same way.
+
+- A **partner organisation** is an entry in the sign-up index with
+  `kind: partner` and a `PartnerType` (`government`, `funder`, `support_org`,
+  `education`, `industry`, `network`, `other`), crosswalked to Nexus's
+  `OrganizationRole` / `OrganizationType` in `enums.json`. It is **not** a
+  directory record: the public directory stays makerspaces only.
+- A steward adds partner organisations for their region; anyone may propose
+  one, and the network admin reviews proposals.
+- People there join with the `partner` role, the only role a partner
+  organisation has. **A steward always confirms a partner.** An email at the
+  organisation's domain is not enough: a `ct.gov` address says you work for
+  the state, not that you speak for the office that funds makerspaces.
+- Once confirmed, a partner is a verified person like any other: they see the
+  roster and are seen on it, receive invitations, and can be filtered for
+  ("Connecticut partners: government"). Like organisers, they may choose to
+  show their address, since a steward has vetted them and they are usually
+  public-facing already.
+- A partner never edits a space's listing and never claims one.
 
 ## The network first, regions on request
 

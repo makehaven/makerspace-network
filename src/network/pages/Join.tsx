@@ -3,13 +3,13 @@ import { useSession } from '../session';
 import { SPACES, spaceById } from '../../data';
 import {
   domainOfEmail, domainOfUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES,
-  type ContactPreference, type SpaceRole, type Membership,
+  type ContactPreference, type SpaceRole, type Membership, type PartnerType, type SpaceIndex,
 } from '../model';
 import {
-  joinSpace, updateProfile, updateRosterSettings, bootstrapNetworkAdmin, getSpaceIndex, type JoinOutcome,
+  joinSpace, updateProfile, updateRosterSettings, bootstrapNetworkAdmin, getSpaceIndex, listSpaceIndex, type JoinOutcome,
 } from '../db';
 import { can } from '../capabilities';
-import { FUNCTIONS, PageLink, SignIn, StatusPill, roleLabel } from './shared';
+import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, partnerTypeLabel, roleLabel } from './shared';
 
 const BOOTSTRAP = ['jrlogan@makehaven.org'];
 
@@ -26,10 +26,10 @@ export default function Join({ spaceId }: { spaceId?: string }) {
           <p className="eyebrow">People</p>
           <h1>{s.person ? 'Your place in the network' : 'Join the network'}</h1>
           <p className="lede">
-            Sign up as someone connected to a makerspace. You'll be reachable for the meetings
-            that concern your space, you'll be able to find your counterparts at other spaces
-            in any state, and when you move on, someone else at your space can pick up where
-            you left off.
+            Sign up as someone connected to a makerspace, or to an organisation that works with
+            them — an agency, funder, support organisation, school or network. You'll be reachable
+            for the meetings that concern you, you'll be able to find your counterparts in any
+            state, and when you move on, someone else can pick up where you left off.
           </p>
         </div>
       </section>
@@ -56,7 +56,11 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   const [search, setSearch] = useState('');
   const [chosen, setChosen] = useState<string | null>(presetSpaceId ?? null);
   const [proposing, setProposing] = useState(false);
-  const [proposal, setProposal] = useState({ name: '', website: '', city: '', state: '' });
+  const [proposal, setProposal] = useState({ name: '', website: '', city: '', state: '', partner_type: '' as PartnerType | '' });
+  // A makerspace comes from the public directory; a partner organisation only
+  // exists in the index, so partner mode searches that instead.
+  const [mode, setMode] = useState<'makerspace' | 'partner'>('makerspace');
+  const [partners, setPartners] = useState<(SpaceIndex & { id: string })[]>([]);
   const [role, setRole] = useState<SpaceRole>('space_contact');
   const [functions, setFunctions] = useState<string[]>([]);
   const [pref, setPref] = useState<ContactPreference>('relay');
@@ -66,11 +70,17 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   const [outcome, setOutcome] = useState<JoinOutcome | null>(null);
   const [indexed, setIndexed] = useState<boolean | null>(null);
 
-  const space = chosen ? spaceById(chosen) : undefined;
+  const partnerOrg = mode === 'partner' && chosen ? partners.find((p) => p.id === chosen) : undefined;
+  const space = mode === 'makerspace' && chosen ? spaceById(chosen) : undefined;
   const spaceDomain = domainOfUrl(space?.contact?.website);
   const domainOk = !!space && !!spaceDomain && spaceDomain === emailDomain
     && !isCommonEmailDomain(emailDomain) && user.emailVerified;
-  const organiser = ORGANISER_ROLES.includes(role);
+  const organiser = mode === 'partner' || ORGANISER_ROLES.includes(role);
+
+  useEffect(() => {
+    if (mode !== 'partner') return;
+    listSpaceIndex().then((xs) => setPartners(xs.filter((x) => x.kind === 'partner'))).catch(() => setPartners([]));
+  }, [mode]);
 
   useEffect(() => {
     if (!chosen || proposing) { setIndexed(null); return; }
@@ -78,6 +88,12 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   }, [chosen, proposing]);
   useEffect(() => { if (!domainOk) setRole('space_contact'); }, [domainOk]);
   useEffect(() => { if (!organiser) setPref('relay'); }, [organiser]);
+
+  const partnerMatches = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return partners.filter((p) => p.name.toLowerCase().includes(q) || (p.state ?? '').toLowerCase() === q).slice(0, 8);
+  }, [search, partners]);
 
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -103,6 +119,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
         proposal: proposing ? {
           name: proposal.name, website: proposal.website.trim() || null,
           city: proposal.city.trim() || null, state: proposal.state,
+          partner_type: mode === 'partner' && proposal.partner_type ? proposal.partner_type : undefined,
         } : undefined,
         wantsRole: role, functions, contact_preference: pref, invitations,
       });
@@ -114,7 +131,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   };
 
   if (outcome) {
-    const spaceName = proposing ? proposal.name : space?.name;
+    const spaceName = proposing ? proposal.name : (space?.name ?? partnerOrg?.name);
     return (
       <div className="card form-card">
         <h2>{outcome.kind === 'active' ? "You're in" : 'Request sent'}</h2>
@@ -123,6 +140,12 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
             You're now {outcome.role === 'space_admin' ? 'the admin of' : 'listed at'} <strong>{spaceName}</strong>
             {outcome.claimed && ' and have claimed its listing'}. You can see and reach verified people
             across the network on the <PageLink page="people">People</PageLink> page.
+          </p>
+        ) : outcome.role === 'partner' ? (
+          <p>
+            You're listed as a partner at <strong>{spaceName}</strong>, waiting for confirmation by{' '}
+            {outcome.reason === 'proposed' ? 'the network admin, who will also add the organisation' : 'the regional steward'}.
+            Once confirmed you'll see and reach people across the network and receive the meeting invitations meant for you.
           </p>
         ) : (
           <p>
@@ -146,8 +169,39 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
       <label className="field"><span>Phone <em>optional</em></span>
         <input maxLength={40} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Only shown if you choose to" /></label>
 
-      <h2>Your space</h2>
-      {!proposing && !space && (
+      <h2>{mode === 'partner' ? 'Your organisation' : 'Your space'}</h2>
+      {!chosen && !proposing && (
+        <div className="radios compact">
+          <label className="radio"><input type="radio" checked={mode === 'makerspace'} onChange={() => { setMode('makerspace'); setSearch(''); }} /> I'm part of a makerspace</label>
+          <label className="radio"><input type="radio" checked={mode === 'partner'} onChange={() => { setMode('partner'); setSearch(''); }} /> I'm at an organisation that works with makerspaces — an agency, funder, support organisation, school, company or network</label>
+        </div>
+      )}
+      {mode === 'partner' && !proposing && !partnerOrg && (
+        <>
+          <label className="field"><span>Find your organisation</span>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or state code" /></label>
+          {partnerMatches.length > 0 && (
+            <ul className="picker">
+              {partnerMatches.map((p) => (
+                <li key={p.id}><button type="button" onClick={() => { setChosen(p.id); setSearch(''); }}>
+                  <strong>{p.name}</strong> <span className="muted">{[partnerTypeLabel(p.partner_type), p.city, p.state].filter(Boolean).join(' · ')}</span>
+                </button></li>
+              ))}
+            </ul>
+          )}
+          <p className="muted" style={{ marginTop: 10 }}>
+            Not there?{' '}
+            <button type="button" className="linkish" onClick={() => setProposing(true)}>Add your organisation</button>
+          </p>
+        </>
+      )}
+      {partnerOrg && !proposing && (
+        <div className="chosen">
+          <div><strong>{partnerOrg.name}</strong> <span className="muted">{[partnerTypeLabel(partnerOrg.partner_type), partnerOrg.state].filter(Boolean).join(' · ')}</span></div>
+          <button type="button" className="linkish" onClick={() => setChosen(null)}>change</button>
+        </div>
+      )}
+      {mode === 'makerspace' && !proposing && !space && (
         <>
           <label className="field"><span>Find your makerspace</span>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, town or state code" autoFocus /></label>
@@ -174,7 +228,14 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
       )}
       {proposing && (
         <div className="subform">
-          <label className="field"><span>Space name</span>
+          {mode === 'partner' && (
+            <label className="field"><span>What kind of organisation</span>
+              <select required value={proposal.partner_type} onChange={(e) => setProposal({ ...proposal, partner_type: e.target.value as PartnerType })}>
+                <option value="">Choose</option>
+                {PARTNER_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select></label>
+          )}
+          <label className="field"><span>{mode === 'partner' ? 'Organisation name' : 'Space name'}</span>
             <input required maxLength={160} value={proposal.name} onChange={(e) => setProposal({ ...proposal, name: e.target.value })} /></label>
           <label className="field"><span>Website</span>
             <input type="url" value={proposal.website} onChange={(e) => setProposal({ ...proposal, website: e.target.value })} placeholder="https://" /></label>
@@ -187,18 +248,27 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
                 {US_STATES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
               </select></label>
           </div>
-          <p className="muted">You'll be a pending contact until the network admin adds the space to the directory.{' '}
-            <button type="button" className="linkish" onClick={() => setProposing(false)}>Pick a listed space instead</button></p>
+          <p className="muted">
+            {mode === 'partner'
+              ? <>You'll be a pending partner until the network admin confirms the organisation and you.{' '}</>
+              : <>You'll be a pending contact until the network admin adds the space to the directory.{' '}</>}
+            <button type="button" className="linkish" onClick={() => setProposing(false)}>{mode === 'partner' ? 'Pick a listed organisation instead' : 'Pick a listed space instead'}</button></p>
         </div>
       )}
 
-      {(space || proposedId) && (
+      {(space || partnerOrg || proposedId) && (
         <>
-          {indexed === false && !proposing && (
+          {indexed === false && !proposing && mode === 'makerspace' && (
             <p className="notice">This space isn't in the sign-up index yet. The network admin needs to sync the directory before you can join it — try again shortly.</p>
           )}
           <h2>Your role there</h2>
-          {domainOk ? (
+          {mode === 'partner' ? (
+            <p className="muted">
+              You'll join as an ecosystem partner. A steward confirms every partner — an email at the
+              organisation's domain isn't enough on its own — and once confirmed you can see and reach
+              people at makerspaces across the network, and they can reach you.
+            </p>
+          ) : domainOk ? (
             <div className="radios">
               {([
                 ['space_admin', 'I look after this space\'s listing', 'Edit the record, confirm and invite other people at the space.'],
@@ -220,7 +290,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
             </p>
           )}
 
-          <h3>What you do at the space</h3>
+          <h3>{mode === 'partner' ? 'What you do' : 'What you do at the space'}</h3>
           <div className="checks">
             {FUNCTIONS.map((f) => (
               <label key={f.id} className={`check ${functions.includes(f.id) ? 'on' : ''}`}>
@@ -243,12 +313,13 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
           )}
           <label className="check standalone">
             <input type="checkbox" checked={invitations} onChange={(e) => setInvitations(e.target.checked)} />
-            Invite me to network meetings that concern my space
+            Invite me to network meetings that concern {mode === 'partner' ? 'my work' : 'my space'}
           </label>
 
           {error && <p className="error">{error}</p>}
           <div className="btn-row">
-            <button className="btn" disabled={busy || !name.trim() || (indexed === false && !proposing)}>
+            <button className="btn" disabled={busy || !name.trim() || (indexed === false && !proposing && mode === 'makerspace')
+              || (proposing && mode === 'partner' && !proposal.partner_type)}>
               {busy ? 'Joining…' : 'Join'}
             </button>
           </div>
@@ -268,7 +339,11 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
   const [saved, setSaved] = useState(false);
   const isBootstrap = BOOTSTRAP.includes((s.user?.email ?? '').toLowerCase()) && !s.stewardship;
 
-  const spaceName = (m: Membership) => spaceById(m.space_id)?.name ?? m.space_id.replace(/^proposed-/, '').replace(/-/g, ' ');
+  // Partner organisations and proposals are only in the index, not the directory.
+  const [indexNames, setIndexNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => { listSpaceIndex().then((xs) => setIndexNames(new Map(xs.map((x) => [x.id, x.name])))).catch(() => undefined); }, []);
+  const spaceName = (m: Membership) => spaceById(m.space_id)?.name ?? indexNames.get(m.space_id)
+    ?? m.space_id.replace(/^(proposed|partner)-/, '').replace(/-/g, ' ');
 
   return (
     <>
@@ -299,7 +374,7 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
       {s.memberships.map((m) => <MembershipCard key={m.id} m={m} spaceName={spaceName(m)} />)}
 
       <div className="btn-row">
-        <button className="btn ghost" onClick={onJoinAnother}>Join another space</button>
+        <button className="btn ghost" onClick={onJoinAnother}>Join another space or organisation</button>
         {(s.verified || s.stewardship) && <PageLink page="people" className="btn">People across the network</PageLink>}
         {can(s, 'steward.view') && <PageLink page="steward" className="btn ghost">Steward tools</PageLink>}
       </div>
@@ -329,7 +404,9 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
         {m.state && <span className="muted">{stateName(m.state)}</span>}
       </div>
       {m.status === 'pending' && (
-        <p className="muted">Once the space's admin or the steward confirms you, you'll appear to other verified people and receive meeting invitations.</p>
+        <p className="muted">{m.role === 'partner'
+          ? "Once a steward confirms you, you'll appear to other verified people and receive meeting invitations."
+          : "Once the space's admin or the steward confirms you, you'll appear to other verified people and receive meeting invitations."}</p>
       )}
       <h4>What you do here</h4>
       <div className="checks">

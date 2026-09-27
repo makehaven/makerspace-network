@@ -125,6 +125,10 @@ Three things it has to do, in order of why anyone asked for it:
       were represented. See PEOPLE.md §Meetings
 - [ ] Email delivery (`functions/`: relayed messages and meeting invitations
       with `.ics`). Written and building; needs Blaze + Postmark to deploy
+- [x] Ecosystem partners: agencies, funders, support organisations, schools,
+      companies and networks join as `partner` at a partner organisation,
+      steward-confirmed, on the roster alongside the spaces (enums 0.4.0,
+      GOVERNANCE §Ecosystem partners)
 - [ ] County filter on the roster — membership carries state, not county
 - [ ] Edit the listing from the site; invitations to join by email
 - [ ] "Join with your space's account" — OIDC against a space's own member

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
-import { listRoster, listInbox, sendMessage, markRead } from '../db';
-import { stateName, ORGANISER_ROLES, type RosterEntry, type Message } from '../model';
-import { FUNCTIONS, PageLink, SignIn, functionLabel, roleLabel } from './shared';
+import { listRoster, listInbox, listSpaceIndex, sendMessage, markRead } from '../db';
+import { stateName, ORGANISER_ROLES, type RosterEntry, type Message, type SpaceIndex } from '../model';
+import { FUNCTIONS, PageLink, SignIn, functionLabel, partnerTypeLabel, roleLabel } from './shared';
 import { MyMeetings } from './Meetings';
 
 type Entry = RosterEntry & { id: string };
@@ -16,12 +16,15 @@ export default function People() {
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState('');
   const [fn, setFn] = useState('');
+  const [kind, setKind] = useState('');
+  const [orgs, setOrgs] = useState<Map<string, SpaceIndex>>(new Map());
   const [q, setQ] = useState('');
   const [to, setTo] = useState<Entry | null>(null);
 
   const reload = () => {
     if (!allowed || !s.user) return;
     listRoster().then(setRoster).catch((e) => setError(String(e?.message ?? e)));
+    listSpaceIndex().then((xs) => setOrgs(new Map(xs.map((x) => [x.id, x])))).catch(() => undefined);
     listInbox(s.user.uid).then(setInbox).catch(() => undefined);
   };
   useEffect(reload, [allowed, s.user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -29,8 +32,9 @@ export default function People() {
   const states = useMemo(() => [...new Set((roster ?? []).map((r) => r.state).filter(Boolean))].sort() as string[], [roster]);
   const shown = useMemo(() => (roster ?? []).filter((r) =>
     (!state || r.state === state) && (!fn || r.functions.includes(fn))
+    && (!kind || (orgs.get(r.space_id)?.kind === 'partner') === (kind === 'partner'))
     && (!q || `${r.name} ${r.space_name}`.toLowerCase().includes(q.toLowerCase()))
-    && r.id !== s.user?.uid), [roster, state, fn, q, s.user?.uid]);
+    && r.id !== s.user?.uid), [roster, state, fn, kind, orgs, q, s.user?.uid]);
 
   return (
     <>
@@ -39,8 +43,9 @@ export default function People() {
           <p className="eyebrow">People</p>
           <h1>Who's at the other spaces</h1>
           <p className="lede">
-            Verified people at makerspaces across the network, in every state. Find the person
-            who does what you do somewhere else, and reach them.
+            Verified people at makerspaces across the network, in every state, and at the
+            agencies, funders and organisations that work with them. Find the person who does
+            what you do somewhere else, and reach them.
           </p>
         </div>
       </section>
@@ -64,6 +69,11 @@ export default function People() {
                 <option value="">Every state</option>
                 {states.map((st) => <option key={st} value={st}>{stateName(st)}</option>)}
               </select>
+              <select value={kind} onChange={(e) => setKind(e.target.value)}>
+                <option value="">Makerspaces and partners</option>
+                <option value="makerspace">At makerspaces</option>
+                <option value="partner">At partner organisations</option>
+              </select>
               <select value={fn} onChange={(e) => setFn(e.target.value)}>
                 <option value="">Any function</option>
                 {FUNCTIONS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
@@ -82,7 +92,8 @@ export default function People() {
                     {shown.map((r) => (
                       <tr key={r.id}>
                         <td><strong>{r.name}</strong><br /><span className="muted">{roleLabel(r.role)}</span></td>
-                        <td>{r.space_name}<br /><span className="muted">{stateName(r.state)}</span></td>
+                        <td>{r.space_name}<br /><span className="muted">{stateName(r.state)}
+                          {orgs.get(r.space_id)?.kind === 'partner' && ` · ${partnerTypeLabel(orgs.get(r.space_id)?.partner_type)}`}</span></td>
                         <td>{r.functions.map((f) => <span key={f} className="tag">{functionLabel(f)}</span>)}</td>
                         <td className="actions">
                           {r.email && <a href={`mailto:${r.email}`}>{r.email}</a>}

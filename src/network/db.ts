@@ -11,7 +11,7 @@ import { db } from './firebase';
 import type { Space, Region } from '../types';
 import {
   domainOfEmail, domainOfUrl, isCommonEmailDomain, membershipId, ORGANISER_ROLES,
-  type ContactPreference, type Meeting, type Membership, type Message, type Person, type RosterEntry,
+  type ContactPreference, type Meeting, type PartnerType, type Membership, type Message, type Person, type RosterEntry,
   type Rsvp, type RsvpResponse, type SizeTier, type SpaceIndex, type SpaceRole, type Stewardship,
 } from './model';
 
@@ -132,7 +132,8 @@ export interface JoinInput {
   primaryStatus: Membership['status'] | null;
   /** Either a directory space id, or a proposal for one that is not listed. */
   spaceId: string;
-  proposal?: { name: string; website: string | null; city: string | null; state: string };
+  /** partner_type set means the proposal is for a partner organisation. */
+  proposal?: { name: string; website: string | null; city: string | null; state: string; partner_type?: PartnerType };
   wantsRole: SpaceRole;
   functions: string[];
   contact_preference: ContactPreference;
@@ -141,7 +142,7 @@ export interface JoinInput {
 
 export type JoinOutcome =
   | { kind: 'active'; role: SpaceRole; claimed: boolean }
-  | { kind: 'pending'; role: SpaceRole; reason: 'proposed' | 'no_domain_match' | 'already_claimed' };
+  | { kind: 'pending'; role: SpaceRole; reason: 'proposed' | 'no_domain_match' | 'already_claimed' | 'partner' };
 
 /** Decide what the rules will accept, then do it in one batch. The decision
  *  is duplicated in firestore.rules — this side exists so the UI can explain
@@ -158,6 +159,8 @@ export async function joinSpace(input: JoinInput): Promise<JoinOutcome> {
     if (!input.proposal) throw new Error('That space is not in the index yet. Ask the network admin to sync the directory.');
     space = {
       name: input.proposal.name.trim(),
+      kind: input.proposal.partner_type ? 'partner' : 'makerspace',
+      partner_type: input.proposal.partner_type ?? null,
       domain: domainOfUrl(input.proposal.website),
       state: input.proposal.state,
       region_id: null,
@@ -172,14 +175,19 @@ export async function joinSpace(input: JoinInput): Promise<JoinOutcome> {
     batch.set(doc(db, 'spaces_index', input.spaceId), space);
   }
 
-  const domainOk = input.emailVerified && !space.proposed && !!space.domain
+  const partner = space.kind === 'partner';
+  const domainOk = !partner && input.emailVerified && !space.proposed && !!space.domain
     && space.domain === emailDomain && !isCommonEmailDomain(emailDomain);
 
   let outcome: JoinOutcome;
   let role: SpaceRole = input.wantsRole;
   let status: Membership['status'];
   let claim = false;
-  if (space.proposed) {
+  if (partner) {
+    // Partners are always confirmed by a steward (or the network admin, for a proposal).
+    role = 'partner'; status = 'pending';
+    outcome = { kind: 'pending', role, reason: space.proposed ? 'proposed' : 'partner' };
+  } else if (space.proposed) {
     role = 'space_contact'; status = 'pending';
     outcome = { kind: 'pending', role, reason: 'proposed' };
   } else if (!domainOk) {
@@ -299,6 +307,8 @@ export async function syncSpaceIndex(spaces: Space[], regions: Region[]) {
     const regionId = s.region_ids?.[0] ?? null;
     const entry: SpaceIndex = {
       name: s.name,
+      kind: 'makerspace',
+      partner_type: null,
       domain: domainOfUrl(s.contact?.website),
       state: s.address?.region ?? regions.find((r) => r.id === regionId)?.region_code ?? null,
       region_id: regionId,
@@ -397,4 +407,23 @@ export async function setRsvp(meetingId: string, uid: string, response: RsvpResp
 export async function setAttended(meetingId: string, uid: string, attended: boolean, existing: Rsvp | undefined) {
   const r: Rsvp = { response: existing?.response ?? null, attended, updated_at: now() };
   await setDoc(doc(db, 'meetings', meetingId, 'rsvps', uid), r);
+}
+
+// ---------- partner organisations ----------
+
+/** A steward adds an organisation in their region that works with makerspaces
+ *  but is not one. It lives only in the index, never in the public directory. */
+export async function addPartnerOrg(actor: string, input: {
+  name: string; partner_type: PartnerType; website: string | null; city: string | null; state: string; region_id: string | null;
+}) {
+  const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
+  const id = `partner-${slug}-${input.state.toLowerCase()}`;
+  const entry: SpaceIndex = {
+    name: input.name.trim(), kind: 'partner', partner_type: input.partner_type,
+    domain: domainOfUrl(input.website), state: input.state, region_id: input.region_id,
+    size_tier: null, proposed: false, website: input.website, city: input.city, claimed: false, updated_at: now(),
+  };
+  await setDoc(doc(db, 'spaces_index', id), entry);
+  await audit(actor, 'partner_added', { space_id: id, partner_type: input.partner_type });
+  return id;
 }

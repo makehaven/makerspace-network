@@ -66,8 +66,15 @@ service cloud.firestore {
 
     function spaceExists(spaceId) { return exists(path('spaces_index', spaceId)); }
     function space(spaceId) { return get(path('spaces_index', spaceId)).data; }
+    // spaces_index holds makerspaces and ecosystem partners (agencies, funders,
+    // support organisations...). An entry without `kind` is a makerspace.
+    function isPartnerOrg(spaceId) { return space(spaceId).get('kind', 'makerspace') == 'partner'; }
+    // Only a makerspace can be joined or claimed on the strength of an email
+    // domain. A partner is always confirmed by a steward: a matching ct.gov
+    // address says you work for the state, not which office speaks for it.
     function domainMatches(spaceId) {
       return emailVerified()
+        && !isPartnerOrg(spaceId)
         && space(spaceId).domain != null
         && space(spaceId).domain == emailDomain();
     }
@@ -116,7 +123,9 @@ service cloud.firestore {
         return d().keys().hasOnly(['person_id', 'space_id', 'role', 'status', 'functions', 'contact_preference',
                                    'invitations', 'state', 'region_id', 'confirmed_by', 'created_at', 'updated_at'])
           && d().person_id is string && d().space_id is string
-          && d().role in ['space_admin', 'space_editor', 'space_contact']
+          && d().role in ['space_admin', 'space_editor', 'space_contact', 'partner']
+          // Partner orgs have partners and nothing else; makerspaces never do.
+          && (d().role == 'partner') == isPartnerOrg(d().space_id)
           && d().status in ['pending', 'active', 'suspended', 'revoked']
           && d().functions is list && d().functions.size() <= 10
           && d().contact_preference in ['email', 'phone', 'relay']
@@ -155,8 +164,8 @@ service cloud.firestore {
               (d().role == 'space_admin' && d().status == 'active' && claimsInSameBatch())
               || (d().role in ['space_editor', 'space_contact'] && d().status == 'active')
               || d().status == 'pending'))
-          // Everyone else is a contact waiting for confirmation.
-          || (d().role == 'space_contact' && d().status == 'pending')
+          // Everyone else is a contact, or a partner, waiting for confirmation.
+          || (d().role in ['space_contact', 'partner'] && d().status == 'pending')
         );
 
       allow update: if signedIn() && shape()
@@ -194,8 +203,12 @@ service cloud.firestore {
     match /spaces_index/{spaceId} {
       function d() { return request.resource.data; }
       function shape() {
-        return d().keys().hasOnly(['name', 'domain', 'state', 'region_id', 'size_tier', 'proposed', 'proposed_by',
-                                   'website', 'city', 'claimed', 'updated_at'])
+        return d().keys().hasOnly(['name', 'kind', 'partner_type', 'domain', 'state', 'region_id', 'size_tier',
+                                   'proposed', 'proposed_by', 'website', 'city', 'claimed', 'updated_at'])
+          && d().kind in ['makerspace', 'partner']
+          && (d().kind == 'partner') == (d().partner_type != null)
+          && (d().partner_type == null
+              || d().partner_type in ['government', 'funder', 'support_org', 'education', 'industry', 'network', 'other'])
           && d().name is string && d().name.size() > 0 && d().name.size() <= 160
           && (d().domain == null || d().domain is string)
           && (d().state == null || (d().state is string && d().state.size() == 2))
@@ -206,6 +219,9 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if shape() && (
           (isNetworkAdmin() && d().proposed == false)
+          // A steward adds the partner organisations of their own region.
+          || (isStewardOf(d().region_id) && d().kind == 'partner' && d().proposed == false
+              && d().claimed == false && spaceId.matches('^partner-[a-z0-9-]{3,60}$'))
           // Anyone may propose a space that is not listed. It stays marked
           // proposed, nobody can be more than a pending contact at it, and
           // the network admin turns it into a directory record or deletes it.
@@ -216,6 +232,8 @@ service cloud.firestore {
           isNetworkAdmin()
           || ((isStewardOf(resource.data.region_id) || isSpaceAdmin(spaceId))
               && d().diff(resource.data).affectedKeys().hasOnly(['size_tier', 'updated_at']))
+          || (isStewardOf(resource.data.region_id) && resource.data.kind == 'partner'
+              && d().diff(resource.data).affectedKeys().hasOnly(['name', 'partner_type', 'domain', 'website', 'city', 'updated_at']))
           // The claim: only ever false → true, only by a domain match, only
           // together with the admin membership that justifies it.
           || (domainMatches(spaceId)
@@ -231,7 +249,9 @@ service cloud.firestore {
       function d() { return request.resource.data; }
       function m() { return getAfter(membershipPath(personId, d().space_id)).data; }
       function p() { return getAfter(path('people', personId)).data; }
-      function organiser() { return m().role in ['space_admin', 'space_editor']; }
+      // Who may show a direct address: organisers, and partners, whom a
+      // steward has vetted and who are usually public-facing already.
+      function organiser() { return m().role in ['space_admin', 'space_editor', 'partner']; }
       // The projection must agree with its sources, after this batch.
       function faithful() {
         return d().keys().hasOnly(['name', 'space_id', 'space_name', 'state', 'region_id', 'role', 'functions',

@@ -31,6 +31,7 @@ export const ROLE_CAPABILITIES: Record<NetworkRole, Capability[]> = {
   space_admin: [...VERIFIED_BASE, 'membership.confirm', 'membership.set_role', 'listing.update', 'space.set_size_tier'],
   space_editor: [...VERIFIED_BASE, 'listing.update'],
   space_contact: [...VERIFIED_BASE],
+  partner: [...VERIFIED_BASE],
 };
 
 export interface Scope { spaceId?: string; regionId?: string | null }

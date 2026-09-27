@@ -2,14 +2,19 @@
 // these are the reader's view of it, kept by hand like src/types.ts. Collection
 // names and field names match docs/PEOPLE.md.
 
-export type SpaceRole = 'space_admin' | 'space_editor' | 'space_contact';
+/** A role held at one organisation in spaces_index. `partner` is the only role
+ *  at a partner organisation, and never held at a makerspace. */
+export type SpaceRole = 'space_admin' | 'space_editor' | 'space_contact' | 'partner';
 export type NetworkRole = 'network_admin' | 'region_steward' | SpaceRole;
 export type MembershipStatus = 'pending' | 'active' | 'suspended' | 'revoked';
 export type ContactPreference = 'email' | 'phone' | 'relay';
 export type SizeTier = 'small' | 'medium' | 'large';
+export type OrgKind = 'makerspace' | 'partner';
+export type PartnerType = 'government' | 'funder' | 'support_org' | 'education' | 'industry' | 'network' | 'other';
 
-/** Roles that show a direct address to verified people (GOVERNANCE §Roster). */
-export const ORGANISER_ROLES: SpaceRole[] = ['space_admin', 'space_editor'];
+/** Roles that may show a direct address to verified people (GOVERNANCE §Roster).
+ *  Partners are included: a steward vetted them and they are usually public-facing. */
+export const ORGANISER_ROLES: SpaceRole[] = ['space_admin', 'space_editor', 'partner'];
 
 export interface Person {
   name: string;
@@ -48,9 +53,14 @@ export interface Stewardship {
 }
 
 /** A Firestore mirror of the fields in data/spaces the rules need to read,
- *  plus spaces people proposed that are not in the directory yet. */
+ *  plus spaces people proposed that are not in the directory yet, plus the
+ *  ecosystem partners (kind 'partner'), which live only here and never in the
+ *  public directory. */
 export interface SpaceIndex {
   name: string;
+  kind: OrgKind;
+  /** Set exactly when kind is 'partner'. */
+  partner_type: PartnerType | null;
   domain: string | null;
   state: string | null;
   region_id: string | null;

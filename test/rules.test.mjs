@@ -21,10 +21,11 @@ const user = (uid, email, verified = true) =>
 const seed = async () => {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    const space = (o) => ({ size_tier: null, proposed: false, website: null, city: null, claimed: false, updated_at: T, ...o });
+    const space = (o) => ({ kind: 'makerspace', partner_type: null, size_tier: null, proposed: false, website: null, city: null, claimed: false, updated_at: T, ...o });
     await setDoc(doc(db, 'spaces_index', 'makehaven'), space({ name: 'MakeHaven', domain: 'makehaven.org', state: 'CT', region_id: 'us-ct' }));
     await setDoc(doc(db, 'spaces_index', 'spark'), space({ name: 'Spark', domain: 'sparkmakerspace.org', state: 'CT', region_id: 'us-ct' }));
     await setDoc(doc(db, 'spaces_index', 'ohio-makers'), space({ name: 'Ohio Makers', domain: 'ohiomakers.org', state: 'OH', region_id: null }));
+    await setDoc(doc(db, 'spaces_index', 'partner-decd-ct'), space({ name: 'CT DECD', kind: 'partner', partner_type: 'government', domain: 'ct.gov', state: 'CT', region_id: 'us-ct' }));
     await setDoc(doc(db, 'stewardships', 'admin'), { region_ids: [], network_admin: true, granted_by: 'admin', created_at: T });
     await setDoc(doc(db, 'stewardships', 'ctsteward'), { region_ids: ['us-ct'], network_admin: false, granted_by: 'admin', created_at: T });
   });
@@ -82,7 +83,7 @@ test('a network admin grants stewardships; a steward cannot', async () => {
 // ---------- spaces_index ----------
 
 test('only a network admin mirrors directory spaces; anyone may propose one', async () => {
-  const entry = { name: 'New', domain: null, state: 'RI', region_id: null, size_tier: null, proposed: false, website: null, city: null, claimed: false, updated_at: T };
+  const entry = { name: 'New', kind: 'makerspace', partner_type: null, domain: null, state: 'RI', region_id: null, size_tier: null, proposed: false, website: null, city: null, claimed: false, updated_at: T };
   await assertSucceeds(setDoc(doc(user('admin', 'a@x.org'), 'spaces_index', 'new-space'), entry));
   const rando = user('rando', 'r@gmail.com');
   await assertFails(setDoc(doc(rando, 'spaces_index', 'another'), entry));
@@ -333,4 +334,57 @@ test('the convener records attendance but cannot answer for anyone', async () =>
   await assertFails(setDoc(doc(st, 'meetings', 'm1', 'rsvps', 'jo'), { response: 'yes', attended: true, updated_at: T }));
   // Attendance for someone not invited is refused.
   await assertFails(setDoc(doc(st, 'meetings', 'm1', 'rsvps', 'stranger'), { response: null, attended: true, updated_at: T }));
+});
+
+// ---------- ecosystem partners ----------
+
+const partnerOrg = (o = {}) => ({
+  name: 'Forge', kind: 'partner', partner_type: 'support_org', domain: 'forgeimpact.org', state: 'CT', region_id: 'us-ct',
+  size_tier: null, proposed: false, website: null, city: null, claimed: false, updated_at: T, ...o,
+});
+
+test('a steward adds partner organisations in their region only; a partner entry must say what kind it is', async () => {
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'spaces_index', 'partner-forge-ct'), partnerOrg()));
+  await assertFails(setDoc(doc(st, 'spaces_index', 'partner-oh-agency-oh'), partnerOrg({ state: 'OH', region_id: null })));
+  await assertFails(setDoc(doc(st, 'spaces_index', 'partner-typeless-ct'), partnerOrg({ partner_type: null })));
+  // Stewards add partners, not makerspaces; and a random person cannot add either.
+  await assertFails(setDoc(doc(st, 'spaces_index', 'partner-sneaky-ct'), partnerOrg({ kind: 'makerspace', partner_type: null })));
+  await assertFails(setDoc(doc(user('rando', 'r@gmail.com'), 'spaces_index', 'partner-mine-ct'), partnerOrg()));
+  // Anyone may still propose one, which the network admin reviews.
+  await assertSucceeds(setDoc(doc(user('rando', 'r@gmail.com'), 'spaces_index', 'proposed-some-fund-ct'),
+    partnerOrg({ proposed: true, proposed_by: 'rando', region_id: null, partner_type: 'funder' })));
+});
+
+test('someone at a partner organisation joins only as a pending partner, even with a matching domain', async () => {
+  const db = user('bri', 'bri@ct.gov');
+  await assertFails(setDoc(doc(db, 'memberships', 'bri_partner-decd-ct'), membership('bri', 'partner-decd-ct', 'partner', 'active')));
+  await assertFails(setDoc(doc(db, 'memberships', 'bri_partner-decd-ct'), membership('bri', 'partner-decd-ct', 'space_contact', 'pending')));
+  await assertFails(setDoc(doc(db, 'memberships', 'bri_partner-decd-ct'), membership('bri', 'partner-decd-ct', 'space_admin', 'pending')));
+  await assertSucceeds(setDoc(doc(db, 'memberships', 'bri_partner-decd-ct'), membership('bri', 'partner-decd-ct', 'partner', 'pending')));
+  // And a partner role cannot be taken at a makerspace.
+  await assertFails(setDoc(doc(user('pat', 'pat@gmail.com'), 'memberships', 'pat_makehaven'), membership('pat', 'makehaven', 'partner', 'pending')));
+  // Nor can a partner organisation be claimed.
+  await assertFails(updateDoc(doc(db, 'spaces_index', 'partner-decd-ct'), { claimed: true, updated_at: T }));
+});
+
+test('the steward confirms a partner, who then appears on the roster and may show their address', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'people', 'bri'), person('Bri', 'bri@ct.gov', 'partner-decd-ct'));
+    await setDoc(doc(db, 'memberships', 'bri_partner-decd-ct'), membership('bri', 'partner-decd-ct', 'partner', 'pending', { contact_preference: 'email' }));
+  });
+  const st = user('ctsteward', 's@x.org');
+  // A steward cannot turn a partner into a space admin.
+  await assertFails(updateDoc(doc(st, 'memberships', 'bri_partner-decd-ct'), { role: 'space_admin', updated_at: T }));
+  const b = writeBatch(st);
+  b.update(doc(st, 'memberships', 'bri_partner-decd-ct'), { status: 'active', confirmed_by: 'ctsteward', updated_at: T });
+  b.set(doc(st, 'roster', 'bri'), {
+    name: 'Bri', space_id: 'partner-decd-ct', space_name: 'CT DECD', state: 'CT', region_id: 'us-ct',
+    role: 'partner', functions: ['staff'], email: 'bri@ct.gov', phone: null, updated_at: T,
+  });
+  await assertSucceeds(b.commit());
+  // Now verified: Bri reads the roster, including people at makerspaces.
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await assertSucceeds(getDocs(collection(user('bri', 'bri@ct.gov'), 'roster')));
 });

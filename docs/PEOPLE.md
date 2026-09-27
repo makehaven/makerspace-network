@@ -16,7 +16,7 @@ here the rules read the documents directly and the client is untrusted.
 | `people/{uid}` | signed-in person: name, email, phone, `primary_space_id`. Read by the person, stewards, and the admin of their primary space — **never by verified peers**, because it holds the address the roster withholds | the person; a confirmer may set the primary space |
 | `memberships/{uid}_{space_id}` | a person's standing at one space: role, status, functions, contact preference, invitations | the person on join and for their own settings; space admin, steward or network admin for standing |
 | `stewardships/{uid}` | region steward or network admin | network admin; the bootstrap address once |
-| `spaces_index/{space_id}` | mirror of `data/spaces` the rules can read (name, domain, state, region), plus proposed spaces | network admin syncs; anyone proposes; a claim flips `claimed` |
+| `spaces_index/{space_id}` | every organisation a person can join: the mirror of `data/spaces` the rules can read (name, domain, state, region), proposed spaces, and **partner organisations** (`kind: partner`, never in the directory). The name is historical | network admin syncs; stewards add partners in their region; anyone proposes; a claim flips `claimed` |
 | `roster/{uid}` | what verified people see about each other | the person or a confirmer; rules refuse a projection that disagrees with its sources |
 | `messages/{id}` | a relayed message | verified sender; recipient marks read; the optional Function emails it |
 | `meetings/{id}` | a convened meeting: when, where, the audience in words, and the invitee uids frozen at creation | stewards in the meeting's region, network admins; `emailed_uids` only by the mailer Function |
@@ -47,6 +47,7 @@ faked. The two must agree; the rules tests pin the rules side.
 | yes | any | editor or contact | **active** at once |
 | no | any | anything | **contact, pending** |
 | — | proposed (not in directory) | anything | **contact, pending**, network admin confirms |
+| any | partner organisation | — | **partner, pending**, steward confirms; domain never counts |
 
 Consumer email domains (`gmail.com` and the rest, list in `model.ts`) never
 count as a match. A space with no website cannot be claimed by domain at all.
