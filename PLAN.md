@@ -134,6 +134,13 @@ Three things it has to do, in order of why anyone asked for it:
       by pasted CSV, prefilled; the invitee accepts by signing in with that
       address. Emailed by the `invitationMailer` or sent by hand (PEOPLE.md
       §Invitations)
+- [x] Groups: mailing lists with an archive, in place of the Google Groups.
+      Post by email or on the site; replies by email come back into the
+      thread through Postmark inbound; membership from the roster or by
+      invitation. Built and tested in the emulator; needs Postmark and DNS
+      (docs/GROUPS.md §Turning it on)
+- [ ] Move the CT Google Group over (docs/GROUPS.md §Moving a Google Group over)
+- [ ] Group digests; attachments
 - [ ] Edit the listing from the site
 - [ ] "Join with your space's account" — OIDC against a space's own member
       system, reusing Nexus's `makehaven-sso-plan.md` flow, so members arrive

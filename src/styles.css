@@ -469,3 +469,7 @@ table.data select { padding: 4px 6px; font-size: 0.86rem; width: auto; }
 blockquote.note { margin: 10px 0 4px; padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius-sm); white-space: pre-wrap; }
 tr.muted-row td { color: var(--ink-3); }
 details.form-card > summary { cursor: pointer; }
+.group-bar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 4px 0 10px; }
+.inline-address { display: flex; gap: 6px; align-items: center; }
+.inline-address input { max-width: 260px; }
+.msg.held { border-left: 3px solid var(--flag); background: var(--flag-soft); }

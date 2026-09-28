@@ -396,7 +396,7 @@ const invitation = (o = {}) => ({
   email: 'pat@gmail.com', name: 'Pat', space_id: 'makehaven', space_name: 'MakeHaven', role: 'space_editor',
   functions: ['safety'], note: '', region_id: 'us-ct', invited_by: 'ctsteward', invited_by_name: 'Steward',
   status: 'pending', created_at: T, expires_at: inFuture(30), accepted_at: null,
-  email_requested_at: null, emailed_at: null, updated_at: T, ...o,
+  email_requested_at: null, emailed_at: null, group_ids: [], updated_at: T, ...o,
 });
 const iid = (space, email) => `${space}~${email}`;
 
@@ -464,4 +464,106 @@ test('accepting an admin invitation claims an unclaimed space in the same batch'
   const b = acceptBatch(casey, 'casey', 'spark', 'space_admin', { email: 'casey@gmail.com' });
   b.update(doc(casey, 'spaces_index', 'spark'), { claimed: true, updated_at: T });
   await assertSucceeds(b.commit());
+});
+
+// ---------- groups ----------
+
+const group = (o = {}) => ({
+  name: 'CT Makerspaces', slug: 'ct-makerspaces', description: '', region_id: 'us-ct', manager_uids: ['ctsteward'],
+  join_policy: 'managers', posting: 'members', archived: false, created_by: 'ctsteward', created_at: T, updated_at: T, ...o,
+});
+const member = (by, o = {}) => ({ name: 'M', delivery: 'each', added_by: by, via_invitation: null, joined_at: T, updated_at: T, ...o });
+const seedGroup = async (o = {}) => env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'groups', o.slug ?? 'ct-makerspaces'), group(o));
+});
+
+test('stewards create groups in their region; addresses are validated and reserved ones refused', async () => {
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'groups', 'ct-makerspaces'), group()));
+  await assertFails(setDoc(doc(st, 'groups', 'national'), group({ slug: 'national', region_id: null })));
+  await assertFails(setDoc(doc(st, 'groups', 'Bad Slug'), group({ slug: 'Bad Slug' })));
+  await assertFails(setDoc(doc(st, 'groups', 'reply'), group({ slug: 'reply' })));
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await assertFails(setDoc(doc(user('jo', 'jo@makehaven.org'), 'groups', 'jos-group'), group({ slug: 'jos-group', created_by: 'jo', manager_uids: ['jo'] })));
+});
+
+test('verified people join open groups themselves; invitation-only groups are joined by a manager adding them', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await seedGroup({ slug: 'open-group', join_policy: 'open' });
+  await seedGroup();
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertSucceeds(setDoc(doc(jo, 'groups', 'open-group', 'members', 'jo'), member('jo')));
+  await assertFails(setDoc(doc(jo, 'groups', 'ct-makerspaces', 'members', 'jo'), member('jo')));
+  // Not verified: cannot join even an open group.
+  await assertFails(setDoc(doc(user('pat', 'pat@gmail.com'), 'groups', 'open-group', 'members', 'pat'), member('pat')));
+  // A manager adds someone on the roster, not someone who is not.
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'groups', 'ct-makerspaces', 'members', 'jo'), member('ctsteward')));
+  await assertFails(setDoc(doc(st, 'groups', 'ct-makerspaces', 'members', 'nobody'), member('ctsteward')));
+  // A member changes their own delivery, and nothing else.
+  await assertSucceeds(updateDoc(doc(jo, 'groups', 'ct-makerspaces', 'members', 'jo'), { delivery: 'none', updated_at: T }));
+  await assertFails(updateDoc(doc(jo, 'groups', 'ct-makerspaces', 'members', 'jo'), { added_by: 'jo', updated_at: T }));
+});
+
+const startBatch = (db, gid, uid, name, o = {}) => {
+  const b = writeBatch(db);
+  const t = doc(collection(db, 'groups', gid, 'threads'));
+  b.set(t, { subject: 'Hello', started_by: uid, started_by_name: name, created_at: T, last_post_at: T, last_author_name: name, post_count: 1 });
+  b.set(doc(collection(t, 'posts')), { author_uid: uid, author_name: name, body: 'Hi all', created_at: T, source: 'web', status: 'queued', sent_count: 0, ...o });
+  return { b, t };
+};
+
+test('members post to a discussion group; only managers post to an announcement group; outsiders read nothing', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await activate('oh', 'oh@ohiomakers.org', 'ohio-makers', 'space_contact');
+  await seedGroup();
+  await seedGroup({ slug: 'ct-news', posting: 'managers' });
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', 'ct-makerspaces', 'members', 'jo'), member('ctsteward'));
+    await setDoc(doc(ctx.firestore(), 'groups', 'ct-news', 'members', 'jo'), member('ctsteward'));
+  });
+  const jo = user('jo', 'jo@makehaven.org');
+  const { b, t } = startBatch(jo, 'ct-makerspaces', 'jo', 'jo');
+  await assertSucceeds(b.commit());
+  // A web post cannot pretend to be email, or skip the mailer's queue.
+  await assertFails(startBatch(jo, 'ct-makerspaces', 'jo', 'jo', { status: 'sent' }).b.commit());
+  await assertFails(startBatch(jo, 'ct-news', 'jo', 'jo').b.commit());
+  const oh = user('oh', 'oh@ohiomakers.org');
+  await assertFails(getDocs(collection(oh, 'groups', 'ct-makerspaces', 'threads')));
+  await assertFails(startBatch(oh, 'ct-makerspaces', 'oh', 'oh').b.commit());
+  // A reply bumps the thread by exactly one.
+  const r = writeBatch(jo);
+  r.set(doc(collection(t, 'posts')), { author_uid: 'jo', author_name: 'jo', body: 'Me again', created_at: T, source: 'web', status: 'queued', sent_count: 0 });
+  r.update(t, { last_post_at: T, last_author_name: 'jo', post_count: 2 });
+  await assertSucceeds(r.commit());
+});
+
+test('a manager releases a held email post; a member cannot', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await seedGroup();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'groups', 'ct-makerspaces', 'members', 'jo'), member('ctsteward'));
+    await setDoc(doc(db, 'groups', 'ct-makerspaces', 'threads', 't1'), { subject: 's', started_by: 'jo', started_by_name: 'jo', created_at: T, last_post_at: T, last_author_name: 'jo', post_count: 1 });
+    await setDoc(doc(db, 'groups', 'ct-makerspaces', 'threads', 't1', 'posts', 'p1'), { author_uid: 'jo', author_name: 'jo', body: 'b', created_at: T, source: 'email', status: 'held', sent_count: 0 });
+  });
+  await assertFails(updateDoc(doc(user('jo', 'jo@makehaven.org'), 'groups', 'ct-makerspaces', 'threads', 't1', 'posts', 'p1'), { status: 'queued' }));
+  await assertSucceeds(updateDoc(doc(user('ctsteward', 's@x.org'), 'groups', 'ct-makerspaces', 'threads', 't1', 'posts', 'p1'), { status: 'queued' }));
+});
+
+test('an invitation that names a group lets the invitee join it after accepting; reply keys are never readable', async () => {
+  await seedGroup();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'invitations', iid('makehaven', 'pat@gmail.com')), invitation({ group_ids: ['ct-makerspaces'] }));
+    await setDoc(doc(ctx.firestore(), 'reply_keys', 'abc'), { gid: 'ct-makerspaces', tid: 't', uid: 'pat' });
+  });
+  const pat = user('pat', 'pat@gmail.com');
+  const joinVia = () => setDoc(doc(pat, 'groups', 'ct-makerspaces', 'members', 'pat'), member('pat', { via_invitation: 'makehaven' }));
+  await assertFails(joinVia());
+  await acceptBatch(pat, 'pat', 'makehaven', 'space_editor').commit();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'roster', 'pat'), { name: 'pat', space_id: 'makehaven', space_name: 'MakeHaven', state: 'CT', region_id: 'us-ct', role: 'space_editor', functions: ['staff'], email: null, phone: null, updated_at: T });
+  });
+  await assertSucceeds(joinVia());
+  await assertFails(getDoc(doc(pat, 'reply_keys', 'abc')));
 });

@@ -157,11 +157,74 @@ export interface Invitation {
   email_requested_at: string | null;
   /** Written only by the mailer Function. */
   emailed_at: string | null;
+  /** Groups the person joins on accepting, e.g. the CT Makerspaces list. */
+  group_ids: string[];
   updated_at: string;
 }
 
 export const invitationId = (spaceId: string, email: string) => `${spaceId}~${email.trim().toLowerCase()}`;
 export const INVITATION_DAYS = 30;
+
+// ---------- groups: a mailing list with an archive, like a Google Group ----------
+
+/** Document id is the slug, which is also the list address's local part:
+ *  `{slug}@lists.makerspace.network`. */
+export interface Group {
+  name: string;
+  slug: string;
+  description: string;
+  /** Whose stewards manage it; null for network-wide (network admins). */
+  region_id: string | null;
+  /** People who manage membership, settings and held posts, besides the stewards. */
+  manager_uids: string[];
+  /** open: any verified person may join. managers: added by a manager, or by invitation. */
+  join_policy: 'open' | 'managers';
+  /** members: any member may post. managers: announcement list. */
+  posting: 'members' | 'managers';
+  archived: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** groups/{slug}/members/{uid}. */
+export interface GroupMember {
+  name: string;
+  /** each: every post by email. none: read on the site only. */
+  delivery: 'each' | 'none';
+  added_by: string;
+  /** Set when the person joined by accepting an invitation that named this group. */
+  via_invitation: string | null;
+  joined_at: string;
+  updated_at: string;
+}
+
+/** groups/{slug}/threads/{id}. */
+export interface GroupThread {
+  subject: string;
+  started_by: string;
+  started_by_name: string;
+  created_at: string;
+  last_post_at: string;
+  last_author_name: string;
+  post_count: number;
+}
+
+/** groups/{slug}/threads/{id}/posts/{id}. `queued` posts are emailed by the
+ *  groupMailer Function; `held` ones wait for a manager (email we could not
+ *  tie firmly to its sender). */
+export interface GroupPost {
+  author_uid: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  source: 'web' | 'email';
+  status: 'queued' | 'held' | 'sent' | 'failed' | 'rejected';
+  sent_count: number;
+}
+
+export const LIST_DOMAIN = 'lists.makerspace.network';
+export const groupAddress = (slug: string) => `${slug}@${LIST_DOMAIN}`;
 
 export const membershipId = (uid: string, spaceId: string) => `${uid}_${spaceId}`;
 

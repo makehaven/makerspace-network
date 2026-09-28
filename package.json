@@ -18,7 +18,8 @@
     "deploy:standards": "npm run build:standards && firebase deploy --only hosting:standards",
     "test:rules": "firebase emulators:exec --only firestore --project makerspace-net \"node --test test/rules.test.mjs\"",
     "deploy:rules": "firebase deploy --only firestore:rules",
-    "dev:emulated": "node scripts/sync-tools.mjs && VITE_USE_EMULATORS=1 vite"
+    "dev:emulated": "node scripts/sync-tools.mjs && VITE_USE_EMULATORS=1 vite",
+    "test:inbound": "npm --prefix functions run build && firebase emulators:exec --only firestore,functions --project makerspace-net \"node --test test/inbound.test.mjs\""
   },
   "dependencies": {
     "firebase": "^12.19.0",

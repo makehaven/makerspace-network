@@ -156,6 +156,9 @@
     "firestore": {
       "port": 8180
     },
+    "functions": {
+      "port": 5101
+    },
     "ui": {
       "enabled": false
     },

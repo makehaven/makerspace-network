@@ -15,6 +15,8 @@ rules_version = '2';
 //   messages/{id}             relayed messages between verified people
 //   meetings/{id}             convened meetings; rsvps/{uid} beneath each
 //   invitations/{space~email} a named person invited to one organisation, prefilled
+//   groups/{slug}             mailing lists: members/, threads/, threads/*/posts/
+//   reply_keys/{key}          Function-only map from a reply address to group, thread, person
 //   audit/{id}                append-only
 
 service cloud.firestore {
@@ -343,7 +345,7 @@ service cloud.firestore {
       function shape() {
         return d().keys().hasOnly(['email', 'name', 'space_id', 'space_name', 'role', 'functions', 'note',
                                    'region_id', 'invited_by', 'invited_by_name', 'status', 'created_at',
-                                   'expires_at', 'accepted_at', 'email_requested_at', 'emailed_at', 'updated_at'])
+                                   'expires_at', 'accepted_at', 'email_requested_at', 'emailed_at', 'group_ids', 'updated_at'])
           && d().email is string && d().email == d().email.lower() && d().email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
           && iid == d().space_id + '~' + d().email
           && spaceExists(d().space_id) && space(d().space_id).proposed == false
@@ -358,6 +360,7 @@ service cloud.firestore {
           && d().status in ['pending', 'accepted', 'revoked']
           && d().expires_at is timestamp
           && (d().email_requested_at == null || isIso(d().email_requested_at))
+          && d().group_ids is list && d().group_ids.size() <= 10
           && isIso(d().updated_at);
       }
       function invitee() { return emailVerified() && resource.data.email == tokenEmail(); }
@@ -386,6 +389,108 @@ service cloud.firestore {
             && getAfter(membershipPath(uid(), resource.data.space_id)).data.status == 'active'
             && getAfter(membershipPath(uid(), resource.data.space_id)).data.role == resource.data.role));
       allow delete: if signedIn() && mayInvite(resource.data.space_id, resource.data.region_id, resource.data.role);
+    }
+
+    // ---------- groups ----------
+    // A mailing list with an archive, in place of a Google Group. Members are
+    // verified people; posts arrive from the site (checked here) or by email
+    // (written by the groupInbound Function, which these rules never see).
+    function groupPath(gid) { return path('groups', gid); }
+    function group(gid) { return get(groupPath(gid)).data; }
+    function groupMemberPath(gid, u) { return /databases/$(database)/documents/groups/$(gid)/members/$(u); }
+    function managesGroup(gid) {
+      return signedIn() && (uid() in group(gid).manager_uids || convenes(group(gid).region_id));
+    }
+    function inGroup(gid) { return signedIn() && exists(groupMemberPath(gid, uid())) && isVerified(); }
+    function mayPost(gid) {
+      return inGroup(gid) && group(gid).archived == false
+        && (group(gid).posting == 'members' || managesGroup(gid));
+    }
+
+    match /groups/{gid} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['name', 'slug', 'description', 'region_id', 'manager_uids', 'join_policy',
+                                   'posting', 'archived', 'created_by', 'created_at', 'updated_at'])
+          && gid.matches('^[a-z0-9][a-z0-9-]{2,39}$') && d().slug == gid
+          && gid != 'reply' && gid != 'postmaster' && gid != 'abuse'
+          && d().name is string && d().name.size() > 0 && d().name.size() <= 120
+          && d().description is string && d().description.size() <= 2000
+          && d().manager_uids is list && d().manager_uids.size() <= 20
+          && d().join_policy in ['open', 'managers']
+          && d().posting in ['members', 'managers']
+          && d().archived is bool
+          && isIso(d().updated_at);
+      }
+      // The list of groups is visible to every verified person, so they can
+      // find and join the open ones.
+      allow read: if isVerified() || isSteward() || isNetworkAdmin();
+      allow create: if shape() && convenes(d().region_id) && d().created_by == uid() && isIso(d().created_at);
+      allow update: if shape() && managesGroup(gid)
+        && d().region_id == resource.data.region_id
+        && d().created_by == resource.data.created_by && d().created_at == resource.data.created_at;
+      allow delete: if convenes(resource.data.region_id);
+
+      match /members/{pid} {
+        function m() { return request.resource.data; }
+        function memberShape() {
+          return m().keys().hasOnly(['name', 'delivery', 'added_by', 'via_invitation', 'joined_at', 'updated_at'])
+            && m().name is string && m().name.size() > 0 && m().name.size() <= 120
+            && m().delivery in ['each', 'none']
+            && isIso(m().updated_at);
+        }
+        // Joining on the strength of an invitation that named this group.
+        function invitedHere() {
+          return m().via_invitation is string
+            && get(invitationPath(m().via_invitation, tokenEmail())).data.status == 'accepted'
+            && gid in get(invitationPath(m().via_invitation, tokenEmail())).data.group_ids;
+        }
+        allow read: if inGroup(gid) || managesGroup(gid);
+        allow create: if memberShape() && m().added_by == uid() && (
+            (uid() == pid && isVerified() && group(gid).archived == false
+              && (group(gid).join_policy == 'open' || invitedHere()))
+            // A manager adds anyone already on the roster.
+            || (managesGroup(gid) && exists(path('roster', pid)) && m().via_invitation == null));
+        allow update: if memberShape() && (
+            (uid() == pid && m().diff(resource.data).affectedKeys().hasOnly(['delivery', 'name', 'updated_at']))
+            || managesGroup(gid));
+        allow delete: if signedIn() && (uid() == pid || managesGroup(gid));
+      }
+
+      match /threads/{tid} {
+        function t() { return request.resource.data; }
+        allow read: if inGroup(gid) || managesGroup(gid);
+        allow create: if mayPost(gid)
+          && t().keys().hasOnly(['subject', 'started_by', 'started_by_name', 'created_at', 'last_post_at',
+                                 'last_author_name', 'post_count'])
+          && t().subject is string && t().subject.size() > 0 && t().subject.size() <= 200
+          && t().started_by == uid() && t().started_by_name == personDoc().name
+          && t().last_author_name == personDoc().name
+          && t().post_count == 1 && isIso(t().created_at) && isIso(t().last_post_at);
+        // A reply bumps the counters; a manager may also fix a subject.
+        allow update: if (mayPost(gid)
+            && t().diff(resource.data).affectedKeys().hasOnly(['last_post_at', 'last_author_name', 'post_count'])
+            && t().post_count == resource.data.post_count + 1
+            && t().last_author_name == personDoc().name && isIso(t().last_post_at))
+          || (managesGroup(gid) && t().diff(resource.data).affectedKeys().hasOnly(['subject']));
+        allow delete: if managesGroup(gid);
+
+        match /posts/{pid} {
+          function p() { return request.resource.data; }
+          allow read: if inGroup(gid) || managesGroup(gid);
+          allow create: if mayPost(gid)
+            && p().keys().hasOnly(['author_uid', 'author_name', 'body', 'created_at', 'source', 'status', 'sent_count'])
+            && p().author_uid == uid() && p().author_name == personDoc().name
+            && p().body is string && p().body.size() > 0 && p().body.size() <= 20000
+            && p().source == 'web' && p().status == 'queued' && p().sent_count == 0
+            && isIso(p().created_at);
+          // A manager releases or rejects a held post; nothing else changes.
+          allow update: if managesGroup(gid) && resource.data.status == 'held'
+            && p().status in ['queued', 'rejected']
+            && p().diff(resource.data).affectedKeys().hasOnly(['status']);
+          allow delete: if signedIn() && (resource.data.author_uid == uid() || managesGroup(gid));
+        }
+      }
     }
 
     // ---------- meetings ----------

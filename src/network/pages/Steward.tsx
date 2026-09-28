@@ -4,12 +4,13 @@ import { can } from '../capabilities';
 import { REGIONS, SPACES } from '../../data';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
-  listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg,
+  listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups,
 } from '../db';
-import { stateName, US_STATES, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
+import { stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 import { InvitationsTab } from './Invitations';
+import { managesGroup } from './Groups';
 
 /** `rosterName` covers a space admin looking at someone whose primary space
  *  is elsewhere: their people document is not readable, their roster entry is. */
@@ -171,6 +172,7 @@ function PeopleTab() {
             Invite these {invitees.length} to a meeting</button>
         )}
       </div>
+      {can(s, 'meeting.convene') && <AddToGroup people={invitees} />}
       {convening && <MeetingForm invitees={invitees} audience={audience}
         onDone={() => setConvening(false)} onCancel={() => setConvening(false)} />}
       {error && <p className="error">{error}</p>}
@@ -374,5 +376,31 @@ function StewardsTab() {
         <div className="btn-row"><button className="btn">Grant</button></div>
       </form>
     </>
+  );
+}
+
+/** Put the filtered, active people into a group in one go — the roster
+ *  filter is the membership list, as it is for meetings. */
+function AddToGroup({ people }: { people: { uid: string; name: string }[] }) {
+  const s = useSession();
+  const [groups, setGroups] = useState<(Group & { id: string })[]>([]);
+  const [gid, setGid] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+  useEffect(() => {
+    listGroups().then((gs) => setGroups(gs.filter((g) => !g.archived && managesGroup(s, g)))).catch(() => setGroups([]));
+  }, [s.user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!groups.length) return null;
+  return (
+    <div className="btn-row" style={{ marginTop: 0 }}>
+      <select value={gid} onChange={(e) => { setGid(e.target.value); setMsg(null); }}>
+        <option value="">Add these to a group…</option>
+        {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+      </select>
+      <button className="btn ghost small" disabled={!gid || !people.length} onClick={async () => {
+        try { await addGroupMembers(s.user!.uid, gid, people); setMsg(`Added ${people.length} to ${groups.find((g) => g.id === gid)?.name}.`); }
+        catch (e) { setMsg(e instanceof Error ? e.message : String(e)); }
+      }}>Add {people.length}</button>
+      {msg && <span className="muted">{msg}</span>}
+    </div>
   );
 }

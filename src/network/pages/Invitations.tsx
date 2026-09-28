@@ -7,8 +7,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
-import { acceptInvitation, createInvitations, listInvitations, listSpaceIndex, myInvitations, updateInvitation, type InvitationDraft } from '../db';
-import { invitationId, ORGANISER_ROLES, type ContactPreference, type Invitation, type SpaceIndex, type SpaceRole } from '../model';
+import { acceptInvitation, createInvitations, listGroups, listInvitations, listSpaceIndex, myInvitations, updateInvitation, type InvitationDraft } from '../db';
+import { invitationId, ORGANISER_ROLES, type ContactPreference, type Group, type Invitation, type SpaceIndex, type SpaceRole } from '../model';
 import { FUNCTIONS, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel } from './shared';
 
 type WithId<T> = T & { id: string };
@@ -143,6 +143,14 @@ function ImportPanel({ orgs, existing, steward, onDone }: {
   const [sendEmail, setSendEmail] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Groups the inviter manages, which an invitation can include.
+  const [groups, setGroups] = useState<(Group & { id: string })[]>([]);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
+  useEffect(() => {
+    listGroups().then((gs) => setGroups(gs.filter((g) => !g.archived && (s.stewardship?.network_admin
+      || g.manager_uids.includes(s.user!.uid) || (g.region_id && s.stewardship?.region_ids.includes(g.region_id))))))
+      .catch(() => setGroups([]));
+  }, [s.user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
   const known = useMemo(() => new Map(existing.map((i) => [i.id, i])), [existing]);
 
   const rows: Row[] = useMemo(() => {
@@ -167,7 +175,7 @@ function ImportPanel({ orgs, existing, steward, onDone }: {
         .map((f) => FUNCTIONS.find((x) => x.id === f || x.label.toLowerCase().startsWith(f))?.id).filter(Boolean) as string[];
       const prior = known.get(invitationId(org.id, email));
       if (prior) return { line, org, problem: `already ${prior.status === 'pending' && !expired(prior) ? 'invited' : prior.status} — ${prior.status === 'accepted' ? 'nothing to do' : 'renew it below'}` };
-      return { line, org, draft: { email, name, space_id: org.id, role, functions: [...new Set(functions)], note: get(cNote) }, note: roleWord && !ROLE_WORDS[roleWord] ? `role “${roleWord}” not recognised, using contact` : undefined };
+      return { line, org, draft: { email, name, space_id: org.id, role, functions: [...new Set(functions)], note: get(cNote), group_ids: [] }, note: roleWord && !ROLE_WORDS[roleWord] ? `role “${roleWord}” not recognised, using contact` : undefined };
     });
   }, [text, orgs, known]);
 
@@ -206,6 +214,20 @@ function ImportPanel({ orgs, existing, steward, onDone }: {
           </table>
         </div>
       )}
+      {groups.length > 0 && (
+        <>
+          <h4>Also join these groups on accepting</h4>
+          <div className="checks">
+            {groups.map((g) => (
+              <label key={g.id} className={`check ${groupIds.includes(g.id) ? 'on' : ''}`}>
+                <input type="checkbox" checked={groupIds.includes(g.id)}
+                       onChange={(e) => setGroupIds(e.target.checked ? [...groupIds, g.id] : groupIds.filter((x) => x !== g.id))} />
+                {g.name}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
       <label className="check standalone"><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email the invitations now
         <span className="muted"> (needs the mailer; otherwise copy the links or download them for your own emails)</span></label>
       {msg && <p className="muted">{msg}</p>}
@@ -214,7 +236,7 @@ function ImportPanel({ orgs, existing, steward, onDone }: {
           setBusy(true); setMsg(null);
           try {
             const n = await createInvitations({ uid: s.user!.uid, name: s.person?.name ?? s.user!.email ?? 'A steward' },
-              good.map((r) => ({ ...r.draft!, note: r.draft!.note || note })), spaces, { sendEmail });
+              good.map((r) => ({ ...r.draft!, note: r.draft!.note || note, group_ids: groupIds })), spaces, { sendEmail });
             setMsg(`Created ${n} invitation${n === 1 ? '' : 's'}.`); setText('');
             await onDone();
           } catch (e) { setMsg(e instanceof Error ? e.message : String(e)); }

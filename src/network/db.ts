@@ -5,13 +5,13 @@
 // the rules check those with getAfter() so the batch is all-or-nothing.
 
 import {
-  addDoc, collection, doc, documentId, getDoc, getDocs, query, setDoc, Timestamp, updateDoc, where, writeBatch,
+  addDoc, collection, deleteDoc, doc, documentId, getDoc, getDocs, orderBy, query, setDoc, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Space, Region } from '../types';
 import {
   domainOfEmail, domainOfUrl, invitationId, isCommonEmailDomain, membershipId, INVITATION_DAYS, ORGANISER_ROLES,
-  type ContactPreference, type Invitation, type Meeting, type PartnerType, type Membership, type Message, type Person, type RosterEntry,
+  type ContactPreference, type Group, type GroupMember, type GroupPost, type GroupThread, type Invitation, type Meeting, type PartnerType, type Membership, type Message, type Person, type RosterEntry,
   type Rsvp, type RsvpResponse, type SizeTier, type SpaceIndex, type SpaceRole, type Stewardship,
 } from './model';
 
@@ -430,7 +430,7 @@ export async function addPartnerOrg(actor: string, input: {
 
 // ---------- invitations ----------
 
-export type InvitationDraft = Pick<Invitation, 'email' | 'name' | 'space_id' | 'role' | 'functions' | 'note'>;
+export type InvitationDraft = Pick<Invitation, 'email' | 'name' | 'space_id' | 'role' | 'functions' | 'note' | 'group_ids'>;
 
 /** Create or re-issue invitations. One batch per 400; an existing pending or
  *  revoked invitation to the same address and organisation is replaced, an
@@ -451,7 +451,7 @@ export async function createInvitations(inviter: { uid: string; name: string }, 
         role: sp.kind === 'partner' ? 'partner' : d.role, functions: d.functions, note: d.note.trim(),
         region_id: sp.region_id, invited_by: inviter.uid, invited_by_name: inviter.name,
         status: 'pending', created_at: t, expires_at: expires, accepted_at: null,
-        email_requested_at: opts.sendEmail ? t : null, emailed_at: null, updated_at: t,
+        email_requested_at: opts.sendEmail ? t : null, emailed_at: null, group_ids: d.group_ids, updated_at: t,
       };
       batch.set(doc(db, 'invitations', invitationId(d.space_id, email)), inv, { merge: false });
       n++;
@@ -529,4 +529,137 @@ export async function acceptInvitation(input: {
   if (person.primary_space_id === inv.space_id) {
     await setDoc(doc(db, 'roster', uid), rosterFrom(person, membership, space.name));
   }
+  // Then the groups the invitation named. Each is its own write, allowed by
+  // the now-accepted invitation; one that fails (a deleted group) does not
+  // undo the rest.
+  for (const gid of inv.group_ids ?? []) {
+    const m: GroupMember = { name: person.name, delivery: 'each', added_by: uid, via_invitation: inv.space_id, joined_at: t, updated_at: t };
+    await setDoc(doc(db, 'groups', gid, 'members', uid), m).catch(() => undefined);
+  }
+}
+
+// ---------- groups ----------
+
+export async function listGroups(): Promise<WithId<Group>[]> {
+  const s = await getDocs(collection(db, 'groups'));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as Group) })).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getGroup(gid: string): Promise<Group | null> {
+  const s = await getDoc(doc(db, 'groups', gid));
+  return s.exists() ? (s.data() as Group) : null;
+}
+
+/** My membership in each of these groups; absent where I am not a member.
+ *  Reading someone else's is refused, so a failure means "not a member". */
+export async function myGroupMemberships(uid: string, gids: string[]): Promise<Map<string, GroupMember>> {
+  const got = await Promise.all(gids.map((g) => getDoc(doc(db, 'groups', g, 'members', uid)).catch(() => null)));
+  const out = new Map<string, GroupMember>();
+  got.forEach((x, i) => { if (x?.exists()) out.set(gids[i], x.data() as GroupMember); });
+  return out;
+}
+
+export async function createGroup(actor: string, g: Pick<Group, 'name' | 'slug' | 'description' | 'region_id' | 'join_policy' | 'posting'>, actorName: string) {
+  const t = now();
+  const group: Group = { ...g, manager_uids: [actor], archived: false, created_by: actor, created_at: t, updated_at: t };
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'groups', g.slug), group);
+  await batch.commit();
+  // The creator is a member too, so they get the mail.
+  await setDoc(doc(db, 'groups', g.slug, 'members', actor),
+    { name: actorName, delivery: 'each', added_by: actor, via_invitation: null, joined_at: t, updated_at: t } satisfies GroupMember);
+  await audit(actor, 'group_created', { group: g.slug });
+}
+
+export async function updateGroup(actor: string, gid: string, patch: Partial<Pick<Group, 'name' | 'description' | 'join_policy' | 'posting' | 'archived' | 'manager_uids'>>) {
+  await updateDoc(doc(db, 'groups', gid), { ...patch, updated_at: now() });
+  await audit(actor, 'group_updated', { group: gid, ...patch });
+}
+
+export async function listGroupMembers(gid: string): Promise<WithId<GroupMember>[]> {
+  const s = await getDocs(collection(db, 'groups', gid, 'members'));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as GroupMember) })).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function joinGroup(uid: string, name: string, gid: string) {
+  const t = now();
+  await setDoc(doc(db, 'groups', gid, 'members', uid),
+    { name, delivery: 'each', added_by: uid, via_invitation: null, joined_at: t, updated_at: t } satisfies GroupMember);
+}
+
+export async function setDelivery(uid: string, gid: string, delivery: GroupMember['delivery']) {
+  await updateDoc(doc(db, 'groups', gid, 'members', uid), { delivery, updated_at: now() });
+}
+
+export async function leaveGroup(uid: string, gid: string) {
+  await deleteDoc(doc(db, 'groups', gid, 'members', uid));
+}
+
+/** A manager adds people already on the roster, e.g. a steward's filtered list. */
+export async function addGroupMembers(actor: string, gid: string, people: { uid: string; name: string }[]) {
+  const t = now();
+  for (let i = 0; i < people.length; i += 400) {
+    const batch = writeBatch(db);
+    for (const p of people.slice(i, i + 400)) {
+      batch.set(doc(db, 'groups', gid, 'members', p.uid),
+        { name: p.name, delivery: 'each', added_by: actor, via_invitation: null, joined_at: t, updated_at: t } satisfies GroupMember);
+    }
+    await batch.commit();
+  }
+  await audit(actor, 'group_members_added', { group: gid, count: people.length });
+}
+
+export async function removeGroupMember(actor: string, gid: string, uid: string) {
+  await deleteDoc(doc(db, 'groups', gid, 'members', uid));
+  await audit(actor, 'group_member_removed', { group: gid, person: uid });
+}
+
+export async function listThreads(gid: string): Promise<WithId<GroupThread>[]> {
+  const s = await getDocs(query(collection(db, 'groups', gid, 'threads'), orderBy('last_post_at', 'desc')));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as GroupThread) }));
+}
+
+export async function getThread(gid: string, tid: string): Promise<GroupThread | null> {
+  const s = await getDoc(doc(db, 'groups', gid, 'threads', tid));
+  return s.exists() ? (s.data() as GroupThread) : null;
+}
+
+export async function listPosts(gid: string, tid: string): Promise<WithId<GroupPost>[]> {
+  const s = await getDocs(query(collection(db, 'groups', gid, 'threads', tid, 'posts'), orderBy('created_at')));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as GroupPost) }));
+}
+
+/** A new thread and its first post, together. The post is queued; the
+ *  groupMailer Function emails it to every member who takes email. */
+export async function startThread(gid: string, author: { uid: string; name: string }, subject: string, body: string) {
+  const t = now();
+  const threadRef = doc(collection(db, 'groups', gid, 'threads'));
+  const batch = writeBatch(db);
+  batch.set(threadRef, {
+    subject: subject.trim().slice(0, 200), started_by: author.uid, started_by_name: author.name,
+    created_at: t, last_post_at: t, last_author_name: author.name, post_count: 1,
+  } satisfies GroupThread);
+  batch.set(doc(collection(threadRef, 'posts')), {
+    author_uid: author.uid, author_name: author.name, body: body.trim().slice(0, 20000),
+    created_at: t, source: 'web', status: 'queued', sent_count: 0,
+  } satisfies GroupPost);
+  await batch.commit();
+  return threadRef.id;
+}
+
+export async function replyToThread(gid: string, tid: string, thread: GroupThread, author: { uid: string; name: string }, body: string) {
+  const t = now();
+  const threadRef = doc(db, 'groups', gid, 'threads', tid);
+  const batch = writeBatch(db);
+  batch.set(doc(collection(threadRef, 'posts')), {
+    author_uid: author.uid, author_name: author.name, body: body.trim().slice(0, 20000),
+    created_at: t, source: 'web', status: 'queued', sent_count: 0,
+  } satisfies GroupPost);
+  batch.update(threadRef, { last_post_at: t, last_author_name: author.name, post_count: thread.post_count + 1 });
+  await batch.commit();
+}
+
+export async function moderatePost(actor: string, gid: string, tid: string, pid: string, status: 'queued' | 'rejected') {
+  await updateDoc(doc(db, 'groups', gid, 'threads', tid, 'posts', pid), { status });
+  await audit(actor, 'group_post_moderated', { group: gid, thread: tid, post: pid, status });
 }

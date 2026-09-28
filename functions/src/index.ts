@@ -1,26 +1,18 @@
-// The people layer's only Cloud Functions, both mailers: deliver a relayed
-// message by email, and email meeting invitations. Everything else is browser +
-// Firestore rules. Both are optional — without them, messages and meetings
-// still appear on the recipient's People page; with them, they also get an
-// email. Needs the Blaze plan and a Postmark server token:
-//
-//   firebase functions:secrets:set POSTMARK_SERVER_TOKEN
-//   firebase functions:secrets:set POSTMARK_FROM_EMAIL     # e.g. relay@makerspace.network
-//
-// Same provider Nexus uses, so one sender signature and one bill.
+// The people layer's Cloud Functions. Everything else is browser + Firestore
+// rules; these exist only where a browser cannot act: sending and receiving
+// email. All optional — without them, messages, meetings, invitations and
+// group posts still work on the site. Needs the Blaze plan and Postmark
+// (functions/src/postmark.ts for the secrets, docs/GROUPS.md for group mail).
 
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { defineSecret } from 'firebase-functions/params';
+import { POSTMARK_FROM_EMAIL, POSTMARK_SERVER_TOKEN, SITE, sendBatch } from './postmark';
 import { meetingIcs, type IcsMeeting } from './ics';
 
 initializeApp();
 const db = getFirestore();
-const POSTMARK_SERVER_TOKEN = defineSecret('POSTMARK_SERVER_TOKEN');
-const POSTMARK_FROM_EMAIL = defineSecret('POSTMARK_FROM_EMAIL');
 
-const SITE = 'https://makerspace.network';
 
 export const relayMessage = onDocumentCreated(
   { document: 'messages/{id}', secrets: [POSTMARK_SERVER_TOKEN, POSTMARK_FROM_EMAIL], region: 'us-central1' },
@@ -76,23 +68,6 @@ const when = (m: MeetingDoc) => new Date(m.starts_at).toLocaleString('en-US', {
   timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
 });
 
-/** Postmark's batch endpoint takes up to 500 messages; returns how many were accepted per recipient uid. */
-async function sendBatch(messages: { uid: string; body: Record<string, unknown> }[]): Promise<string[]> {
-  const sent: string[] = [];
-  for (let i = 0; i < messages.length; i += 500) {
-    const chunk = messages.slice(i, i + 500);
-    const res = await fetch('https://api.postmarkapp.com/email/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_SERVER_TOKEN.value() },
-      body: JSON.stringify(chunk.map((c) => c.body)),
-    });
-    if (!res.ok) continue;
-    const results = await res.json() as { ErrorCode: number }[];
-    results.forEach((r, j) => { if (r.ErrorCode === 0) sent.push(chunk[j].uid); });
-  }
-  return sent;
-}
-
 async function emailsOf(uids: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   const refs = uids.map((u) => db.doc(`people/${u}`));
@@ -138,7 +113,7 @@ export const meetingMailer = onDocumentWritten(
     text.push('', `You are receiving this because you are on the Makerspace Network roster with meeting invitations on. Change that at ${SITE}/?page=join.`);
 
     const messages = to.filter((u) => emails.has(u)).map((u) => ({
-      uid: u,
+      id: u,
       body: {
         From: POSTMARK_FROM_EMAIL.value(), To: emails.get(u), ...(replyTo ? { ReplyTo: replyTo } : {}),
         Subject: `[Makerspace Network] ${cancelling ? 'Cancelled: ' : ''}${m.title}`,
@@ -207,3 +182,5 @@ export const invitationMailer = onDocumentWritten(
     if (res.ok) await event.data.after.ref.update({ emailed_at: new Date().toISOString() });
   },
 );
+
+export { groupMailer, groupInbound, groupUnsubscribe } from './groups';

@@ -20,6 +20,8 @@ here the rules read the documents directly and the client is untrusted.
 | `roster/{uid}` | what verified people see about each other | the person or a confirmer; rules refuse a projection that disagrees with its sources |
 | `messages/{id}` | a relayed message | verified sender; recipient marks read; the optional Function emails it |
 | `invitations/{space~email}` | a named person invited to one organisation in one role, prefilled with name and functions | stewards in the region, network admins, and a space's admin for their own space; the invitee flips it to accepted; `emailed_at` only by the mailer |
+| `groups/{slug}` (+ `members/`, `threads/`, `threads/*/posts/`) | mailing lists with an archive — see GROUPS.md | stewards create; managers run; members post from the site; `groupInbound` writes email posts |
+| `reply_keys/{key}` | map from a personal reply address to group, thread, person | the `groupMailer` Function only; no client reads it |
 | `meetings/{id}` | a convened meeting: when, where, the audience in words, and the invitee uids frozen at creation | stewards in the meeting's region, network admins; `emailed_uids` only by the mailer Function |
 | `meetings/{id}/rsvps/{uid}` | one invitee's answer and whether they came | the invitee writes `response`; the convener writes `attended` |
 | `audit/{id}` | append-only | anyone about themselves; stewards read |

@@ -9,3 +9,5 @@ dist/
 public/tools/
 dist-standards/
 functions/lib/
+.secret.local
+functions/.secret.local

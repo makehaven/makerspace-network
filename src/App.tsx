@@ -13,7 +13,7 @@ import { ACHIEVEMENTS } from './data';
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
 const NetworkPages = lazy(() => import('./network/NetworkPages'));
-const NETWORK_PAGES = new Set(['join', 'people', 'steward']);
+const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group']);
 
 // Query-string routing, no router library — same convention as the sibling
 // Entrepreneurship Nexus app.
@@ -102,6 +102,7 @@ export default function App() {
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="for-spaces">For makerspaces</Link>
             <Link page="people">People</Link>
+            <Link page="groups">Groups</Link>
             <Link page="about">About</Link>
           </nav>
         </div>
