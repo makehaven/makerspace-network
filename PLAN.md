@@ -130,7 +130,11 @@ Three things it has to do, in order of why anyone asked for it:
       steward-confirmed, on the roster alongside the spaces (enums 0.4.0,
       GOVERNANCE §Ecosystem partners)
 - [ ] County filter on the roster — membership carries state, not county
-- [ ] Edit the listing from the site; invitations to join by email
+- [x] Invitations: stewards and space admins invite named people, singly or
+      by pasted CSV, prefilled; the invitee accepts by signing in with that
+      address. Emailed by the `invitationMailer` or sent by hand (PEOPLE.md
+      §Invitations)
+- [ ] Edit the listing from the site
 - [ ] "Join with your space's account" — OIDC against a space's own member
       system, reusing Nexus's `makehaven-sso-plan.md` flow, so members arrive
       verified instead of waiting for a space admin to confirm each one.

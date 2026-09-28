@@ -14,6 +14,7 @@ rules_version = '2';
 //   roster/{uid}              what verified people may see about each other
 //   messages/{id}             relayed messages between verified people
 //   meetings/{id}             convened meetings; rsvps/{uid} beneath each
+//   invitations/{space~email} a named person invited to one organisation, prefilled
 //   audit/{id}                append-only
 
 service cloud.firestore {
@@ -80,6 +81,22 @@ service cloud.firestore {
     }
 
     function isIso(v) { return v is string && v.size() >= 20 && v.size() <= 40; }
+
+    // An invitation is addressed to one email at one organisation; its id is
+    // `{space_id}~{email}`, so the rules can find it with get() and a second
+    // invitation to the same address overwrites the first.
+    function invitationPath(spaceId, email) { return path('invitations', spaceId + '~' + email); }
+    function myInvitation(spaceId) { return get(invitationPath(spaceId, tokenEmail())).data; }
+    // Accepting: a live invitation for this role, addressed to the signed-in
+    // verified email, flipped to accepted in the same batch.
+    function invitedAs(spaceId, role) {
+      return emailVerified()
+        && exists(invitationPath(spaceId, tokenEmail()))
+        && myInvitation(spaceId).status == 'pending'
+        && myInvitation(spaceId).role == role
+        && request.time < myInvitation(spaceId).expires_at
+        && getAfter(invitationPath(spaceId, tokenEmail())).data.status == 'accepted';
+    }
 
     // ---------- people ----------
     match /people/{personId} {
@@ -164,6 +181,8 @@ service cloud.firestore {
               (d().role == 'space_admin' && d().status == 'active' && claimsInSameBatch())
               || (d().role in ['space_editor', 'space_contact'] && d().status == 'active')
               || d().status == 'pending'))
+          // Invited: active at once, in exactly the role the inviter chose.
+          || (d().status == 'active' && space(d().space_id).proposed == false && invitedAs(d().space_id, d().role))
           // Everyone else is a contact, or a partner, waiting for confirmation.
           || (d().role in ['space_contact', 'partner'] && d().status == 'pending')
         );
@@ -240,6 +259,11 @@ service cloud.firestore {
               && resource.data.proposed == false && resource.data.claimed == false && d().claimed == true
               && d().diff(resource.data).affectedKeys().hasOnly(['claimed', 'updated_at'])
               && getAfter(membershipPath(uid(), spaceId)).data.role == 'space_admin'
+              && getAfter(membershipPath(uid(), spaceId)).data.status == 'active')
+          // ...or by accepting an invitation to be its admin.
+          || (resource.data.proposed == false && resource.data.claimed == false && d().claimed == true
+              && d().diff(resource.data).affectedKeys().hasOnly(['claimed', 'updated_at'])
+              && invitedAs(spaceId, 'space_admin')
               && getAfter(membershipPath(uid(), spaceId)).data.status == 'active'));
       allow delete: if isNetworkAdmin();
     }
@@ -300,6 +324,68 @@ service cloud.firestore {
       allow update: if signedIn() && resource.data.to_uid == uid()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- invitations ----------
+    // GOVERNANCE §Invitations. A steward, network admin or space admin
+    // invites a named person by email, with the role and functions filled in.
+    // Nobody sees the invitation but the inviters and the invitee, and it
+    // becomes a membership only when the invitee signs in with that exact
+    // verified address and accepts. The id is not a secret: holding the link
+    // without the mailbox gets you nothing.
+    function mayInvite(spaceId, regionId, role) {
+      return isNetworkAdmin() || isStewardOf(regionId)
+        || (isSpaceAdmin(spaceId) && role in ['space_admin', 'space_editor', 'space_contact']);
+    }
+
+    match /invitations/{iid} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['email', 'name', 'space_id', 'space_name', 'role', 'functions', 'note',
+                                   'region_id', 'invited_by', 'invited_by_name', 'status', 'created_at',
+                                   'expires_at', 'accepted_at', 'email_requested_at', 'emailed_at', 'updated_at'])
+          && d().email is string && d().email == d().email.lower() && d().email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
+          && iid == d().space_id + '~' + d().email
+          && spaceExists(d().space_id) && space(d().space_id).proposed == false
+          && d().space_name == space(d().space_id).name
+          && d().region_id == space(d().space_id).region_id
+          && d().name is string && d().name.size() > 0 && d().name.size() <= 120
+          && d().role in ['space_admin', 'space_editor', 'space_contact', 'partner']
+          && (d().role == 'partner') == isPartnerOrg(d().space_id)
+          && d().functions is list && d().functions.size() <= 10
+          && d().note is string && d().note.size() <= 2000
+          && d().invited_by_name is string && d().invited_by_name.size() <= 120
+          && d().status in ['pending', 'accepted', 'revoked']
+          && d().expires_at is timestamp
+          && (d().email_requested_at == null || isIso(d().email_requested_at))
+          && isIso(d().updated_at);
+      }
+      function invitee() { return emailVerified() && resource.data.email == tokenEmail(); }
+
+      allow read: if signedIn() && (invitee() || isSteward() || isNetworkAdmin()
+                                    || isSpaceAdmin(resource.data.space_id));
+      allow create: if shape() && mayInvite(d().space_id, d().region_id, d().role)
+        && d().invited_by == uid()
+        && d().status == 'pending'
+        && d().accepted_at == null && d().emailed_at == null
+        && isIso(d().created_at)
+        && d().expires_at > request.time && d().expires_at < request.time + duration.value(31, 'd');
+      allow update: if shape() && d().email == resource.data.email && d().space_id == resource.data.space_id && (
+          // An inviter re-issues or revokes one that has not been accepted.
+          // emailed_at belongs to the mailer Function.
+          (mayInvite(d().space_id, d().region_id, d().role)
+            && resource.data.status != 'accepted' && d().status in ['pending', 'revoked']
+            && d().invited_by == uid()
+            && d().accepted_at == null && d().emailed_at == resource.data.emailed_at
+            && d().expires_at < request.time + duration.value(31, 'd'))
+          // The invitee accepts, in the batch that creates the membership.
+          || (invitee() && resource.data.status == 'pending' && d().status == 'accepted'
+            && request.time < resource.data.expires_at
+            && d().diff(resource.data).affectedKeys().hasOnly(['status', 'accepted_at', 'updated_at'])
+            && isIso(d().accepted_at)
+            && getAfter(membershipPath(uid(), resource.data.space_id)).data.status == 'active'
+            && getAfter(membershipPath(uid(), resource.data.space_id)).data.role == resource.data.role));
+      allow delete: if signedIn() && mayInvite(resource.data.space_id, resource.data.region_id, resource.data.role);
     }
 
     // ---------- meetings ----------

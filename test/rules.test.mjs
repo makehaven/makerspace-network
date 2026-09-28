@@ -8,7 +8,7 @@ import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from '@firebase/rules-unit-testing';
 import {
-  doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, collection, writeBatch, addDoc, query, where,
+  doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, collection, writeBatch, addDoc, query, where, Timestamp,
 } from 'firebase/firestore';
 
 const PROJECT = 'makerspace-net';
@@ -387,4 +387,81 @@ test('the steward confirms a partner, who then appears on the roster and may sho
   // Now verified: Bri reads the roster, including people at makerspaces.
   await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
   await assertSucceeds(getDocs(collection(user('bri', 'bri@ct.gov'), 'roster')));
+});
+
+// ---------- invitations ----------
+
+const inFuture = (days) => Timestamp.fromMillis(Date.now() + days * 864e5);
+const invitation = (o = {}) => ({
+  email: 'pat@gmail.com', name: 'Pat', space_id: 'makehaven', space_name: 'MakeHaven', role: 'space_editor',
+  functions: ['safety'], note: '', region_id: 'us-ct', invited_by: 'ctsteward', invited_by_name: 'Steward',
+  status: 'pending', created_at: T, expires_at: inFuture(30), accepted_at: null,
+  email_requested_at: null, emailed_at: null, updated_at: T, ...o,
+});
+const iid = (space, email) => `${space}~${email}`;
+
+test('stewards invite in their region, space admins at their own space, nobody else', async () => {
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(setDoc(doc(st, 'invitations', iid('makehaven', 'pat@gmail.com')), invitation()));
+  await assertFails(setDoc(doc(st, 'invitations', iid('ohio-makers', 'o@x.org')),
+    invitation({ email: 'o@x.org', space_id: 'ohio-makers', space_name: 'Ohio Makers', region_id: null })));
+  // The id must be space~email, and the role must suit the organisation.
+  await assertFails(setDoc(doc(st, 'invitations', 'something-else'), invitation()));
+  await assertFails(setDoc(doc(st, 'invitations', iid('makehaven', 'q@x.org')), invitation({ email: 'q@x.org', role: 'partner' })));
+  await assertSucceeds(setDoc(doc(st, 'invitations', iid('partner-decd-ct', 'bri@ct.gov')),
+    invitation({ email: 'bri@ct.gov', space_id: 'partner-decd-ct', space_name: 'CT DECD', role: 'partner' })));
+
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertSucceeds(setDoc(doc(jo, 'invitations', iid('makehaven', 'kim@gmail.com')), invitation({ email: 'kim@gmail.com', invited_by: 'jo' })));
+  await assertFails(setDoc(doc(jo, 'invitations', iid('spark', 'kim@gmail.com')),
+    invitation({ email: 'kim@gmail.com', space_id: 'spark', space_name: 'Spark', invited_by: 'jo' })));
+  await assertFails(setDoc(doc(user('rando', 'r@gmail.com'), 'invitations', iid('makehaven', 'x@gmail.com')),
+    invitation({ email: 'x@gmail.com', invited_by: 'rando' })));
+  // The mailer's emailed_at is not the inviter's to set.
+  await assertFails(updateDoc(doc(st, 'invitations', iid('makehaven', 'pat@gmail.com')), { emailed_at: T, updated_at: T }));
+});
+
+const acceptBatch = (db, uid, space, role, o = {}) => {
+  const b = writeBatch(db);
+  b.set(doc(db, 'people', uid), person(uid, o.email ?? 'pat@gmail.com', space));
+  b.set(doc(db, 'memberships', `${uid}_${space}`), membership(uid, space, role, 'active'));
+  b.update(doc(db, 'invitations', iid(space, o.email ?? 'pat@gmail.com')), { status: 'accepted', accepted_at: T, updated_at: T });
+  return b;
+};
+
+test('the invitee accepts with the invited address and becomes active in the invited role at once', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'invitations', iid('makehaven', 'pat@gmail.com')), invitation()); });
+  // Someone else cannot see it or use it.
+  const other = user('lee', 'lee@gmail.com');
+  await assertFails(getDoc(doc(other, 'invitations', iid('makehaven', 'pat@gmail.com'))));
+  await assertFails(acceptBatch(other, 'lee', 'makehaven', 'space_editor').commit());
+  const pat = user('pat', 'pat@gmail.com');
+  await assertSucceeds(getDocs(query(collection(pat, 'invitations'), where('email', '==', 'pat@gmail.com'))));
+  // Not a different role than invited, and not without marking it accepted.
+  await assertFails(acceptBatch(pat, 'pat', 'makehaven', 'space_admin').commit());
+  await assertFails(setDoc(doc(pat, 'memberships', 'pat_makehaven'), membership('pat', 'makehaven', 'space_editor', 'active')));
+  await assertSucceeds(acceptBatch(pat, 'pat', 'makehaven', 'space_editor').commit());
+  // Used once.
+  await assertFails(updateDoc(doc(pat, 'invitations', iid('makehaven', 'pat@gmail.com')), { status: 'pending', updated_at: T }));
+});
+
+test('an expired invitation, or one for an unverified address, cannot be accepted', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'invitations', iid('makehaven', 'pat@gmail.com')), invitation({ expires_at: inFuture(-1) }));
+    await setDoc(doc(ctx.firestore(), 'invitations', iid('makehaven', 'un@gmail.com')), invitation({ email: 'un@gmail.com' }));
+  });
+  await assertFails(acceptBatch(user('pat', 'pat@gmail.com'), 'pat', 'makehaven', 'space_editor').commit());
+  await assertFails(acceptBatch(user('un', 'un@gmail.com', false), 'un', 'makehaven', 'space_editor', { email: 'un@gmail.com' }).commit());
+});
+
+test('accepting an admin invitation claims an unclaimed space in the same batch', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'invitations', iid('spark', 'casey@gmail.com')),
+      invitation({ email: 'casey@gmail.com', space_id: 'spark', space_name: 'Spark', role: 'space_admin' }));
+  });
+  const casey = user('casey', 'casey@gmail.com');
+  const b = acceptBatch(casey, 'casey', 'spark', 'space_admin', { email: 'casey@gmail.com' });
+  b.update(doc(casey, 'spaces_index', 'spark'), { claimed: true, updated_at: T });
+  await assertSucceeds(b.commit());
 });

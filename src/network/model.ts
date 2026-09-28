@@ -134,6 +134,35 @@ export interface Rsvp {
   updated_at: string;
 }
 
+/** Document id is `${space_id}~${email}` (see invitationId). Visible to the
+ *  inviters and to the invitee once they sign in with that address. */
+export interface Invitation {
+  email: string;
+  name: string;
+  space_id: string;
+  space_name: string;
+  role: SpaceRole;
+  functions: string[];
+  /** A personal line from the inviter, shown on the join page and in the email. */
+  note: string;
+  region_id: string | null;
+  invited_by: string;
+  invited_by_name: string;
+  status: 'pending' | 'accepted' | 'revoked';
+  created_at: string;
+  /** A Firestore Timestamp: the rules compare it with request.time. */
+  expires_at: { toDate(): Date; toMillis(): number };
+  accepted_at: string | null;
+  /** Set by an inviter to ask the mailer Function to send it. */
+  email_requested_at: string | null;
+  /** Written only by the mailer Function. */
+  emailed_at: string | null;
+  updated_at: string;
+}
+
+export const invitationId = (spaceId: string, email: string) => `${spaceId}~${email.trim().toLowerCase()}`;
+export const INVITATION_DAYS = 30;
+
 export const membershipId = (uid: string, spaceId: string) => `${uid}_${spaceId}`;
 
 export const domainOfEmail = (email: string): string =>

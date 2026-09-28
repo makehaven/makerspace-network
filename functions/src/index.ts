@@ -153,3 +153,57 @@ export const meetingMailer = onDocumentWritten(
     }
   },
 );
+
+// ---------- invitations ----------
+
+type InvitationDoc = {
+  email: string; name: string; space_name: string; role: string; note: string;
+  invited_by: string; invited_by_name: string; status: string;
+  expires_at: FirebaseFirestore.Timestamp; email_requested_at: string | null;
+};
+
+const ROLE_WORDS: Record<string, string> = {
+  space_admin: 'as an admin, looking after its listing and its people',
+  space_editor: 'on its team',
+  space_contact: 'so you are in the loop',
+  partner: 'as an ecosystem partner',
+};
+
+/** Emails an invitation when an inviter sets email_requested_at. The link
+ *  only works for someone signed in with this address, so it is safe to send
+ *  in the clear; replies go to the inviter. */
+export const invitationMailer = onDocumentWritten(
+  { document: 'invitations/{id}', secrets: [POSTMARK_SERVER_TOKEN, POSTMARK_FROM_EMAIL], region: 'us-central1' },
+  async (event) => {
+    const before = event.data?.before.data() as InvitationDoc | undefined;
+    const after = event.data?.after.data() as InvitationDoc | undefined;
+    if (!after || !event.data || after.status !== 'pending' || !after.email_requested_at) return;
+    if (after.email_requested_at === before?.email_requested_at) return;
+    if (after.expires_at.toMillis() < Date.now()) return;
+
+    const inviter = await db.doc(`people/${after.invited_by}`).get();
+    const replyTo = inviter.get('email') as string | undefined;
+    const link = `${SITE}/?page=join&invite=${encodeURIComponent(event.params.id)}`;
+    const text = [
+      `Hi ${after.name.split(' ')[0]},`, '',
+      `${after.invited_by_name} has invited you to join Makerspace Network at ${after.space_name}, ${ROLE_WORDS[after.role] ?? ''}.`,
+      ...(after.note ? ['', after.note] : []), '',
+      'Makerspace Network connects the people who run makerspaces, and the organisations that work with them, across every state: who is at each space, how to reach them, and the meetings that concern you.',
+      '', `Accept here, signing in with this address (${after.email}): ${link}`,
+      '', `We've filled in what ${after.invited_by_name} told us; you can correct it before you accept. The invitation expires on ${after.expires_at.toDate().toDateString()}.`,
+      '', 'Nothing about you is shown to anyone until you accept. If this is not for you, ignore it, or reply to let them know.',
+    ].join('\n');
+
+    const res = await fetch('https://api.postmarkapp.com/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_SERVER_TOKEN.value() },
+      body: JSON.stringify({
+        From: `${after.invited_by_name} via Makerspace Network <${POSTMARK_FROM_EMAIL.value()}>`, To: after.email,
+        ...(replyTo ? { ReplyTo: replyTo } : {}),
+        Subject: `${after.invited_by_name} invited you to Makerspace Network`,
+        TextBody: text, MessageStream: 'outbound',
+      }),
+    });
+    if (res.ok) await event.data.after.ref.update({ emailed_at: new Date().toISOString() });
+  },
+);

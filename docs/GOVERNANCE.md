@@ -86,9 +86,17 @@ visitor needs most anyway.
 
 ## Invitations
 
-Once someone is a `space_admin` they invite colleagues directly. Mechanics copied
-from Nexus rather than reinvented, because these details are where invite systems
-leak:
+Once someone is a `space_admin` they invite colleagues directly, and a steward
+may invite anyone in their region. **Built 2026-09-27**; see PEOPLE.md
+§Invitations. It departs from the Nexus mechanics below in one place, on
+purpose: acceptance already requires signing in with the invited address, so
+the link carries no secret — the invitation's id is `{space}~{email}` and
+holding it without the mailbox gets you nothing. There is therefore no token to
+hash. Expiry is 30 days rather than 14, because the first use is inviting a
+whole existing group at once.
+
+The Nexus mechanics, for reference, because these details are where invite
+systems leak:
 
 - The token is random, emailed raw as a link, and stored **only** as a SHA-256
   hash plus its last four characters for support. A database dump does not yield

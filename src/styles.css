@@ -465,3 +465,7 @@ table.data select { padding: 4px 6px; font-size: 0.86rem; width: auto; }
 .compose { border: 1px solid var(--accent); border-radius: var(--radius); padding: 16px 18px; margin: 14px 0; background: var(--card); }
 .warn-row td { background: var(--flag-soft); }
 @media (max-width: 640px) { .two, .inline-fields { grid-template-columns: 1fr; } .inline-form { flex-direction: column; } }
+
+blockquote.note { margin: 10px 0 4px; padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius-sm); white-space: pre-wrap; }
+tr.muted-row td { color: var(--ink-3); }
+details.form-card > summary { cursor: pointer; }

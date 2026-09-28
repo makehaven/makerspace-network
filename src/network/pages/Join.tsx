@@ -9,6 +9,7 @@ import {
   joinSpace, updateProfile, updateRosterSettings, bootstrapNetworkAdmin, getSpaceIndex, listSpaceIndex, type JoinOutcome,
 } from '../db';
 import { can } from '../capabilities';
+import { PendingInvitations } from './Invitations';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, partnerTypeLabel, roleLabel } from './shared';
 
 const BOOTSTRAP = ['jrlogan@makehaven.org'];
@@ -16,6 +17,9 @@ const BOOTSTRAP = ['jrlogan@makehaven.org'];
 export default function Join({ spaceId }: { spaceId?: string }) {
   const s = useSession();
   const [joining, setJoining] = useState(false);
+  const inviteId = new URLSearchParams(window.location.search).get('invite');
+  const [accepted, setAccepted] = useState(0);
+  const [invited, setInvited] = useState(0);
 
   if (s.status === 'loading') return <div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>;
 
@@ -34,8 +38,12 @@ export default function Join({ spaceId }: { spaceId?: string }) {
         </div>
       </section>
       <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 60 }}>
-        {s.status === 'signed_out' && <SignIn />}
-        {s.status === 'signed_in' && (!s.person || joining || (spaceId && !s.memberships.some((m) => m.space_id === spaceId)))
+        {s.status === 'signed_out' && <SignIn why={inviteId ? 'You have been invited. Sign in with the email address the invitation was sent to.' : undefined} />}
+        {s.status === 'signed_in' && <PendingInvitations key={accepted} focusId={inviteId} onAccepted={() => setAccepted((n) => n + 1)} onLoaded={setInvited} />}
+        {s.status === 'signed_in' && invited > 0 && !s.person && !joining && (
+          <p className="muted">Not right? <button type="button" className="linkish" onClick={() => setJoining(true)}>Join a different space or organisation instead</button></p>
+        )}
+        {s.status === 'signed_in' && !(invited > 0 && !s.person && !joining) && (!s.person || joining || (spaceId && !s.memberships.some((m) => m.space_id === spaceId)))
           ? <JoinForm presetSpaceId={spaceId} onDone={() => { setJoining(false); void s.refresh(); }} />
           : s.status === 'signed_in' && <Profile onJoinAnother={() => setJoining(true)} />}
       </div>

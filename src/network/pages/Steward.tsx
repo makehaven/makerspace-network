@@ -9,6 +9,7 @@ import {
 import { stateName, US_STATES, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
+import { InvitationsTab } from './Invitations';
 
 /** `rosterName` covers a space admin looking at someone whose primary space
  *  is elsewhere: their people document is not readable, their roster entry is. */
@@ -17,7 +18,7 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  const [tab, setTab] = useState<'people' | 'meetings' | 'spaces' | 'stewards'>('people');
+  const [tab, setTab] = useState<'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards'>('people');
 
   return (
     <>
@@ -41,11 +42,13 @@ export default function Steward() {
           <>
             <div className="tabs">
               <button className={tab === 'people' ? 'on' : ''} onClick={() => setTab('people')}>People</button>
+              <button className={tab === 'invitations' ? 'on' : ''} onClick={() => setTab('invitations')}>Invitations</button>
               {can(s, 'meeting.convene') && <button className={tab === 'meetings' ? 'on' : ''} onClick={() => setTab('meetings')}>Meetings</button>}
               <button className={tab === 'spaces' ? 'on' : ''} onClick={() => setTab('spaces')}>Spaces</button>
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
             </div>
             {tab === 'people' && <PeopleTab />}
+            {tab === 'invitations' && <InvitationsTab />}
             {tab === 'meetings' && <MeetingsTab />}
             {tab === 'spaces' && <SpacesTab />}
             {tab === 'stewards' && <StewardsTab />}

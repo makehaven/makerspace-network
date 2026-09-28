@@ -19,6 +19,7 @@ here the rules read the documents directly and the client is untrusted.
 | `spaces_index/{space_id}` | every organisation a person can join: the mirror of `data/spaces` the rules can read (name, domain, state, region), proposed spaces, and **partner organisations** (`kind: partner`, never in the directory). The name is historical | network admin syncs; stewards add partners in their region; anyone proposes; a claim flips `claimed` |
 | `roster/{uid}` | what verified people see about each other | the person or a confirmer; rules refuse a projection that disagrees with its sources |
 | `messages/{id}` | a relayed message | verified sender; recipient marks read; the optional Function emails it |
+| `invitations/{space~email}` | a named person invited to one organisation in one role, prefilled with name and functions | stewards in the region, network admins, and a space's admin for their own space; the invitee flips it to accepted; `emailed_at` only by the mailer |
 | `meetings/{id}` | a convened meeting: when, where, the audience in words, and the invitee uids frozen at creation | stewards in the meeting's region, network admins; `emailed_uids` only by the mailer Function |
 | `meetings/{id}/rsvps/{uid}` | one invitee's answer and whether they came | the invitee writes `response`; the convener writes `attended` |
 | `audit/{id}` | append-only | anyone about themselves; stewards read |
@@ -67,6 +68,23 @@ Two documents describe one fact, and the rules check them together with
 A contact's email can therefore never reach the roster, whatever the client
 sends. That is the "relay for members, direct for organisers" rule from
 GOVERNANCE, held by the database rather than by good behaviour.
+
+## Invitations
+
+How an existing group becomes people on the roster without anyone being added
+unasked. On the Steward page, **Invitations**, paste a list — `name, email,
+organisation, role, functions, note` — and each line becomes an invitation
+visible only to the inviters. The preview flags unknown organisations (add
+partner organisations first) and people already invited.
+
+Send each invitation in one of three ways: **Email it** (the
+`invitationMailer` Function, replies to the inviter), **Copy link**, or
+**Download pending links** for a mail merge or personal emails. The link opens
+the join page; the invitee signs in with that exact address, sees what the
+inviter filled in, corrects it and accepts. They are active at once, in the
+role they were invited to, and an admin invitation claims an unclaimed space.
+A signed-in person sees their open invitations on the join page whether or not
+they came by the link.
 
 ## Meetings
 

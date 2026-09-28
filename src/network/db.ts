@@ -5,13 +5,13 @@
 // the rules check those with getAfter() so the batch is all-or-nothing.
 
 import {
-  addDoc, collection, doc, documentId, getDoc, getDocs, query, setDoc, updateDoc, where, writeBatch,
+  addDoc, collection, doc, documentId, getDoc, getDocs, query, setDoc, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Space, Region } from '../types';
 import {
-  domainOfEmail, domainOfUrl, isCommonEmailDomain, membershipId, ORGANISER_ROLES,
-  type ContactPreference, type Meeting, type PartnerType, type Membership, type Message, type Person, type RosterEntry,
+  domainOfEmail, domainOfUrl, invitationId, isCommonEmailDomain, membershipId, INVITATION_DAYS, ORGANISER_ROLES,
+  type ContactPreference, type Invitation, type Meeting, type PartnerType, type Membership, type Message, type Person, type RosterEntry,
   type Rsvp, type RsvpResponse, type SizeTier, type SpaceIndex, type SpaceRole, type Stewardship,
 } from './model';
 
@@ -426,4 +426,107 @@ export async function addPartnerOrg(actor: string, input: {
   await setDoc(doc(db, 'spaces_index', id), entry);
   await audit(actor, 'partner_added', { space_id: id, partner_type: input.partner_type });
   return id;
+}
+
+// ---------- invitations ----------
+
+export type InvitationDraft = Pick<Invitation, 'email' | 'name' | 'space_id' | 'role' | 'functions' | 'note'>;
+
+/** Create or re-issue invitations. One batch per 400; an existing pending or
+ *  revoked invitation to the same address and organisation is replaced, an
+ *  accepted one is left alone (the rules refuse it). */
+export async function createInvitations(inviter: { uid: string; name: string }, drafts: InvitationDraft[],
+  spaces: Map<string, SpaceIndex>, opts: { sendEmail: boolean }) {
+  const t = now();
+  const expires = Timestamp.fromMillis(Date.now() + INVITATION_DAYS * 864e5);
+  let n = 0;
+  for (let i = 0; i < drafts.length; i += 400) {
+    const batch = writeBatch(db);
+    for (const d of drafts.slice(i, i + 400)) {
+      const sp = spaces.get(d.space_id);
+      if (!sp) throw new Error(`Unknown organisation ${d.space_id}`);
+      const email = d.email.trim().toLowerCase();
+      const inv: Omit<Invitation, 'expires_at'> & { expires_at: Timestamp } = {
+        email, name: d.name.trim(), space_id: d.space_id, space_name: sp.name,
+        role: sp.kind === 'partner' ? 'partner' : d.role, functions: d.functions, note: d.note.trim(),
+        region_id: sp.region_id, invited_by: inviter.uid, invited_by_name: inviter.name,
+        status: 'pending', created_at: t, expires_at: expires, accepted_at: null,
+        email_requested_at: opts.sendEmail ? t : null, emailed_at: null, updated_at: t,
+      };
+      batch.set(doc(db, 'invitations', invitationId(d.space_id, email)), inv, { merge: false });
+      n++;
+    }
+    await batch.commit();
+  }
+  await audit(inviter.uid, 'invitations_created', { count: n, emailed: opts.sendEmail });
+  return n;
+}
+
+/** Everything an inviter may see: all of it for stewards, their own spaces for a space admin. */
+export async function listInvitations(s: { steward: boolean; adminSpaceIds: string[] }): Promise<WithId<Invitation>[]> {
+  const col = collection(db, 'invitations');
+  const snaps = s.steward
+    ? [await getDocs(col)]
+    : await Promise.all(s.adminSpaceIds.map((sp) => getDocs(query(col, where('space_id', '==', sp)))));
+  return snaps.flatMap((x) => x.docs.map((d) => ({ id: d.id, ...(d.data() as Invitation) })))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+/** The pending invitations addressed to the signed-in person. */
+export async function myInvitations(email: string): Promise<WithId<Invitation>[]> {
+  const snap = await getDocs(query(collection(db, 'invitations'), where('email', '==', email.toLowerCase())));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Invitation) }))
+    .filter((i) => i.status === 'pending' && i.expires_at.toMillis() > Date.now());
+}
+
+export async function updateInvitation(actor: { uid: string; name: string }, inv: WithId<Invitation>,
+  patch: { status?: 'pending' | 'revoked'; requestEmail?: boolean; renew?: boolean }) {
+  const t = now();
+  await updateDoc(doc(db, 'invitations', inv.id), {
+    ...(patch.status ? { status: patch.status } : {}),
+    ...(patch.requestEmail ? { email_requested_at: t } : {}),
+    ...(patch.renew ? { expires_at: Timestamp.fromMillis(Date.now() + INVITATION_DAYS * 864e5) } : {}),
+    invited_by: actor.uid, invited_by_name: actor.name, updated_at: t,
+  });
+  await audit(actor.uid, 'invitation_updated', { invitation: inv.id, ...patch });
+}
+
+/** Accept: the membership, the person, the claim if it is an admin invitation
+ *  to an unclaimed space, and the invitation flipped to accepted, in one batch
+ *  the rules check together. Then the roster entry, as joinSpace does. */
+export async function acceptInvitation(input: {
+  uid: string; email: string; inv: WithId<Invitation>; name: string; phone: string | null;
+  existingPerson: Person | null; primaryStatus: Membership['status'] | null;
+  functions: string[]; contact_preference: ContactPreference; invitations: boolean;
+}) {
+  const { uid, inv } = input;
+  const space = await getSpaceIndex(inv.space_id);
+  if (!space) throw new Error('That organisation is no longer in the index.');
+  const t = now();
+  const organiser = ORGANISER_ROLES.includes(inv.role);
+  const membership: Membership = {
+    person_id: uid, space_id: inv.space_id, role: inv.role, status: 'active',
+    functions: input.functions, contact_preference: organiser ? input.contact_preference : 'relay',
+    invitations: input.invitations, state: space.state, region_id: space.region_id,
+    confirmed_by: null, created_at: t, updated_at: t,
+  };
+  // An active primary stays; anything less gives way to this active membership.
+  const current = input.existingPerson?.primary_space_id ?? null;
+  const primary = current != null && input.primaryStatus === 'active' ? current : inv.space_id;
+  const person: Person = input.existingPerson
+    ? { ...input.existingPerson, name: input.name.trim(), phone: input.phone, updated_at: t, primary_space_id: primary }
+    : { name: input.name.trim(), email: input.email.toLowerCase(), email_domain: domainOfEmail(input.email), phone: input.phone,
+        primary_space_id: primary, created_at: t, updated_at: t };
+
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'memberships', membershipId(uid, inv.space_id)), membership);
+  batch.set(doc(db, 'people', uid), person);
+  batch.update(doc(db, 'invitations', inv.id), { status: 'accepted', accepted_at: t, updated_at: t });
+  const claim = inv.role === 'space_admin' && !space.claimed;
+  if (claim) batch.update(doc(db, 'spaces_index', inv.space_id), { claimed: true, updated_at: t });
+  await batch.commit();
+  await audit(uid, 'invitation_accepted', { space_id: inv.space_id, role: inv.role, invited_by: inv.invited_by });
+  if (person.primary_space_id === inv.space_id) {
+    await setDoc(doc(db, 'roster', uid), rosterFrom(person, membership, space.name));
+  }
 }
