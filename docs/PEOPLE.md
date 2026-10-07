@@ -145,10 +145,17 @@ Done by hand in the Firebase console, once, under `jrlogan@makehaven.org`:
 3. **Authentication → Settings → Authorized domains**: add
    `makerspace.network` (and `connecticut.makerspace.network`). The app uses
    `makerspace.network` as `authDomain` so the sign-in popup stays first-party.
+   **Also** in Google Cloud → APIs & Services → Credentials → *Web client
+   (auto created by Google Service)*, add the redirect URI
+   `https://makerspace.network/__/auth/handler` and the origin
+   `https://makerspace.network`, or Google sign-in fails with
+   `redirect_uri_mismatch`. Neither list takes wildcards. Every subdomain signs
+   in through the apex handler, so a new region needs only its own line in
+   *Authorized domains*, not a new redirect URI.
 4. `npm run deploy:site` — the CSP in `firebase.json` now admits the Firebase
    endpoints and the auth iframe.
 5. Sign in at `makerspace.network/?page=join` as the bootstrap address, press
-   **Set up network admin**, then on the Steward page **Sync directory into
+   **Set up network admin** (shown above the join form, before you join anything), then on the Steward page **Sync directory into
    the index**. Until that sync, nobody can join a directory space.
 6. Optional, later: Blaze plan, `firebase functions:secrets:set` for
    `POSTMARK_SERVER_TOKEN` and `POSTMARK_FROM_EMAIL`, then
