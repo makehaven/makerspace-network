@@ -53,7 +53,7 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
           <>
             <div className="tabs" >
               <button className={tab === 'listing' ? 'on' : ''} onClick={() => setTab('listing')}>Public listing</button>
-              <button className={tab === 'annual' ? 'on' : ''} onClick={() => setTab('annual')}>Annual data (private)</button>
+              <button className={tab === 'annual' ? 'on' : ''} onClick={() => setTab('annual')}>Annual data — members, sq ft, finances (private)</button>
             </div>
             {tab === 'listing' ? <ListingForm spaceId={space.id} canEdit={!!mine} /> : <AnnualForm spaceId={space.id} canEdit={!!mine} />}
           </>

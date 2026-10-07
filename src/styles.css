@@ -495,3 +495,5 @@ details.form-card > summary { cursor: pointer; }
   .hero-stats dt { font-size: 1.4rem; }
   .hero-stats dd { font-size: 0.74rem; }
 }
+.you-at { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.you-at h3 { margin: 0 0 4px; font-size: 1.05rem; }

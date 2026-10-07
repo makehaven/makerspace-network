@@ -449,11 +449,7 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
   const dirty = () => setSaved(false);
 
   return (
-    <form className="card form-card" onSubmit={async (e) => {
-      e.preventDefault();
-      await updateRosterSettings(s.user!.uid, s.person!, m, spaceName, { functions, contact_preference: organiser ? pref : 'relay', invitations });
-      setSaved(true); void s.refresh();
-    }}>
+    <div className="card form-card">
       <div className="card-top">
         <h2 style={{ fontSize: '1.25rem' }}>{spaceName}</h2>
         <span className="pill">{roleLabel(m.role)}</span>
@@ -463,8 +459,10 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
       {m.status === 'active' && STAFF_ROLES.includes(m.role) && spaceById(m.space_id) && (
         <div className="manage">
           <h4>Manage {spaceName}</h4>
+          <p className="muted" style={{ margin: 0 }}>The space itself: the network's annual data (private — members, square feet, staff, finances), its public listing, and who is connected to it.</p>
           <div className="btn-row">
-            <PageLink className="btn" page="space-data" params={{ space: m.space_id }}>Listing &amp; annual data</PageLink>
+            <PageLink className="btn" page="space-data" params={{ space: m.space_id, tab: 'annual' }}>Annual data — members, sq ft, finances</PageLink>
+            <PageLink className="btn ghost" page="space-data" params={{ space: m.space_id }}>Public listing</PageLink>
             {m.role === 'space_admin' && <>
               <PageLink className="btn ghost" page="steward" params={{ tab: 'people' }}>People &amp; requests</PageLink>
               <PageLink className="btn ghost" page="steward" params={{ tab: 'invitations' }}>Invite colleagues</PageLink>
@@ -478,29 +476,38 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
           ? "Once a steward confirms you, you'll appear to other verified people and receive meeting invitations."
           : "Once the space's admin or the steward confirms you, you'll appear to other verified people and receive meeting invitations."}</p>
       )}
-      <h4>What you do here</h4>
-      <div className="checks">
-        {FUNCTIONS.map((f) => (
-          <label key={f.id} className={`check ${functions.includes(f.id) ? 'on' : ''}`}>
-            <input type="checkbox" checked={functions.includes(f.id)}
-                   onChange={(e) => { dirty(); setFunctions(e.target.checked ? [...functions, f.id] : functions.filter((x) => x !== f.id)); }} />
-            {f.label}
-          </label>
-        ))}
-      </div>
-      <h4>How verified people reach you</h4>
-      {organiser ? (
-        <div className="radios compact">
-          <label className="radio"><input type="radio" checked={pref === 'relay'} onChange={() => { dirty(); setPref('relay'); }} /> Relay only</label>
-          <label className="radio"><input type="radio" checked={pref === 'email'} onChange={() => { dirty(); setPref('email'); }} /> Show my email</label>
-          <label className="radio"><input type="radio" checked={pref === 'phone'} onChange={() => { dirty(); setPref('phone'); }} disabled={!s.person?.phone} /> Show my phone</label>
+
+      <form className="you-at" onSubmit={async (e) => {
+        e.preventDefault();
+        await updateRosterSettings(s.user!.uid, s.person!, m, spaceName, { functions, contact_preference: organiser ? pref : 'relay', invitations });
+        setSaved(true); void s.refresh();
+      }}>
+        <h3>You at {spaceName}</h3>
+        <p className="muted">About you, not the space. Other people in the network see this next to your name, and stewards use it to invite the right people to the right meetings.</p>
+        <h4>Which of these do you personally handle?</h4>
+        <div className="checks">
+          {FUNCTIONS.map((f) => (
+            <label key={f.id} className={`check ${functions.includes(f.id) ? 'on' : ''}`}>
+              <input type="checkbox" checked={functions.includes(f.id)}
+                     onChange={(e) => { dirty(); setFunctions(e.target.checked ? [...functions, f.id] : functions.filter((x) => x !== f.id)); }} />
+              {f.label}
+            </label>
+          ))}
         </div>
-      ) : <p className="muted">By relay. Contacts' addresses are never shown.</p>}
-      <label className="check standalone">
-        <input type="checkbox" checked={invitations} onChange={(e) => { dirty(); setInvitations(e.target.checked); }} />
-        Invite me to network meetings that concern this space
-      </label>
-      <div className="btn-row"><button className="btn ghost" disabled={saved}>{saved ? 'Saved' : 'Save'}</button></div>
-    </form>
+        <h4>How people in the network reach you</h4>
+        {organiser ? (
+          <div className="radios compact">
+            <label className="radio"><input type="radio" checked={pref === 'relay'} onChange={() => { dirty(); setPref('relay'); }} /> Messages relayed through the site</label>
+            <label className="radio"><input type="radio" checked={pref === 'email'} onChange={() => { dirty(); setPref('email'); }} /> Show my email</label>
+            <label className="radio"><input type="radio" checked={pref === 'phone'} onChange={() => { dirty(); setPref('phone'); }} disabled={!s.person?.phone} /> Show my phone</label>
+          </div>
+        ) : <p className="muted">By relay. Contacts' addresses are never shown.</p>}
+        <label className="check standalone">
+          <input type="checkbox" checked={invitations} onChange={(e) => { dirty(); setInvitations(e.target.checked); }} />
+          Invite me to network meetings that concern {spaceName}
+        </label>
+        <div className="btn-row"><button className="btn ghost" disabled={saved}>{saved ? 'Saved' : 'Save my settings'}</button></div>
+      </form>
+    </div>
   );
 }
