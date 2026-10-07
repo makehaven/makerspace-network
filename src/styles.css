@@ -497,3 +497,15 @@ details.form-card > summary { cursor: pointer; }
 }
 .you-at { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .you-at h3 { margin: 0 0 4px; font-size: 1.05rem; }
+
+/* Feedback: a corner button on every page, opening a small panel. */
+.feedback-fab { position: fixed; right: 18px; bottom: 18px; z-index: 50; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); font: 600 0.92rem var(--sans);
+  padding: 10px 16px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); }
+.feedback-fab:hover { background: var(--accent-2); }
+.feedback-panel { position: fixed; right: 18px; bottom: 18px; z-index: 50; width: min(360px, calc(100vw - 32px));
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+.feedback-panel textarea { width: 100%; margin: 6px 0 10px; }
+.feedback-panel .muted { margin: 6px 0 0; font-size: 0.9rem; }
+.feedback-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }

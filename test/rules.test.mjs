@@ -631,3 +631,20 @@ test('staff submit their listing; the steward marks it merged but cannot rewrite
   await assertSucceeds(updateDoc(doc(st, 'listing_submissions', 'makehaven'), { status: 'merged', updated_at: T }));
   await assertFails(getDoc(doc(user('mem', 'mem@gmail.com'), 'listing_submissions', 'makehaven')));
 });
+
+// ---------- feedback ----------
+
+test('anyone sends feedback, signed in or not, without claiming to be someone else; only stewards read it', async () => {
+  const fb = (extra = {}) => ({ message: 'The join form confused me', email: null, page: 'makerspace.network/?page=join',
+    uid: null, created_at: T, user_agent: null, ...extra });
+  const anon = env.unauthenticatedContext().firestore();
+  await assertSucceeds(addDoc(collection(anon, 'feedback'), fb()));
+  await assertFails(addDoc(collection(anon, 'feedback'), fb({ uid: 'jo' })));
+  await assertFails(addDoc(collection(anon, 'feedback'), fb({ message: '' })));
+  await assertFails(addDoc(collection(anon, 'feedback'), fb({ extra: 1 })));
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertSucceeds(addDoc(collection(jo, 'feedback'), fb({ uid: 'jo', email: 'jo@makehaven.org' })));
+  await assertFails(getDocs(collection(jo, 'feedback')));
+  await assertFails(getDocs(collection(anon, 'feedback')));
+  await assertSucceeds(getDocs(collection(user('ctsteward', 's@x.org'), 'feedback')));
+});

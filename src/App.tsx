@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import ForSpaces from './pages/ForSpaces';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
+import FeedbackButton from './components/FeedbackButton';
 
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
@@ -147,6 +148,8 @@ export default function App() {
           </Suspense>
         )}
       </main>
+
+      <FeedbackButton />
 
       <footer className="site-footer">
         <div className="wrap footer-cols">

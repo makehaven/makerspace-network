@@ -19,6 +19,7 @@ rules_version = '2';
 //   reply_keys/{key}          Function-only map from a reply address to group, thread, person
 //   listing_submissions/{space} a space's own answers for its public listing, for the steward to merge
 //   space_metrics/{space~year}  annual network data — private to the space and its stewards
+//   feedback/{id}             anyone's feedback on the site; stewards read
 //   audit/{id}                append-only
 
 service cloud.firestore {
@@ -322,6 +323,23 @@ service cloud.firestore {
       allow get: if signedIn() && caresFor(sid());
       allow list: if isSteward() || isNetworkAdmin();
       allow create, update: if shape() && isOrganiserAt(sid()) && spaceExists(sid()) && !isPartnerOrg(sid());
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- feedback ----------
+    // Early users tell us what is wrong. Anyone may send, signed in or not,
+    // because the people who give up before signing in are the ones we most
+    // need to hear from. Write-only for them; stewards read.
+    match /feedback/{id} {
+      function d() { return request.resource.data; }
+      allow create: if d().keys().hasOnly(['message', 'email', 'page', 'uid', 'created_at', 'user_agent'])
+        && d().message is string && d().message.size() > 0 && d().message.size() <= 4000
+        && (d().email == null || (d().email is string && d().email.size() <= 200))
+        && d().page is string && d().page.size() <= 500
+        && (d().user_agent == null || (d().user_agent is string && d().user_agent.size() <= 300))
+        && (d().uid == null || (signedIn() && d().uid == uid()))
+        && isIso(d().created_at);
+      allow read: if isSteward() || isNetworkAdmin();
       allow delete: if isNetworkAdmin();
     }
 

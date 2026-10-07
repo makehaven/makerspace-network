@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
+import { listFeedback, type Feedback } from '../feedback';
 import { REGIONS, SPACES } from '../../data';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
@@ -19,10 +20,10 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards';
+  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards' | 'feedback';
   const [tab, setTab] = useState<Tab>(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    return (['people', 'invitations', 'meetings', 'spaces', 'stewards'] as const).find((x) => x === t) ?? 'people';
+    return (['people', 'invitations', 'meetings', 'spaces', 'stewards', 'feedback'] as const).find((x) => x === t) ?? 'people';
   });
 
   return (
@@ -51,12 +52,14 @@ export default function Steward() {
               {can(s, 'meeting.convene') && <button className={tab === 'meetings' ? 'on' : ''} onClick={() => setTab('meetings')}>Meetings</button>}
               <button className={tab === 'spaces' ? 'on' : ''} onClick={() => setTab('spaces')}>Spaces</button>
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
+              {!!s.stewardship && <button className={tab === 'feedback' ? 'on' : ''} onClick={() => setTab('feedback')}>Feedback</button>}
             </div>
             {tab === 'people' && <PeopleTab />}
             {tab === 'invitations' && <InvitationsTab />}
             {tab === 'meetings' && <MeetingsTab />}
             {tab === 'spaces' && <SpacesTab />}
             {tab === 'stewards' && <StewardsTab />}
+            {tab === 'feedback' && <FeedbackTab />}
           </>
         )}
       </div>
@@ -323,6 +326,30 @@ function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
       {msg && <p className="muted">{msg}</p>}
       <div className="btn-row"><button className="btn">Add organisation</button></div>
     </form>
+  );
+}
+
+function FeedbackTab() {
+  const [items, setItems] = useState<(Feedback & { id: string })[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { listFeedback().then(setItems).catch((e) => setError(String(e?.message ?? e))); }, []);
+  if (error) return <p className="error">{error}</p>;
+  if (!items) return <p>Loading…</p>;
+  if (!items.length) return <p className="muted" style={{ marginTop: 14 }}>No feedback yet.</p>;
+  return (
+    <div style={{ marginTop: 14 }}>
+      <p className="muted">{items.length} message{items.length === 1 ? '' : 's'}, newest first.</p>
+      {items.map((f) => (
+        <div key={f.id} className="card form-card" style={{ marginBottom: 10 }}>
+          <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{f.message}</p>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            {f.created_at.slice(0, 16).replace('T', ' ')} UTC · {f.page}
+            {f.email && <> · <a href={`mailto:${f.email}`}>{f.email}</a></>}
+            {f.uid && ' · signed in'}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }
 
