@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Region, Space } from '../types';
-import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, completeness } from '../data';
+import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, completeness, STANDARDS_URL } from '../data';
 import { href, navigate } from '../App';
 import RegionMap from '../components/RegionMap';
 import Logo from '../components/Logo';
@@ -276,10 +276,25 @@ export default function Directory({ region }: { region: Region }) {
   return (
     <>
       <section className="hero">
-        <div className="wrap">
-          <p className="eyebrow">{region.name} · {all.length} spaces</p>
-          <h1>Find a place to make something</h1>
-          <p className="lede">{region.summary}</p>
+        <div className="wrap hero-split">
+          <div>
+            <p className="eyebrow">{region.name} · {all.length} spaces</p>
+            <h1>Find a place to make something</h1>
+            <p className="lede">{region.summary}</p>
+            <div className="btn-row">
+              <a className="btn" href={href('join')}
+                 onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join'); }}>
+                Run a space here? Join the network
+              </a>
+              <a className="btn ghost" href={STANDARDS_URL}>Standards self-assessment</a>
+            </div>
+          </div>
+          <dl className="hero-stats">
+            <div><dt>{all.filter(leads).length}</dt><dd>open workshops</dd></div>
+            <div><dt>{all.length - all.filter(leads).length}</dt><dd>library &amp; campus spaces</dd></div>
+            <div><dt>{counties.length}</dt><dd>counties</dd></div>
+            <div><dt>{presentCaps.size}</dt><dd>kinds of making on file</dd></div>
+          </dl>
         </div>
       </section>
 

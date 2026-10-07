@@ -31,7 +31,22 @@ const parse = (): Route => {
   return { page: q.get('page') ?? 'directory', id: q.get('space') ?? undefined };
 };
 
+// Sign-in is kept per origin, so a person signed in at the apex is signed out
+// on connecticut.makerspace.network. The people layer therefore lives only at
+// the apex: a regional host hands any of its pages over, and people stay signed in.
+const APEX = 'makerspace.network';
+const host = window.location.hostname.toLowerCase();
+const onRegionalHost = host.endsWith(`.${APEX}`);
+const toApex = (qs: string) => { window.location.assign(`https://${APEX}/${qs ? `?${qs}` : ''}`); };
+if (onRegionalHost && NETWORK_PAGES.has(new URLSearchParams(window.location.search).get('page') ?? '')) {
+  toApex(window.location.search.slice(1));
+}
+
 export function navigate(page: string, params: Record<string, string> = {}) {
+  if (onRegionalHost && NETWORK_PAGES.has(page)) {
+    toApex(new URLSearchParams({ page, ...params }).toString());
+    return;
+  }
   const q = new URLSearchParams(window.location.search);
   const region = q.get('region');
   const next = new URLSearchParams();
@@ -47,6 +62,7 @@ export function navigate(page: string, params: Record<string, string> = {}) {
 }
 
 export const href = (page: string, params: Record<string, string> = {}) => {
+  if (onRegionalHost && NETWORK_PAGES.has(page)) return `https://${APEX}/?${new URLSearchParams({ page, ...params })}`;
   const q = new URLSearchParams(window.location.search);
   const next = new URLSearchParams();
   const region = q.get('region');
@@ -101,6 +117,7 @@ export default function App() {
           <nav className="nav">
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="for-spaces">For makerspaces</Link>
+            <Link page="join">Your space</Link>
             <Link page="people">People</Link>
             <Link page="groups">Groups</Link>
             <Link page="about">About</Link>

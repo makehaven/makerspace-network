@@ -19,7 +19,11 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  const [tab, setTab] = useState<'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards'>('people');
+  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards';
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    return (['people', 'invitations', 'meetings', 'spaces', 'stewards'] as const).find((x) => x === t) ?? 'people';
+  });
 
   return (
     <>

@@ -30,7 +30,7 @@ export default function Join({ spaceId }: { spaceId?: string }) {
       <section className="hero">
         <div className="wrap narrow">
           <p className="eyebrow">People</p>
-          <h1>{s.person ? 'Your place in the network' : 'Join the network'}</h1>
+          <h1>{s.person ? 'Your space' : 'Join the network'}</h1>
           <p className="lede">
             Sign up as someone connected to a makerspace, or to an organisation that works with
             them — an agency, funder, support organisation, school or network. You'll be reachable
@@ -461,7 +461,17 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
         {m.state && <span className="muted">{stateName(m.state)}</span>}
       </div>
       {m.status === 'active' && STAFF_ROLES.includes(m.role) && spaceById(m.space_id) && (
-        <p><PageLink page="space-data" params={{ space: m.space_id }}>Your space's listing and annual data →</PageLink></p>
+        <div className="manage">
+          <h4>Manage {spaceName}</h4>
+          <div className="btn-row">
+            <PageLink className="btn" page="space-data" params={{ space: m.space_id }}>Listing &amp; annual data</PageLink>
+            {m.role === 'space_admin' && <>
+              <PageLink className="btn ghost" page="steward" params={{ tab: 'people' }}>People &amp; requests</PageLink>
+              <PageLink className="btn ghost" page="steward" params={{ tab: 'invitations' }}>Invite colleagues</PageLink>
+            </>}
+            <PageLink className="btn ghost" page="space" params={{ space: m.space_id }}>Public page</PageLink>
+          </div>
+        </div>
       )}
       {m.status === 'pending' && (
         <p className="muted">{m.role === 'partner'
