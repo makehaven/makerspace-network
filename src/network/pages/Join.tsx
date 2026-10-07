@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { SPACES, spaceById } from '../../data';
+import { navigate } from '../../App';
 import {
   domainOfEmail, domainOfUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES,
   type ContactPreference, type SpaceRole, type Membership, type PartnerType, type SpaceIndex,
@@ -39,6 +40,7 @@ export default function Join({ spaceId }: { spaceId?: string }) {
       </section>
       <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 60 }}>
         {s.status === 'signed_out' && <SignIn why={inviteId ? 'You have been invited. Sign in with the email address the invitation was sent to.' : undefined} />}
+        {s.status === 'signed_in' && <BootstrapAdmin />}
         {s.status === 'signed_in' && <PendingInvitations key={accepted} focusId={inviteId} onAccepted={() => setAccepted((n) => n + 1)} onLoaded={setInvited} />}
         {s.status === 'signed_in' && invited > 0 && !s.person && !joining && (
           <p className="muted">Not right? <button type="button" className="linkish" onClick={() => setJoining(true)}>Join a different space or organisation instead</button></p>
@@ -48,6 +50,30 @@ export default function Join({ spaceId }: { spaceId?: string }) {
           : s.status === 'signed_in' && <Profile onJoinAnother={() => setJoining(true)} />}
       </div>
     </>
+  );
+}
+
+// The first network admin has to exist before the directory can be synced into
+// the index, and nobody can join a directory space until it is — so this sits
+// above the join form, not behind having joined something.
+function BootstrapAdmin() {
+  const s = useSession();
+  const [error, setError] = useState<string | null>(null);
+  if (!BOOTSTRAP.includes((s.user?.email ?? '').toLowerCase()) || s.stewardship) return null;
+  return (
+    <div className="notice">
+      <p style={{ margin: 0 }}>
+        This address is the network's bootstrap admin and no stewardship exists yet.
+        Set it up, then open the Steward page and sync the directory into the index.
+      </p>
+      <div className="btn-row">
+        <button type="button" className="btn" onClick={async () => {
+          try { await bootstrapNetworkAdmin(s.user!.uid); await s.refresh(); navigate('steward'); }
+          catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+        }}>Set up network admin</button>
+      </div>
+      {error && <p className="error">{error}</p>}
+    </div>
   );
 }
 
@@ -345,7 +371,6 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
   const [name, setName] = useState(person.name);
   const [phone, setPhone] = useState(person.phone ?? '');
   const [saved, setSaved] = useState(false);
-  const isBootstrap = BOOTSTRAP.includes((s.user?.email ?? '').toLowerCase()) && !s.stewardship;
 
   // Partner organisations and proposals are only in the index, not the directory.
   const [indexNames, setIndexNames] = useState<Map<string, string>>(new Map());
@@ -369,14 +394,6 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
         <p className="muted" style={{ marginTop: 10 }}>
           {person.email} · <button type="button" className="linkish" onClick={() => void s.signOut()}>Sign out</button>
         </p>
-        {isBootstrap && (
-          <p className="notice">
-            This address is the network's bootstrap admin and no stewardship exists yet.{' '}
-            <button type="button" className="linkish" onClick={async () => { await bootstrapNetworkAdmin(s.user!.uid); void s.refresh(); }}>
-              Set up network admin
-            </button>
-          </p>
-        )}
       </div>
 
       {s.memberships.map((m) => <MembershipCard key={m.id} m={m} spaceName={spaceName(m)} />)}
