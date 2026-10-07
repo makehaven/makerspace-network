@@ -234,6 +234,14 @@ export const domainOfEmail = (email: string): string =>
   (email.split('@')[1] ?? '').toLowerCase();
 
 /** Hostname of a website, `www.` stripped, so it compares to an email domain. */
+/** People type `example.org`; browsers' url inputs refuse that without a
+ *  scheme and say so badly. Accept it and add https:// ourselves. */
+export const normalizeUrl = (raw: string): string | null => {
+  const t = raw.trim();
+  if (!t) return null;
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(t) ? t : `https://${t.replace(/^\/+/, '')}`;
+};
+
 export const domainOfUrl = (url?: string | null): string | null => {
   if (!url) return null;
   try {

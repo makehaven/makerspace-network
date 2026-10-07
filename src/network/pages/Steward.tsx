@@ -7,7 +7,7 @@ import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
   listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups,
 } from '../db';
-import { stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
+import { normalizeUrl, stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel, stewardRegionIds } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 import { InvitationsTab } from './Invitations';
@@ -293,7 +293,7 @@ function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
       e.preventDefault(); setMsg(null);
       try {
         await addPartnerOrg(s.user!.uid, {
-          name: f.name, partner_type: f.partner_type as PartnerType, website: f.website.trim() || null,
+          name: f.name, partner_type: f.partner_type as PartnerType, website: normalizeUrl(f.website),
           city: f.city.trim() || null, state: f.state, region_id: f.region_id || null,
         });
         setMsg(`Added ${f.name}. People there can now find it when they join.`);
@@ -320,7 +320,7 @@ function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
           </select></label>
       </div>
       <div className="inline-fields">
-        <label className="field"><span>Website</span><input type="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} placeholder="https://" /></label>
+        <label className="field"><span>Website</span><input inputMode="url" autoCapitalize="off" maxLength={300} value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} placeholder="example.org" /></label>
         <label className="field"><span>City</span><input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></label>
       </div>
       {msg && <p className="muted">{msg}</p>}

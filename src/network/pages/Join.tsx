@@ -3,7 +3,7 @@ import { useSession } from '../session';
 import { SPACES, spaceById } from '../../data';
 import { navigate } from '../../App';
 import {
-  domainOfEmail, domainOfUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES, STAFF_ROLES,
+  domainOfEmail, domainOfUrl, normalizeUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES, STAFF_ROLES,
   type ContactPreference, type SpaceRole, type Membership, type PartnerType, type SpaceIndex,
 } from '../model';
 import {
@@ -152,7 +152,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
         primaryStatus: s.memberships.find((m) => m.space_id === s.person?.primary_space_id)?.status ?? null,
         spaceId: target,
         proposal: proposing ? {
-          name: proposal.name, website: proposal.website.trim() || null,
+          name: proposal.name, website: normalizeUrl(proposal.website),
           city: proposal.city.trim() || null, state: proposal.state,
           partner_type: mode === 'partner' && proposal.partner_type ? proposal.partner_type : undefined,
         } : undefined,
@@ -255,6 +255,10 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
             Not listed? The directory is Connecticut so far, and the network is not.{' '}
             <button type="button" className="linkish" onClick={() => setProposing(true)}>Add your space</button>
           </p>
+          <p className="muted">
+            Not a makerspace — an agency, funder, school or support organisation?{' '}
+            <button type="button" className="linkish" onClick={() => { setMode('partner'); setSearch(''); }}>Find your organisation instead</button>
+          </p>
         </>
       )}
       {space && !proposing && (
@@ -275,7 +279,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
           <label className="field"><span>{mode === 'partner' ? 'Organisation name' : 'Space name'}</span>
             <input required maxLength={160} value={proposal.name} onChange={(e) => setProposal({ ...proposal, name: e.target.value })} /></label>
           <label className="field"><span>Website</span>
-            <input type="url" value={proposal.website} onChange={(e) => setProposal({ ...proposal, website: e.target.value })} placeholder="https://" /></label>
+            <input inputMode="url" autoCapitalize="off" maxLength={300} value={proposal.website} onChange={(e) => setProposal({ ...proposal, website: e.target.value })} placeholder="example.org" /></label>
           <div className="two">
             <label className="field"><span>City</span>
               <input value={proposal.city} onChange={(e) => setProposal({ ...proposal, city: e.target.value })} /></label>
