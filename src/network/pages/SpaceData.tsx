@@ -22,7 +22,15 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
   const [tab, setTab] = useState<'listing' | 'annual'>(
     new URLSearchParams(window.location.search).get('tab') === 'annual' ? 'annual' : 'listing');
 
-  if (s.status === 'loading') return <div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>;
+  // Arriving straight from the join form ("Answer now"), the session still
+  // holds the memberships from before the join. Reload them once on arrival.
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => {
+    if (s.status !== 'signed_in' || fresh) return;
+    s.refresh().finally(() => setFresh(true));
+  }, [s.status, fresh]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (s.status === 'loading' || (s.status === 'signed_in' && !fresh)) return <div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>;
   if (s.status === 'signed_out') return <div className="wrap narrow" style={{ paddingTop: 30 }}><SignIn /></div>;
 
   const space = spaceId ? spaceById(spaceId) : undefined;
