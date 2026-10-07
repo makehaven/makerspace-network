@@ -3,7 +3,7 @@ import { useSession } from '../session';
 import { SPACES, spaceById } from '../../data';
 import { navigate } from '../../App';
 import {
-  domainOfEmail, domainOfUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES,
+  domainOfEmail, domainOfUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES, STAFF_ROLES,
   type ContactPreference, type SpaceRole, type Membership, type PartnerType, type SpaceIndex,
 } from '../model';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../db';
 import { can } from '../capabilities';
 import { PendingInvitations } from './Invitations';
+import { getListingSubmission, getSpaceMetrics, reportingYear } from '../spaceData';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, partnerTypeLabel, roleLabel } from './shared';
 
 const BOOTSTRAP = ['jrlogan@makehaven.org'];
@@ -189,7 +190,9 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
               : "the space's admin or the regional steward"}. You'll get meeting invitations once confirmed.
           </p>
         )}
-        <div className="btn-row"><button className="btn" onClick={onDone}>Continue</button></div>
+        {outcome.kind === 'active' && STAFF_ROLES.includes(outcome.role) && space
+          ? <StaffNext spaceId={space.id} onDone={onDone} />
+          : <div className="btn-row"><button className="btn" onClick={onDone}>Continue</button></div>}
       </div>
     );
   }
@@ -363,6 +366,35 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   );
 }
 
+// Staff who have just joined are asked about their space — unless a colleague
+// already answered, in which case it is a link they can come back to.
+function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void }) {
+  const [started, setStarted] = useState<boolean | null>(null);
+  useEffect(() => {
+    Promise.all([getListingSubmission(spaceId), getSpaceMetrics(spaceId, reportingYear())])
+      .then(([l, m]) => setStarted(!!l || !!m)).catch(() => setStarted(true));
+  }, [spaceId]);
+  if (started === null) return null;
+  return started ? (
+    <>
+      <p className="muted">Your space's listing and annual data have been started by a colleague. You can review or add to them any time from your space card.</p>
+      <div className="btn-row">
+        <button className="btn" onClick={onDone}>Continue</button>
+        <PageLink className="btn ghost" page="space-data" params={{ space: spaceId }}>Review your space's data</PageLink>
+      </div>
+    </>
+  ) : (
+    <>
+      <h3>Next: tell the network about your space</h3>
+      <p>Two short sets of questions — your public listing, and the network's annual data, which is private to your space and the steward and only ever published in totals. Ten minutes now, or come back later.</p>
+      <div className="btn-row">
+        <PageLink className="btn" page="space-data" params={{ space: spaceId }}>Answer now</PageLink>
+        <button className="btn ghost" onClick={onDone}>Later</button>
+      </div>
+    </>
+  );
+}
+
 // ---------- signed in and already a member ----------
 
 function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
@@ -428,6 +460,9 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
         <StatusPill status={m.status} />
         {m.state && <span className="muted">{stateName(m.state)}</span>}
       </div>
+      {m.status === 'active' && STAFF_ROLES.includes(m.role) && spaceById(m.space_id) && (
+        <p><PageLink page="space-data" params={{ space: m.space_id }}>Your space's listing and annual data →</PageLink></p>
+      )}
       {m.status === 'pending' && (
         <p className="muted">{m.role === 'partner'
           ? "Once a steward confirms you, you'll appear to other verified people and receive meeting invitations."

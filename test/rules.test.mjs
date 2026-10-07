@@ -567,3 +567,67 @@ test('an invitation that names a group lets the invitee join it after accepting;
   await assertSucceeds(joinVia());
   await assertFails(getDoc(doc(pat, 'reply_keys', 'abc')));
 });
+
+// ---------- a space's own data ----------
+
+const metrics = (uid, space, year = 2025, extra = {}) => ({
+  space_id: space, year, metrics: { membersEnd: 120, structure: '501(c)(3) nonprofit', access247: true },
+  capabilities: ['wood'], updated_by: uid, updated_at: T, ...extra,
+});
+
+test('a space\'s staff save annual data; members, partners and other spaces cannot read or write it', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_editor');
+  await activate('mem', 'mem@gmail.com', 'makehaven', 'space_contact');
+  await activate('sp', 'sp@sparkmakerspace.org', 'spark', 'space_admin');
+  await activate('pat', 'pat@ct.gov', 'partner-decd-ct', 'partner');
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertSucceeds(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven')));
+  // A colleague comes back to it.
+  await activate('al', 'al@makehaven.org', 'makehaven', 'space_admin');
+  await assertSucceeds(getDoc(doc(user('al', 'al@makehaven.org'), 'space_metrics', 'makehaven~2025')));
+  await assertSucceeds(setDoc(doc(user('al', 'al@makehaven.org'), 'space_metrics', 'makehaven~2025'), metrics('al', 'makehaven')));
+  for (const [u, e] of [['mem', 'mem@gmail.com'], ['sp', 'sp@sparkmakerspace.org'], ['pat', 'pat@ct.gov']]) {
+    await assertFails(getDoc(doc(user(u, e), 'space_metrics', 'makehaven~2025')));
+    await assertFails(setDoc(doc(user(u, e), 'space_metrics', 'makehaven~2025'), metrics(u, 'makehaven')));
+  }
+  await assertFails(getDocs(collection(jo, 'space_metrics')));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'space_metrics', 'makehaven~2025')));
+});
+
+test('annual data is filed under the right space and year, and a partner organisation has none', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2024'), metrics('jo', 'makehaven', 2025)));
+  await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('someone-else', 'makehaven')));
+  await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven', 2025, { member_names: ['x'] })));
+  await activate('pat', 'pat@ct.gov', 'partner-decd-ct', 'partner');
+  await assertFails(setDoc(doc(user('pat', 'pat@ct.gov'), 'space_metrics', 'partner-decd-ct~2025'), metrics('pat', 'partner-decd-ct')));
+});
+
+test('the region steward and network admin read annual data; a steward elsewhere does not', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await assertSucceeds(setDoc(doc(user('jo', 'jo@makehaven.org'), 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven')));
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'stewardships', 'ohsteward'), { region_ids: ['us-oh'], network_admin: false, granted_by: 'admin', created_at: T });
+  });
+  await assertSucceeds(getDoc(doc(user('ctsteward', 's@x.org'), 'space_metrics', 'makehaven~2025')));
+  await assertSucceeds(getDoc(doc(user('admin', 'a@x.org'), 'space_metrics', 'makehaven~2025')));
+  await assertFails(getDoc(doc(user('ohsteward', 'o@x.org'), 'space_metrics', 'makehaven~2025')));
+  // Stewards read; they do not write a space's figures for it.
+  await assertFails(setDoc(doc(user('ctsteward', 's@x.org'), 'space_metrics', 'makehaven~2025'), metrics('ctsteward', 'makehaven')));
+});
+
+test('staff submit their listing; the steward marks it merged but cannot rewrite it', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await activate('mem', 'mem@gmail.com', 'makehaven', 'space_contact');
+  const sub = (uid, extra = {}) => ({ listing: { access_model: 'member_24_7', capabilities: ['laser_cutting'] }, status: 'submitted',
+    submitted_by: uid, submitted_name: uid, updated_at: T, ...extra });
+  await assertFails(setDoc(doc(user('mem', 'mem@gmail.com'), 'listing_submissions', 'makehaven'), sub('mem')));
+  await assertFails(setDoc(doc(user('jo', 'jo@makehaven.org'), 'listing_submissions', 'makehaven'), sub('jo', { status: 'merged' })));
+  await assertSucceeds(setDoc(doc(user('jo', 'jo@makehaven.org'), 'listing_submissions', 'makehaven'), sub('jo')));
+  const st = user('ctsteward', 's@x.org');
+  await assertSucceeds(getDocs(collection(st, 'listing_submissions')));
+  await assertFails(updateDoc(doc(st, 'listing_submissions', 'makehaven'), { listing: {}, updated_at: T }));
+  await assertSucceeds(updateDoc(doc(st, 'listing_submissions', 'makehaven'), { status: 'merged', updated_at: T }));
+  await assertFails(getDoc(doc(user('mem', 'mem@gmail.com'), 'listing_submissions', 'makehaven')));
+});

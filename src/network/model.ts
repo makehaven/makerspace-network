@@ -15,6 +15,8 @@ export type PartnerType = 'government' | 'funder' | 'support_org' | 'education' 
 /** Roles that may show a direct address to verified people (GOVERNANCE §Roster).
  *  Partners are included: a steward vetted them and they are usually public-facing. */
 export const ORGANISER_ROLES: SpaceRole[] = ['space_admin', 'space_editor', 'partner'];
+/** A space's own staff: the people asked for its listing and annual data. Matches `isOrganiserAt` in the rules. */
+export const STAFF_ROLES: SpaceRole[] = ['space_admin', 'space_editor'];
 
 export interface Person {
   name: string;

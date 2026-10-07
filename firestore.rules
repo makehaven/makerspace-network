@@ -17,6 +17,8 @@ rules_version = '2';
 //   invitations/{space~email} a named person invited to one organisation, prefilled
 //   groups/{slug}             mailing lists: members/, threads/, threads/*/posts/
 //   reply_keys/{key}          Function-only map from a reply address to group, thread, person
+//   listing_submissions/{space} a space's own answers for its public listing, for the steward to merge
+//   space_metrics/{space~year}  annual network data — private to the space and its stewards
 //   audit/{id}                append-only
 
 service cloud.firestore {
@@ -267,6 +269,59 @@ service cloud.firestore {
               && d().diff(resource.data).affectedKeys().hasOnly(['claimed', 'updated_at'])
               && invitedAs(spaceId, 'space_admin')
               && getAfter(membershipPath(uid(), spaceId)).data.status == 'active'));
+      allow delete: if isNetworkAdmin();
+    }
+
+    // ---------- a space's own data ----------
+    // Who may see a space's data before it is public: the space's own
+    // organisers, the steward of its region, the network admin. The region is
+    // read from the index, never from the document, so it cannot be misfiled.
+    function caresFor(spaceId) {
+      return isOrganiserAt(spaceId)
+        || (spaceExists(spaceId) && isStewardOf(space(spaceId).region_id))
+        || isNetworkAdmin();
+    }
+
+    // The listing questionnaire. Public once merged into data/spaces by a
+    // steward, with the space itself recorded as the source. Until then it is
+    // a submission, not a fact.
+    match /listing_submissions/{spaceId} {
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['listing', 'status', 'submitted_by', 'submitted_name', 'updated_at'])
+          && d().listing is map && d().listing.size() <= 30
+          && d().status in ['submitted', 'merged']
+          && d().submitted_name is string && d().submitted_name.size() <= 120
+          && isIso(d().updated_at);
+      }
+      allow get: if signedIn() && caresFor(spaceId);
+      allow list: if isSteward() || isNetworkAdmin();
+      allow create, update: if shape() && (
+          (isOrganiserAt(spaceId) && d().status == 'submitted' && d().submitted_by == uid())
+          || ((isNetworkAdmin() || (spaceExists(spaceId) && isStewardOf(space(spaceId).region_id)))
+              && (resource == null || d().diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at']))));
+      allow delete: if isNetworkAdmin();
+    }
+
+    // Annual network data (the Standards tool's Annual Data tab). Organisational
+    // figures, never published attributed to a space: the network reports
+    // aggregates only. Id is `{space_id}~{year}`.
+    match /space_metrics/{mid} {
+      function sid() { return mid.split('~')[0]; }
+      function d() { return request.resource.data; }
+      function shape() {
+        return d().keys().hasOnly(['space_id', 'year', 'metrics', 'capabilities', 'updated_by', 'updated_at'])
+          && d().space_id == sid()
+          && mid == sid() + '~' + string(d().year)
+          && d().year is int && d().year >= 2015 && d().year <= 2100
+          && d().metrics is map && d().metrics.size() <= 60
+          && d().capabilities is list && d().capabilities.size() <= 20
+          && d().updated_by == uid()
+          && isIso(d().updated_at);
+      }
+      allow get: if signedIn() && caresFor(sid());
+      allow list: if isSteward() || isNetworkAdmin();
+      allow create, update: if shape() && isOrganiserAt(sid()) && spaceExists(sid()) && !isPartnerOrg(sid());
       allow delete: if isNetworkAdmin();
     }
 

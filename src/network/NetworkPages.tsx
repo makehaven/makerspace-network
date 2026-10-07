@@ -6,6 +6,7 @@ import Join from './pages/Join';
 import People from './pages/People';
 import Steward from './pages/Steward';
 import { GroupPage, GroupsPage } from './pages/Groups';
+import SpaceData from './pages/SpaceData';
 
 export default function NetworkPages({ page, spaceId }: { page: string; spaceId?: string }) {
   return (
@@ -15,6 +16,7 @@ export default function NetworkPages({ page, spaceId }: { page: string; spaceId?
       {page === 'steward' && <Steward />}
       {page === 'groups' && <GroupsPage />}
       {page === 'group' && <GroupPage />}
+      {page === 'space-data' && <SpaceData spaceId={spaceId} />}
     </SessionProvider>
   );
 }
