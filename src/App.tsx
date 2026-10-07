@@ -74,7 +74,9 @@ export const href = (page: string, params: Record<string, string> = {}) => {
 };
 
 function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
-  const current = parse().page === page;
+  const here = parse().page;
+  // A space's data pages belong to 'Your space'.
+  const current = here === page || (page === 'join' && here === 'space-data');
   return (
     <a
       href={href(page, params)}

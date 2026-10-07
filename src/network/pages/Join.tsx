@@ -412,6 +412,9 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
 
   return (
     <>
+      {/* The spaces first: managing them is why most people open this page. */}
+      {s.memberships.map((m) => <MembershipCard key={m.id} m={m} spaceName={spaceName(m)} />)}
+
       <div className="card form-card">
         <h2>You</h2>
         <form className="inline-fields" onSubmit={async (e) => {
@@ -428,7 +431,6 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
         </p>
       </div>
 
-      {s.memberships.map((m) => <MembershipCard key={m.id} m={m} spaceName={spaceName(m)} />)}
 
       <div className="btn-row">
         <button className="btn ghost" onClick={onJoinAnother}>Join another space or organisation</button>
