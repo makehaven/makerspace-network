@@ -1,0 +1,65 @@
+{
+  "id": "unh-schaub-makerspace",
+  "name": "Schaub Makerspace",
+  "legal_name": "University of New Haven",
+  "kind": "university_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "The University of New Haven's makerspace in the Bergami Center, with digital fabrication, a waterjet and a metal 3D printer, open to the university's students and faculty.",
+  "address": {
+    "street": "300 Boston Post Road",
+    "locality": "West Haven",
+    "county": "New Haven",
+    "region": "CT",
+    "postal_code": "06516",
+    "country": "US",
+    "notes": "Bergami Center for Science, Technology and Innovation, Room 101."
+  },
+  "contact": {
+    "website": "https://www.newhaven.edu/academics/makerspace/index.php",
+    "email": "make@newhaven.edu",
+    "phone": "+1-203-479-4774"
+  },
+  "operations": {
+    "access_model": "host_institution_hours",
+    "public_access": false,
+    "tax_status": "university",
+    "membership_models": [
+      "free_gated"
+    ],
+    "minor_policy": "unknown",
+    "hours_note": "Monday to Friday, 8 a.m. to 8 p.m.; requests outside those hours may be accommodated."
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "three_d_printing_resin",
+    "three_d_printing_powder",
+    "laser_cutting",
+    "waterjet",
+    "vinyl_cutting",
+    "woodworking_machine",
+    "screen_printing",
+    "textiles_sewing",
+    "large_format_printing"
+  ],
+  "sources": [
+    {
+      "system": "space_website",
+      "url": "https://www.newhaven.edu/academics/makerspace/index.php",
+      "retrieved": "2026-10-07",
+      "note": "Own page: location, hours, contact, 'Undergraduates, graduate students and faculty from the University are all welcome during our open hours', and the equipment list (Stratasys, Ultimaker, MakerBot and Formlabs printers, three Epilog lasers, three CNC machines, waterjet, Sharebot Metal One, vinyl cutters, miter saw, band saw, drill press, screen printing, sewing, large-format printing)."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-10-07",
+    "gaps": [
+      "No coordinates on file; the space does not appear on the map until it has them.",
+      "The three CNC machines are not described, so no CNC capability is listed.",
+      "Whether anyone outside the university may use it is not stated; the page names only students and faculty.",
+      "Minor policy and any cost are not stated."
+    ]
+  }
+}
