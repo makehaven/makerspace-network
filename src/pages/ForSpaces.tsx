@@ -24,15 +24,16 @@ export default function ForSpaces() {
       <div className="wrap narrow prose" style={{ paddingTop: 34 }}>
         <h2>Claim your listing</h2>
         <p>
-          Email us from an address at your space's own domain and say which listing is
-          yours. We check that the domain matches the website on the record, then hand you
-          editing rights over it. {thin > 0 && (
+          Sign in with an address at your space's own domain and pick your listing. If the
+          domain matches the website on the record and nobody has claimed it yet, it is
+          yours at once; otherwise the region steward confirms you. {thin > 0 && (
             <>Right now {thin} of the {SPACES.length} records are thin enough that ten
             minutes from the right person would visibly improve them.</>
           )}
         </p>
         <div className="btn-row">
-          <a className="btn" href={CONTACT}>Claim a listing</a>
+          <a className="btn" href={href('join')}
+             onClick={(e) => { e.preventDefault(); navigate('join'); }}>Join and claim a listing</a>
           <a className="btn ghost" href={REPO_URL}>Or send a pull request</a>
         </div>
         <p>
@@ -80,11 +81,10 @@ export default function ForSpaces() {
           sent to.
         </p>
         <p className="notice info">
-          <strong>Being straight about what exists today:</strong> the role model above is
-          specified and the vocabulary is settled — it deliberately mirrors the sibling
-          Entrepreneurship Nexus project so the two converge rather than fork — but the
-          sign-in and invitation machinery is not built yet. Until it is, claiming runs
-          through email and pull requests, and we do the edit for you. See{' '}
+          <strong>Being straight about what exists today:</strong> sign-in, claiming, the
+          roster and invitations are live. Editing the listing from the site is not built
+          yet — until it is, send changes by <a href={CONTACT}>email</a> or pull request and
+          we make the edit for you. See{' '}
           <a href={`${REPO_URL}/blob/main/docs/GOVERNANCE.md`}>docs/GOVERNANCE.md</a> for the
           full specification.
         </p>
