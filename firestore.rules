@@ -147,17 +147,21 @@ service cloud.firestore {
           && d().person_id is string && d().space_id is string
           && d().role in ['space_admin', 'space_editor', 'space_contact', 'partner']
           // Partner orgs have partners and nothing else; makerspaces never do.
-          && (d().role == 'partner') == isPartnerOrg(d().space_id)
+          && (d().role == 'partner') == (spaceAfter(d().space_id).get('kind', 'makerspace') == 'partner')
           && d().status in ['pending', 'active', 'suspended', 'revoked']
           && d().functions is list && d().functions.size() <= 10
           && d().contact_preference in ['email', 'phone', 'relay']
           && d().invitations is bool
           && isIso(d().updated_at);
       }
+      // The space as it stands after this batch. Proposing a space that is not
+      // listed creates its index entry and the proposer's membership in one
+      // batch, so a plain get() would not find it yet.
+      function spaceAfter(spaceId) { return getAfter(path('spaces_index', spaceId)).data; }
       // The copied space fields must agree with the index, or a person could
       // file themselves under a region whose steward never sees them.
       function agreesWithSpace() {
-        return d().state == space(d().space_id).state && d().region_id == space(d().space_id).region_id;
+        return d().state == spaceAfter(d().space_id).state && d().region_id == spaceAfter(d().space_id).region_id;
       }
       function claimsInSameBatch() {
         return space(d().space_id).claimed == false
@@ -175,21 +179,23 @@ service cloud.firestore {
       allow create: if signedIn() && shape()
         && mid == uid() + '_' + d().space_id
         && d().person_id == uid()
-        && spaceExists(d().space_id)
+        && existsAfter(path('spaces_index', d().space_id))
         && agreesWithSpace()
         && d().confirmed_by == null
         && isIso(d().created_at)
         && (
+          // Everyone else is a contact, or a partner, waiting for confirmation.
+          // First, so a space proposed in this same batch never reaches the
+          // lookups below, which read the index as it was before the batch.
+          (d().role in ['space_contact', 'partner'] && d().status == 'pending')
           // Domain-matched at a real space: admin if unclaimed (and claim it
           // in the same batch), editor/contact right away, or choose to wait.
-          (domainMatches(d().space_id) && space(d().space_id).proposed == false && (
+          || (domainMatches(d().space_id) && space(d().space_id).proposed == false && (
               (d().role == 'space_admin' && d().status == 'active' && claimsInSameBatch())
               || (d().role in ['space_editor', 'space_contact'] && d().status == 'active')
               || d().status == 'pending'))
           // Invited: active at once, in exactly the role the inviter chose.
           || (d().status == 'active' && space(d().space_id).proposed == false && invitedAs(d().space_id, d().role))
-          // Everyone else is a contact, or a partner, waiting for confirmation.
-          || (d().role in ['space_contact', 'partner'] && d().status == 'pending')
         );
 
       allow update: if signedIn() && shape()

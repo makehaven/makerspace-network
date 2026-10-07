@@ -648,3 +648,27 @@ test('anyone sends feedback, signed in or not, without claiming to be someone el
   await assertFails(getDocs(collection(anon, 'feedback')));
   await assertSucceeds(getDocs(collection(user('ctsteward', 's@x.org'), 'feedback')));
 });
+
+// ---------- proposing a space while joining it ----------
+
+test('someone proposes an unlisted space or organisation and joins it in the same batch, as the join form does', async () => {
+  for (const [uid, email, id, kind, partnerType, role] of [
+    ['lee', 'lee@newstudio.example', 'proposed-new-studio-ct', 'makerspace', null, 'space_contact'],
+    ['ash', 'ash@example-foundation.org', 'proposed-example-foundation-ct', 'partner', 'support_org', 'partner'],
+  ]) {
+    const db = user(uid, email);
+    const b = writeBatch(db);
+    b.set(doc(db, 'spaces_index', id), { name: 'New Studio', kind, partner_type: partnerType, domain: 'newstudio.example', state: 'CT',
+      region_id: null, size_tier: null, proposed: true, proposed_by: uid, website: 'https://newstudio.example', city: 'Bethel', claimed: false, updated_at: T });
+    b.set(doc(db, 'memberships', `${uid}_${id}`), { ...membership(uid, id, role, 'pending'), state: 'CT', region_id: null });
+    b.set(doc(db, 'people', uid), person(uid, email, id));
+    await assertSucceeds(b.commit());
+  }
+  // Proposing never makes you anything but pending.
+  const db = user('eve', 'eve@evil.org');
+  const b = writeBatch(db);
+  b.set(doc(db, 'spaces_index', 'proposed-evil-ct'), { name: 'Evil', kind: 'makerspace', partner_type: null, domain: 'evil.org', state: 'CT',
+    region_id: null, size_tier: null, proposed: true, proposed_by: 'eve', website: null, city: null, claimed: false, updated_at: T });
+  b.set(doc(db, 'memberships', 'eve_proposed-evil-ct'), { ...membership('eve', 'proposed-evil-ct', 'space_admin', 'active'), state: 'CT', region_id: null });
+  await assertFails(b.commit());
+});
