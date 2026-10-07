@@ -12,7 +12,7 @@ import {
   setDelivery, startThread, updateGroup,
 } from '../db';
 import { groupAddress, type Group, type GroupMember, type GroupPost, type GroupThread, type RosterEntry } from '../model';
-import { PageLink, SignIn } from './shared';
+import { PageLink, SignIn, stewardRegionIds } from './shared';
 import type { Session } from '../session';
 
 type WithId<T> = T & { id: string };
@@ -92,7 +92,7 @@ export function GroupsPage() {
 
 function CreateGroup({ onCreated }: { onCreated: () => Promise<void> }) {
   const s = useSession();
-  const regions = s.stewardship?.region_ids ?? [];
+  const regions = stewardRegionIds(s.stewardship);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [touched, setTouched] = useState(false);

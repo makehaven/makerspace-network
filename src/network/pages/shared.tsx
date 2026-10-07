@@ -3,6 +3,13 @@ import { useSession } from '../session';
 import { href, navigate } from '../../App';
 import enumsJson from '../../../data/schema/enums.json';
 import type { EnumEntry } from '../../types';
+import { REGIONS } from '../../data';
+import type { Stewardship } from '../model';
+
+/** Regions a steward can act for. A network admin acts for every region, so
+ *  they are offered all of them rather than only the ones on their record. */
+export const stewardRegionIds = (st: Stewardship | null | undefined): string[] =>
+  !st ? [] : st.network_admin ? [...new Set([...st.region_ids, ...REGIONS.map((r) => r.id)])] : st.region_ids;
 
 const enums = enumsJson as unknown as Record<string, EnumEntry[]>;
 export const FUNCTIONS = enums.PersonFunction ?? [];

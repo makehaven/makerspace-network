@@ -33,8 +33,7 @@ export default function People() {
   const shown = useMemo(() => (roster ?? []).filter((r) =>
     (!state || r.state === state) && (!fn || r.functions.includes(fn))
     && (!kind || (orgs.get(r.space_id)?.kind === 'partner') === (kind === 'partner'))
-    && (!q || `${r.name} ${r.space_name}`.toLowerCase().includes(q.toLowerCase()))
-    && r.id !== s.user?.uid), [roster, state, fn, kind, orgs, q, s.user?.uid]);
+    && (!q || `${r.name} ${r.space_name}`.toLowerCase().includes(q.toLowerCase()))), [roster, state, fn, kind, orgs, q]);
 
   return (
     <>
@@ -91,14 +90,14 @@ export default function People() {
                   <tbody>
                     {shown.map((r) => (
                       <tr key={r.id}>
-                        <td><strong>{r.name}</strong><br /><span className="muted">{roleLabel(r.role)}</span></td>
+                        <td><strong>{r.name}</strong>{r.id === s.user?.uid && <span className="muted"> (you — this is how others see you)</span>}<br /><span className="muted">{roleLabel(r.role)}</span></td>
                         <td>{r.space_name}<br /><span className="muted">{stateName(r.state)}
                           {orgs.get(r.space_id)?.kind === 'partner' && ` · ${partnerTypeLabel(orgs.get(r.space_id)?.partner_type)}`}</span></td>
                         <td>{r.functions.map((f) => <span key={f} className="tag">{functionLabel(f)}</span>)}</td>
                         <td className="actions">
                           {r.email && <a href={`mailto:${r.email}`}>{r.email}</a>}
                           {r.phone && <span>{r.phone}</span>}
-                          {!r.email && !r.phone && (
+                          {!r.email && !r.phone && r.id !== s.user?.uid && (
                             <button className="btn ghost small" onClick={() => setTo(r)}>
                               Message{ORGANISER_ROLES.includes(r.role) ? '' : ' (relayed)'}
                             </button>

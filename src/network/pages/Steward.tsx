@@ -7,7 +7,7 @@ import {
   listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups,
 } from '../db';
 import { stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
-import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel } from './shared';
+import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel, stewardRegionIds } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 import { InvitationsTab } from './Invitations';
 import { managesGroup } from './Groups';
@@ -278,7 +278,7 @@ function SpacesTab() {
  *  join as partners and the steward confirms them. */
 function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
   const s = useSession();
-  const regions = s.stewardship?.region_ids ?? [];
+  const regions = stewardRegionIds(s.stewardship);
   const [f, setF] = useState({ name: '', partner_type: '' as PartnerType | '', website: '', city: '', state: '', region_id: regions[0] ?? '' });
   const [msg, setMsg] = useState<string | null>(null);
   return (

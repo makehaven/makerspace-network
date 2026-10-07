@@ -308,8 +308,8 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
           ) : domainOk ? (
             <div className="radios">
               {([
-                ['space_admin', 'I look after this space\'s listing', 'Edit the record, confirm and invite other people at the space.'],
-                ['space_editor', 'I\'m on the team', 'Edit the record. Your email or phone can be shown to verified people.'],
+                ['space_admin', 'I run this space or its listing — admin', 'Claim the listing, answer its data, confirm and invite other people at the space.'],
+                ['space_editor', 'I\'m on the staff — editor', 'Answer the listing and annual data. Your email or phone can be shown to verified people.'],
                 ['space_contact', 'Keep me in the loop', 'Meeting invitations and the people directory. Messages reach you by relay.'],
               ] as const).map(([r, title, body]) => (
                 <label key={r} className={`radio ${role === r ? 'on' : ''}`}>

@@ -11,7 +11,7 @@ import {
   setAttended, setRsvp, updateMeeting, type MeetingDraft,
 } from '../db';
 import type { Meeting, Person, RosterEntry, Rsvp, RsvpResponse } from '../model';
-import { download } from './shared';
+import { download, stewardRegionIds } from './shared';
 import { meetingIcs } from '../../../functions/src/ics';
 
 type WithId<T> = T & { id: string };
@@ -32,7 +32,7 @@ export function MeetingForm({ invitees, audience, onDone, onCancel }: {
   invitees: { uid: string; name: string }[]; audience: string; onDone: () => void; onCancel: () => void;
 }) {
   const s = useSession();
-  const regionChoices = s.stewardship?.region_ids ?? [];
+  const regionChoices = stewardRegionIds(s.stewardship);
   const [title, setTitle] = useState('');
   const [agenda, setAgenda] = useState('');
   const [start, setStart] = useState(() => {
