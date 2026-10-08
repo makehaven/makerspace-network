@@ -715,3 +715,41 @@ test('staff share a summary; stewards read it; it never carries a single standar
   // Withdrawing is the space's own call.
   await assertSucceeds(deleteDoc(doc(jo, 'assessment_summaries', 'makehaven')));
 });
+
+// ---------- merging a duplicate organisation ----------
+
+const mergeBatch = (db, uid, from, to, role, status, toRegion = 'us-ct') => {
+  const b = writeBatch(db);
+  b.set(doc(db, 'memberships', `${uid}_${to}`), { ...membership(uid, to, role, status), region_id: toRegion });
+  b.delete(doc(db, 'memberships', `${uid}_${from}`));
+  b.update(doc(db, 'people', uid), { primary_space_id: to, updated_at: T });
+  b.delete(doc(db, 'spaces_index', from));
+  return b;
+};
+
+test('the network admin merges a proposed duplicate into the real organisation, moving its people', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'spaces_index', 'proposed-decd-inc-ct'), { name: 'DECD Inc.', kind: 'partner', partner_type: 'government', domain: null, state: 'CT',
+      region_id: null, size_tier: null, proposed: true, proposed_by: 'mo', website: null, city: null, claimed: false, updated_at: T });
+    await setDoc(doc(db, 'people', 'mo'), person('mo', 'mo@ct.gov', 'proposed-decd-inc-ct'));
+    await setDoc(doc(db, 'memberships', 'mo_proposed-decd-inc-ct'), { ...membership('mo', 'proposed-decd-inc-ct', 'partner', 'pending'), region_id: null });
+  });
+  // A steward may not; the network admin may.
+  await assertFails(mergeBatch(user('ctsteward', 's@x.org'), 'mo', 'proposed-decd-inc-ct', 'partner-decd-ct', 'partner', 'pending').commit());
+  // The person keeps their standing: a pending partner stays pending for the steward to confirm.
+  await assertSucceeds(mergeBatch(user('admin', 'a@x.org'), 'mo', 'proposed-decd-inc-ct', 'partner-decd-ct', 'partner', 'pending').commit());
+  // It cannot merge into another proposal, or file the person under the wrong region.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'spaces_index', 'proposed-two-ct'), { name: 'Two', kind: 'makerspace', partner_type: null, domain: null, state: 'CT',
+      region_id: null, size_tier: null, proposed: true, proposed_by: 'zo', website: null, city: null, claimed: false, updated_at: T });
+    await setDoc(doc(db, 'spaces_index', 'proposed-three-ct'), { name: 'Three', kind: 'makerspace', partner_type: null, domain: null, state: 'CT',
+      region_id: null, size_tier: null, proposed: true, proposed_by: 'zo', website: null, city: null, claimed: false, updated_at: T });
+    await setDoc(doc(db, 'people', 'zo'), person('zo', 'zo@x.org', 'proposed-two-ct'));
+    await setDoc(doc(db, 'memberships', 'zo_proposed-two-ct'), { ...membership('zo', 'proposed-two-ct', 'space_contact', 'pending'), region_id: null });
+  });
+  await assertFails(mergeBatch(user('admin', 'a@x.org'), 'zo', 'proposed-two-ct', 'proposed-three-ct', 'space_contact', 'pending', null).commit());
+  await assertFails(mergeBatch(user('admin', 'a@x.org'), 'zo', 'proposed-two-ct', 'spark', 'space_contact', 'pending', 'us-ri').commit());
+  await assertSucceeds(mergeBatch(user('admin', 'a@x.org'), 'zo', 'proposed-two-ct', 'spark', 'space_contact', 'pending').commit());
+});

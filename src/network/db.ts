@@ -292,6 +292,41 @@ export async function setMembership(actor: string, m: WithId<Membership>, person
   await audit(actor, 'membership_changed', { membership: m.id, ...patch });
 }
 
+/** Merge a duplicate organisation (usually one someone proposed while joining)
+ *  into the real one. Each person's membership is re-filed under the real
+ *  organisation with the same role and status — a pending request stays
+ *  pending for its confirmer — and the duplicate disappears. Network admin
+ *  only; firestore.rules §memberships "Merging a duplicate". */
+export async function mergeOrganisation(actor: string, fromId: string, toId: string) {
+  const [from, to] = await Promise.all([getSpaceIndex(fromId), getSpaceIndex(toId)]);
+  if (!from || !to) throw new Error('One of those organisations no longer exists.');
+  if (to.proposed) throw new Error('Merge into an organisation that is already confirmed.');
+  if ((from.kind ?? 'makerspace') !== (to.kind ?? 'makerspace')) throw new Error('A makerspace and a partner organisation cannot be merged.');
+  const ms = await getDocs(query(collection(db, 'memberships'), where('space_id', '==', fromId)));
+  const t = now();
+  const batch = writeBatch(db);
+  let moved = 0;
+  for (const d of ms.docs) {
+    const m = d.data() as Membership;
+    const targetId = membershipId(m.person_id, toId);
+    const already = (await getDoc(doc(db, 'memberships', targetId))).exists();
+    const next: Membership = { ...m, space_id: toId, state: to.state, region_id: to.region_id, updated_at: t };
+    if (!already) batch.set(doc(db, 'memberships', targetId), next);
+    batch.delete(d.ref);
+    const p = await getDoc(doc(db, 'people', m.person_id));
+    const person = p.exists() ? (p.data() as Person) : null;
+    if (person?.primary_space_id === fromId) {
+      batch.update(p.ref, { primary_space_id: toId, updated_at: t });
+      if (next.status === 'active' && !already) batch.set(doc(db, 'roster', m.person_id), rosterFrom({ ...person, primary_space_id: toId }, next, to.name));
+    }
+    moved++;
+  }
+  batch.delete(doc(db, 'spaces_index', fromId));
+  await batch.commit();
+  await audit(actor, 'organisation_merged', { from: fromId, to: toId, people: moved });
+  return moved;
+}
+
 export async function setSizeTier(spaceId: string, tier: SizeTier | null) {
   await updateDoc(doc(db, 'spaces_index', spaceId), { size_tier: tier, updated_at: now() });
 }

@@ -121,7 +121,12 @@ Three things it has to do, in order of why anyone asked for it:
 - [x] **Switch it on**: Firestore and Auth in the console, deploy, bootstrap
       the network admin, sync the index (2026-10-07). Email-link sign-in is
       capped at a few emails a day on the Spark plan; Blaze lifts it
-- [ ] Steward screen to review and merge listing submissions (by hand until then)
+- [x] Steward Listings tab: each submission against the record on file, field
+      by field; merged into `data/spaces` with the space as source, then marked
+      merged (2026-10-08). Merging is still a repository change
+- [x] Merge a duplicate organisation into the real one from the Spaces tab,
+      moving its people with their role and status (network admin)
+- [ ] Turn a proposed makerspace into a directory record from the Steward page
 - [x] Annual data made easy (2026-10-08): the core ten first, the rest
       folded; last year's answers and the listing offered as suggestions to
       accept; "we don't track this" and "estimate" recorded as answers; "Ask a

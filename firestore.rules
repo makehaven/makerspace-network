@@ -136,6 +136,12 @@ service cloud.firestore {
             && resource.data.primary_space_id == null
             && existsAfter(membershipPath(personId, d().primary_space_id))
             && isIso(d().updated_at))
+          // A merge moves the primary space off a duplicate that is going away.
+          || (isNetworkAdmin()
+            && d().diff(resource.data).affectedKeys().hasOnly(['primary_space_id', 'updated_at'])
+            && existsAfter(membershipPath(personId, d().primary_space_id))
+            && !existsAfter(membershipPath(personId, resource.data.primary_space_id))
+            && isIso(d().updated_at))
         );
       allow delete: if isNetworkAdmin();
     }
@@ -199,6 +205,16 @@ service cloud.firestore {
           // Invited: active at once, in exactly the role the inviter chose.
           || (d().status == 'active' && space(d().space_id).proposed == false && invitedAs(d().space_id, d().role))
         );
+
+      // Merging a duplicate organisation into the real one: the network admin
+      // re-files each person's membership under the real organisation, with
+      // the same role and status, and deletes the duplicate's in the batch.
+      allow create: if isNetworkAdmin() && shape()
+        && mid == d().person_id + '_' + d().space_id
+        && existsAfter(path('spaces_index', d().space_id))
+        && spaceAfter(d().space_id).get('proposed', false) == false
+        && agreesWithSpace()
+        && isIso(d().created_at);
 
       allow update: if signedIn() && shape()
         && d().person_id == resource.data.person_id

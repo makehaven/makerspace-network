@@ -4,10 +4,11 @@ import { can } from '../capabilities';
 import { listFeedback, type Feedback } from '../feedback';
 import { listSummaries, type AssessmentSummary } from '../standardsData';
 import { levelLabel } from '../../standards/framework';
-import { REGIONS, SPACES } from '../../data';
+import { REGIONS, SPACES, VOCAB, label, spaceById } from '../../data';
+import { listListingSubmissions, listingFromRecord, markListingMerged, type ListingAnswers, type ListingSubmission } from '../spaceData';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
-  listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups,
+  listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups, mergeOrganisation,
 } from '../db';
 import { normalizeUrl, stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel, stewardRegionIds } from './shared';
@@ -22,10 +23,10 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'stewards' | 'feedback';
+  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'listings' | 'stewards' | 'feedback';
   const [tab, setTab] = useState<Tab>(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    return (['people', 'invitations', 'meetings', 'spaces', 'stewards', 'feedback'] as const).find((x) => x === t) ?? 'people';
+    return (['people', 'invitations', 'meetings', 'spaces', 'listings', 'stewards', 'feedback'] as const).find((x) => x === t) ?? 'people';
   });
 
   return (
@@ -53,6 +54,7 @@ export default function Steward() {
               <button className={tab === 'invitations' ? 'on' : ''} onClick={() => setTab('invitations')}>Invitations</button>
               {can(s, 'meeting.convene') && <button className={tab === 'meetings' ? 'on' : ''} onClick={() => setTab('meetings')}>Meetings</button>}
               <button className={tab === 'spaces' ? 'on' : ''} onClick={() => setTab('spaces')}>Spaces</button>
+              {!!s.stewardship && <button className={tab === 'listings' ? 'on' : ''} onClick={() => setTab('listings')}>Listings</button>}
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
               {!!s.stewardship && <button className={tab === 'feedback' ? 'on' : ''} onClick={() => setTab('feedback')}>Feedback</button>}
             </div>
@@ -60,6 +62,7 @@ export default function Steward() {
             {tab === 'invitations' && <InvitationsTab />}
             {tab === 'meetings' && <MeetingsTab />}
             {tab === 'spaces' && <SpacesTab />}
+            {tab === 'listings' && <ListingsTab />}
             {tab === 'stewards' && <StewardsTab />}
             {tab === 'feedback' && <FeedbackTab />}
           </>
@@ -264,7 +267,11 @@ function SpacesTab() {
               return (
                 <tr key={sp.id} className={n < 2 && !sp.proposed && sp.kind !== 'partner' ? 'warn-row' : ''}>
                   <td><strong>{sp.name}</strong>{sp.proposed && <span className="pill flag" style={{ marginLeft: 6 }}>proposed</span>}<br />
-                      <span className="muted">{sp.city}{sp.website ? ` · ${sp.website.replace(/^https?:\/\//, '')}` : ''}</span></td>
+                      <span className="muted">{sp.city}{sp.website ? ` · ${sp.website.replace(/^https?:\/\//, '')}` : ''}</span>
+                      {sp.proposed && s.stewardship?.network_admin && (
+                        <MergeControl from={sp} options={list.filter((x) => !x.proposed && (x.kind ?? 'makerspace') === (sp.kind ?? 'makerspace'))}
+                                      onMerged={async (msg) => { setMsg(msg); await reload(); }} />
+                      )}</td>
                   <td>{stateName(sp.state)}</td>
                   <td>{sp.region_id ?? <span className="muted">none yet</span>}</td>
                   <td>{sp.kind === 'partner' ? <span className="tag">{partnerTypeLabel(sp.partner_type)}</span> : editable
@@ -332,6 +339,107 @@ function PartnerForm({ onAdded }: { onAdded: () => Promise<void> }) {
       {msg && <p className="muted">{msg}</p>}
       <div className="btn-row"><button className="btn">Add organisation</button></div>
     </form>
+  );
+}
+
+/** A proposed organisation that turns out to be one already listed. */
+function MergeControl({ from, options, onMerged }: {
+  from: SpaceIndex & { id: string }; options: (SpaceIndex & { id: string })[]; onMerged: (msg: string) => Promise<void>;
+}) {
+  const s = useSession();
+  const [to, setTo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const target = options.find((o) => o.id === to);
+  return (
+    <div className="merge">
+      <span className="muted">Same as one already listed?</span>
+      <select value={to} onChange={(e) => { setTo(e.target.value); setErr(null); }}>
+        <option value="">Choose…</option>
+        {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+      </select>
+      <button className="btn ghost small" disabled={!to || busy} onClick={async () => {
+        if (!target || !window.confirm(`Merge "${from.name}" into "${target.name}"? Its people move across with the same role and status, and "${from.name}" is removed.`)) return;
+        setBusy(true);
+        try { const n = await mergeOrganisation(s.user!.uid, from.id, to); await onMerged(`Merged ${from.name} into ${target.name}; ${n} ${n === 1 ? 'person' : 'people'} moved.`); }
+        catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+        setBusy(false);
+      }}>{busy ? 'Merging…' : 'Merge'}</button>
+      {err && <span className="error">{err}</span>}
+    </div>
+  );
+}
+
+/** What a space's staff sent for their listing, against what is on file. The
+ *  directory is plain JSON in the repository, so merging is a change to
+ *  data/spaces/<id>.json with the space recorded as the source; this tab shows
+ *  exactly what changed and records that it was merged. */
+function ListingsTab() {
+  const [items, setItems] = useState<(ListingSubmission & { id: string })[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = () => listListingSubmissions().then(setItems).catch((e) => setError(String(e?.message ?? e)));
+  useEffect(() => { void load(); }, []);
+  if (error) return <p className="error">{error}</p>;
+  if (!items) return <p>Loading…</p>;
+  if (!items.length) return <p className="muted" style={{ marginTop: 14 }}>No listing submissions yet.</p>;
+  return (
+    <div style={{ marginTop: 14 }}>
+      <p className="muted">
+        A space's staff answer their listing under Your space; it reaches the public directory once it is
+        merged into <code>data/spaces/&lt;id&gt;.json</code> with the space as the source. Ask Claude to merge a
+        submission, or make the change as a pull request, then mark it merged here.
+      </p>
+      {items.map((x) => <ListingDiff key={x.id} sub={x} onMerged={load} />)}
+    </div>
+  );
+}
+
+const LISTING_LABELS: Record<keyof ListingAnswers, string> = {
+  summary: 'Summary', capabilities: 'What people can make', access_model: 'Access', public_access: 'Open to non-members',
+  membership_models: 'Ways to use the space', monthly_cost_min: 'Monthly cost from', monthly_cost_max: 'Monthly cost up to',
+  day_pass_usd: 'Day pass', minor_policy: 'Young people', hours_note: 'Hours', email: 'Email', phone: 'Phone', notes: 'Note to the steward',
+};
+const VOCAB_FOR: Partial<Record<keyof ListingAnswers, keyof typeof VOCAB>> = {
+  capabilities: 'Capability', access_model: 'AccessModel', membership_models: 'MembershipModel', minor_policy: 'MinorPolicy',
+};
+
+function ListingDiff({ sub, onMerged }: { sub: ListingSubmission & { id: string }; onMerged: () => Promise<unknown> }) {
+  const onFile = listingFromRecord(spaceById(sub.id));
+  const say = (k: keyof ListingAnswers, v: unknown): string => {
+    if (v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)) return '—';
+    const voc = VOCAB_FOR[k];
+    if (Array.isArray(v)) return v.map((x) => (voc ? label(voc, x) : x)).join(', ');
+    if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+    return voc ? label(voc, String(v)) : String(v);
+  };
+  const same = (a: unknown, b: unknown) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a ?? null) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b ?? null)
+    || (!a && !b);
+  const changes = (Object.keys(LISTING_LABELS) as (keyof ListingAnswers)[]).filter((k) => !same(onFile[k], sub.listing[k]));
+  return (
+    <div className="card form-card" style={{ marginBottom: 12 }}>
+      <div className="card-top">
+        <h3 style={{ margin: 0 }}>{spaceById(sub.id)?.name ?? sub.id}</h3>
+        <span className={`pill ${sub.status === 'merged' ? 'ok' : 'flag'}`}>{sub.status === 'merged' ? 'merged' : 'waiting'}</span>
+        <span className="muted">from {sub.submitted_name}, {sub.updated_at.slice(0, 10)}</span>
+      </div>
+      {changes.length === 0 ? <p className="muted">Nothing differs from the record on file.</p> : (
+        <div className="scroll-x">
+          <table className="data">
+            <thead><tr><th>Field</th><th>On file</th><th>They say</th></tr></thead>
+            <tbody>
+              {changes.map((k) => (
+                <tr key={k}><td>{LISTING_LABELS[k]}</td><td className="muted">{say(k, onFile[k])}</td><td><strong>{say(k, sub.listing[k])}</strong></td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {sub.status !== 'merged' && (
+        <div className="btn-row" style={{ marginBottom: 0 }}>
+          <button className="btn ghost small" onClick={async () => { await markListingMerged(sub.id); await onMerged(); }}>Mark merged</button>
+        </div>
+      )}
+    </div>
   );
 }
 

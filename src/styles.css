@@ -560,3 +560,6 @@ details.form-card > summary { cursor: pointer; }
 .annual-opts label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
 .annual .radios.compact { margin: 0; }
 @media (max-width: 640px) { .annual-row { grid-template-columns: 1fr; } }
+
+.merge { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; font-size: 0.86rem; }
+.merge select { width: auto; padding: 4px 8px; font-size: 0.86rem; }

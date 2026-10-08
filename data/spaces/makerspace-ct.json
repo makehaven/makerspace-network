@@ -26,8 +26,14 @@
   "operations": {
     "tax_status": "nonprofit_501c3",
     "square_feet": 28000,
-    "hours_note": "Fri 10am–9pm, Sat 10am–6pm, closed Sun–Thu (hours posted as changing from 22 July).",
-    "access_model": "staffed_hours_only"
+    "hours_note": "Tue 5pm–9pm; Thu, Fri and Sat 10am–9pm; Sun 10am–6pm.",
+    "access_model": "staffed_hours_only",
+    "public_access": true,
+    "membership_models": [
+      "monthly_membership",
+      "annual_membership"
+    ],
+    "minor_policy": "minors_in_programs"
   },
   "capabilities": [
     "metalworking_machine",
@@ -41,7 +47,8 @@
     "laser_cutting",
     "cnc_router",
     "textiles_sewing",
-    "computer_workstations"
+    "computer_workstations",
+    "jewelry"
   ],
   "sources": [
     {
@@ -61,19 +68,21 @@
       "url": "https://makerspacect.com/join-the-movement/",
       "retrieved": "2026-08-29",
       "note": "Own site: 28,000 sq ft in the G. Fox Building; operating hours Fri 10am–9pm, Sat 10am–6pm, closed Sun–Thu."
+    },
+    {
+      "system": "direct_contact",
+      "url": "https://makerspace.network/?page=space-data&space=makerspace-ct",
+      "retrieved": "2026-10-07",
+      "note": "Listing confirmed by the space's own staff on makerspace.network: summary, capabilities (adding jewelry), access during staffed hours, open to non-members, monthly and annual membership, minors in supervised programs, current hours, phone and email. Cost left blank."
     }
   ],
   "verification": {
-    "status": "imported",
-    "verified_on": "2026-08-28",
+    "status": "space_confirmed",
+    "verified_by": "the space's staff, via makerspace.network",
+    "verified_on": "2026-10-07",
     "gaps": [
-      "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
-      "membership_models",
-      "monthly_cost_usd",
-      "minor_policy",
-      "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
-      "membership prices are behind app.makerspacect.com and were not published at a fetchable URL",
-      "the posted hours say 'starting 7/22' without a year — confirm they are current",
+      "address and coordinates come from the superseded Google Site and its map; the space has not been asked to confirm them",
+      "monthly_cost_usd — membership prices are behind app.makerspacect.com and the space left cost blank",
       "reported as both 28,000 sq ft (own site) and 20,000 sq ft (Hartford Business Journal); the space's own figure is used"
     ]
   }

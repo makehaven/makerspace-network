@@ -3,7 +3,7 @@
 // Data tab (tools/standards/app/index.html, `data-m` keys) so a share file and
 // a saved record describe the same thing in the same words.
 
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Space } from '../types';
 
@@ -63,6 +63,17 @@ export async function getListingSubmission(spaceId: string): Promise<ListingSubm
 export async function submitListing(spaceId: string, uid: string, name: string, listing: ListingAnswers) {
   const s: ListingSubmission = { listing, status: 'submitted', submitted_by: uid, submitted_name: name, updated_at: now() };
   await setDoc(doc(db, 'listing_submissions', spaceId), s);
+}
+
+/** Stewards only: every submission waiting for, or past, merging. */
+export async function listListingSubmissions(): Promise<(ListingSubmission & { id: string })[]> {
+  const s = await getDocs(collection(db, 'listing_submissions'));
+  return s.docs.map((d) => ({ id: d.id, ...(d.data() as ListingSubmission) }))
+    .sort((a, b) => (a.status === b.status ? b.updated_at.localeCompare(a.updated_at) : a.status === 'submitted' ? -1 : 1));
+}
+
+export async function markListingMerged(spaceId: string) {
+  await updateDoc(doc(db, 'listing_submissions', spaceId), { status: 'merged', updated_at: now() });
 }
 
 // ---------- annual network data ----------
