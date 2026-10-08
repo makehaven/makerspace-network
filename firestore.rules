@@ -319,12 +319,15 @@ service cloud.firestore {
       function sid() { return mid.split('~')[0]; }
       function d() { return request.resource.data; }
       function shape() {
-        return d().keys().hasOnly(['space_id', 'year', 'metrics', 'capabilities', 'updated_by', 'updated_at'])
+        return d().keys().hasOnly(['space_id', 'year', 'metrics', 'capabilities', 'untracked', 'estimated', 'updated_by', 'updated_at'])
           && d().space_id == sid()
           && mid == sid() + '~' + string(d().year)
           && d().year is int && d().year >= 2015 && d().year <= 2100
           && d().metrics is map && d().metrics.size() <= 60
           && d().capabilities is list && d().capabilities.size() <= 20
+          // "We don't track this" and "this is an estimate" are answers too.
+          && d().get('untracked', []) is list && d().get('untracked', []).size() <= 60
+          && d().get('estimated', []) is list && d().get('estimated', []).size() <= 60
           && d().updated_by == uid()
           && isIso(d().updated_at);
       }

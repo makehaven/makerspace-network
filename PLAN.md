@@ -122,8 +122,10 @@ Three things it has to do, in order of why anyone asked for it:
       the network admin, sync the index (2026-10-07). Email-link sign-in is
       capped at a few emails a day on the Spark plan; Blaze lifts it
 - [ ] Steward screen to review and merge listing submissions (by hand until then)
-- [ ] Annual data: pre-fill from the record and last year, a core-ten first,
-      "we don't track this", estimates, hand a section to a colleague
+- [x] Annual data made easy (2026-10-08): the core ten first, the rest
+      folded; last year's answers and the listing offered as suggestions to
+      accept; "we don't track this" and "estimate" recorded as answers; "Ask a
+      colleague" emails a link to one section
 - [x] Meetings: a steward turns a roster filter into a meeting with a frozen
       invitation list; invitees answer and add it to their calendar on the
       People page; the steward records attendance and sees how many spaces

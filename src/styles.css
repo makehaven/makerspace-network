@@ -540,3 +540,23 @@ details.form-card > summary { cursor: pointer; }
 .std-more textarea { width: 100%; }
 @media (max-width: 860px) { .std-anchors { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .std-anchors { grid-template-columns: 1fr; } }
+
+/* Annual data */
+.annual .card { margin-bottom: 14px; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sec-head h3, .sec-head h4 { margin: 0; }
+.annual-sec { margin-top: 18px; }
+.annual-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 8px 20px; padding: 12px 0; border-top: 1px solid var(--line); align-items: start; }
+.annual-row.done .annual-label::before { content: '✓ '; color: var(--accent); }
+.annual-label { font-weight: 500; color: var(--ink); }
+.annual-hint { display: block; font-size: 0.86rem; margin-top: 2px; }
+.annual-num { display: flex; align-items: center; gap: 6px; }
+.annual-num .affix { color: var(--ink-3); }
+.annual-untracked { margin: 6px 0; color: var(--ink-3); font-style: italic; }
+.annual-suggest { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 999px; border: 1px dashed var(--accent);
+  background: transparent; color: var(--accent); font: 500 0.85rem var(--sans); cursor: pointer; }
+.annual-suggest:hover { background: var(--accent-soft); }
+.annual-opts { display: flex; gap: 14px; align-items: center; margin-top: 6px; font-size: 0.85rem; color: var(--ink-3); }
+.annual-opts label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.annual .radios.compact { margin: 0; }
+@media (max-width: 640px) { .annual-row { grid-template-columns: 1fr; } }

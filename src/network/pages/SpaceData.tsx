@@ -4,16 +4,14 @@
 // network publishes aggregates only). Anyone with standing at the space can
 // come back and continue — the page always opens on what is already saved.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from '../session';
 import { CAPABILITIES, CAPABILITY_DOMAINS, VOCAB, spaceById } from '../../data';
 import { STAFF_ROLES } from '../model';
-import {
-  METRIC_SECTIONS, REFERRAL_CAPABILITIES, getListingSubmission, getSpaceMetrics, listingFromRecord, reportingYear,
-  saveSpaceMetrics, submitListing, type ListingAnswers, type MetricValue,
-} from '../spaceData';
+import { getListingSubmission, listingFromRecord, submitListing, type ListingAnswers } from '../spaceData';
 import { PageLink, SignIn } from './shared';
 import StandardsAssessment from './StandardsAssessment';
+import AnnualData from './AnnualData';
 
 const options = (vocab: keyof typeof VOCAB) => [...VOCAB[vocab].values()].filter((v) => v.id !== 'unknown');
 const num = (v: string): number | null => (v.trim() === '' || Number.isNaN(Number(v)) ? null : Number(v));
@@ -70,7 +68,7 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
               <button className={tab === 'standards' ? 'on' : ''} onClick={() => setTab('standards')}>Standards self-assessment</button>
             </div>
             {tab === 'listing' && <ListingForm spaceId={space.id} canEdit={!!mine} />}
-            {tab === 'annual' && <AnnualForm spaceId={space.id} canEdit={!!mine} />}
+            {tab === 'annual' && <AnnualData spaceId={space.id} canEdit={!!mine} />}
             {tab === 'standards' && (mine
               ? <StandardsAssessment spaceId={space.id} canEdit />
               : <p className="notice">A space's self-assessment is private to its own staff — stewards see only the summary a space chooses to share.</p>)}
@@ -185,123 +183,6 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
 
       {msg && <p className="muted">{msg}</p>}
       {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Sending…' : 'Send listing'}</button></div>}
-      </fieldset>
-    </form>
-  );
-}
-
-// ---------- the annual network data ----------
-
-function AnnualForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }) {
-  const s = useSession();
-  const [year, setYear] = useState(reportingYear());
-  const [m, setM] = useState<Record<string, MetricValue> | null>(null);
-  const [caps, setCaps] = useState<string[]>([]);
-  const [meta, setMeta] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  useEffect(() => {
-    setM(null); setMeta(null); setMsg(null);
-    getSpaceMetrics(spaceId, year).then((x) => {
-      setM(x?.metrics ?? {}); setCaps(x?.capabilities ?? []);
-      if (x) setMeta(`Saved ${x.updated_at.slice(0, 10)}. Continue where it was left.`);
-    }).catch((e) => { setM({}); setMsg(e instanceof Error ? e.message : String(e)); });
-  }, [spaceId, year]);
-
-  if (!m) return <p>Loading…</p>;
-  // Save a moment after each change: a long form that only saves at the
-  // bottom loses everything to one closed tab.
-  function autosave(next: Record<string, MetricValue>, nextCaps: string[]) {
-    if (!canEdit) return;
-    window.clearTimeout(timer.current); setMsg('Unsaved changes…');
-    timer.current = window.setTimeout(() => {
-      setMsg('Saving…');
-      saveSpaceMetrics(spaceId, year, s.user!.uid, next, nextCaps)
-        .then(() => { setMsg('All changes saved'); setMeta(null); })
-        .catch((x) => setMsg(x instanceof Error ? x.message : String(x)));
-    }, 800);
-  }
-  const set = (k: string, v: MetricValue | null) => {
-    const next = { ...m }; if (v === null || v === '') delete next[k]; else next[k] = v;
-    setM(next); setMsg(null); autosave(next, caps);
-  };
-  const filled = METRIC_SECTIONS.flatMap((x) => x.fields).filter((x) => m[x.key] !== undefined).length;
-  const total = METRIC_SECTIONS.flatMap((x) => x.fields).length;
-
-  return (
-    <form className="card form-card" onSubmit={async (e) => {
-      e.preventDefault(); setBusy(true);
-      try { await saveSpaceMetrics(spaceId, year, s.user!.uid, m, caps); setMsg('Saved.'); setMeta('Saved just now.'); }
-      catch (x) { setMsg(x instanceof Error ? x.message : String(x)); }
-      setBusy(false);
-    }}>
-      <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0 }}>
-      <p className="muted">
-        The network's annual data standard — the same questions as the Annual Data tab in the{' '}
-        <a href="https://standards.makerspace.network">Standards tool</a>. Calendar year, due January 31.
-        Organisational figures only; no member is ever named. Your space's staff and the regional
-        steward can see these answers; the network publishes totals, medians and ranges, never your figures.
-      </p>
-      <div className="inline-fields">
-        <label className="field"><span>Reporting year</span>
-          <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {[0, 1, 2].map((i) => reportingYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
-          </select></label>
-        <p className="muted" style={{ alignSelf: 'end' }}>{filled} of {total} answered{canEdit && msg ? <> · <span className="std-save">{msg}</span></> : null}</p>
-      </div>
-      {meta && <p className="notice info">{meta}</p>}
-
-      {METRIC_SECTIONS.map((sec) => (
-        <div key={sec.title}>
-          <h3>{sec.title}</h3>
-          {sec.fields.map((x) => {
-            const v = m[x.key];
-            if (x.kind === 'yesno') return (
-              <div key={x.key} className="radios compact">
-                <span>{x.label}{x.hint && <em className="muted"> — {x.hint}</em>}</span>
-                <label className="radio"><input type="radio" checked={v === true} onChange={() => set(x.key, true)} /> Yes</label>
-                <label className="radio"><input type="radio" checked={v === false} onChange={() => set(x.key, false)} /> No</label>
-                <label className="radio"><input type="radio" checked={v === undefined} onChange={() => set(x.key, null)} /> Blank</label>
-              </div>
-            );
-            if (x.kind === 'choice') return (
-              <label key={x.key} className="field"><span>{x.label}</span>
-                <select value={typeof v === 'string' ? v : ''} onChange={(e) => set(x.key, e.target.value || null)}>
-                  <option value="">—</option>{x.choices!.map((c) => <option key={c}>{c}</option>)}
-                </select></label>
-            );
-            if (x.kind === 'text') return (
-              <label key={x.key} className="field"><span>{x.label}</span>
-                <input maxLength={300} value={typeof v === 'string' ? v : ''} onChange={(e) => set(x.key, e.target.value || null)} /></label>
-            );
-            return (
-              <label key={x.key} className="field">
-                <span>{x.label}{x.kind === 'percent' ? ' (%)' : x.kind === 'money' ? ' ($)' : ''}</span>
-                <input inputMode="numeric" value={typeof v === 'number' ? String(v) : ''}
-                       onChange={(e) => set(x.key, num(e.target.value.replace(/[$,%\s]/g, '')))} />
-                {x.hint && <em className="muted">{x.hint}</em>}
-              </label>
-            );
-          })}
-        </div>
-      ))}
-
-      <h3>Capabilities (statewide referral map)</h3>
-      <div className="checks">
-        {REFERRAL_CAPABILITIES.map(([id, label, note]) => (
-          <label key={id} className={`check ${caps.includes(id) ? 'on' : ''}`} title={note}>
-            <input type="checkbox" checked={caps.includes(id)}
-                   onChange={(e) => { const next = e.target.checked ? [...caps, id] : caps.filter((c) => c !== id); setCaps(next); autosave(m, next); }} />
-            {label}
-          </label>
-        ))}
-      </div>
-
-      {msg && <p className="muted">{msg}</p>}
-      {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save now'}</button></div>}
       </fieldset>
     </form>
   );

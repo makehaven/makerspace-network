@@ -600,6 +600,9 @@ test('annual data is filed under the right space and year, and a partner organis
   await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2024'), metrics('jo', 'makehaven', 2025)));
   await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('someone-else', 'makehaven')));
   await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven', 2025, { member_names: ['x'] })));
+  // Untracked and estimated are recorded as answers; older documents without them still save.
+  await assertSucceeds(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven', 2025, { untracked: ['pctBIPOC'], estimated: ['membersEnd'] })));
+  await assertFails(setDoc(doc(jo, 'space_metrics', 'makehaven~2025'), metrics('jo', 'makehaven', 2025, { untracked: 'pctBIPOC' })));
   await activate('pat', 'pat@ct.gov', 'partner-decd-ct', 'partner');
   await assertFails(setDoc(doc(user('pat', 'pat@ct.gov'), 'space_metrics', 'partner-decd-ct~2025'), metrics('pat', 'partner-decd-ct')));
 });
