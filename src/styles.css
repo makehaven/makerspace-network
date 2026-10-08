@@ -420,7 +420,7 @@ code { font-family: var(--mono); font-size: 0.87em; background: var(--paper-2); 
 .field { display: block; margin: 10px 0; }
 .field > span { display: block; font-size: 0.86rem; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
 .field > span em { font-style: normal; font-weight: 400; color: var(--ink-3); }
-input[type='text'], input[type='email'], input[type='url'], input[type='search'], input:not([type]), select, textarea {
+input[type='text'], input[type='email'], input[type='url'], input[type='search'], input[type='date'], input:not([type]), select, textarea {
   width: 100%; padding: 9px 11px; font: inherit; font-size: 0.97rem; color: var(--ink);
   background: var(--card); border: 1px solid var(--line-2); border-radius: var(--radius-sm);
 }
@@ -509,3 +509,34 @@ details.form-card > summary { cursor: pointer; }
 .feedback-panel textarea { width: 100%; margin: 6px 0 10px; }
 .feedback-panel .muted { margin: 6px 0 0; font-size: 0.9rem; }
 .feedback-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+/* Standards self-assessment */
+.std .card { margin-bottom: 14px; }
+.std-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.std-level { font-family: var(--display); font-size: 1.9rem; font-weight: 700; color: var(--accent); line-height: 1.1; margin: 2px 0 4px; }
+.std-urgent { color: #b42318; }
+.std-save { font-size: 0.86rem; color: var(--ink-3); }
+.std-save.saved { color: var(--accent); }
+.std-save.error { color: #b42318; }
+.std-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.92rem; color: var(--ink-2); }
+.std-checks li.ok { color: var(--accent); }
+.std-domain > summary, .std-profile > summary { cursor: pointer; padding: 2px 0; }
+.std-row { border-top: 1px solid var(--line); padding: 14px 0 10px; }
+.std-row.na { opacity: 0.6; }
+.std-row-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.std-id { font-family: var(--display); font-weight: 700; font-size: 0.85rem; color: var(--ink-3); }
+.std-score { margin-left: auto; font-size: 0.86rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chip { font-size: 0.74rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); }
+.chip.critical { border-color: #b42318; color: #b42318; }
+.std-text { margin: 6px 0 10px; font-weight: 500; color: var(--ink); }
+.std-anchors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.std-anchor { display: flex; gap: 8px; text-align: left; align-items: flex-start; padding: 9px 10px; border-radius: 10px;
+  border: 1px solid var(--line-2); background: var(--card); color: var(--ink-2); font: 0.84rem/1.35 var(--sans); cursor: pointer; }
+.std-anchor:hover:not(:disabled) { border-color: var(--accent); }
+.std-anchor.on { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.std-anchor .n { font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: var(--accent); flex: none; }
+.std-row-foot { display: flex; gap: 18px; margin-top: 8px; font-size: 0.9rem; }
+.std-more { margin-top: 8px; }
+.std-more textarea { width: 100%; }
+@media (max-width: 860px) { .std-anchors { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .std-anchors { grid-template-columns: 1fr; } }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
 import { listFeedback, type Feedback } from '../feedback';
+import { listSummaries, type AssessmentSummary } from '../standardsData';
+import { levelLabel } from '../../standards/framework';
 import { REGIONS, SPACES } from '../../data';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
@@ -233,6 +235,9 @@ function SpacesTab() {
   }, [rows]);
   const list = [...spaces.values()].sort((a, b) => (a.kind === 'partner' ? 1 : 0) - (b.kind === 'partner' ? 1 : 0) || a.name.localeCompare(b.name));
   const unsynced = SPACES.filter((sp) => !spaces.has(sp.id)).length;
+  // Standards summaries a space chose to share. Only stewards may list them.
+  const [levels, setLevels] = useState<Map<string, AssessmentSummary>>(new Map());
+  useEffect(() => { if (s.stewardship) listSummaries().then(setLevels).catch(() => undefined); }, [s.stewardship]);
 
   return (
     <>
@@ -251,7 +256,7 @@ function SpacesTab() {
       <p className="muted">A space with fewer than two active people is one departure from going dark. Partner organisations are listed after the spaces.</p>
       <div className="scroll-x">
         <table className="data">
-          <thead><tr><th>Organisation</th><th>State</th><th>Region</th><th>Size or type</th><th>Active people</th><th>Claimed</th></tr></thead>
+          <thead><tr><th>Organisation</th><th>State</th><th>Region</th><th>Size or type</th><th>Active people</th><th>Claimed</th><th>Standards</th></tr></thead>
           <tbody>
             {list.map((sp) => {
               const n = counts.get(sp.id) ?? 0;
@@ -269,6 +274,7 @@ function SpacesTab() {
                     : (sp.size_tier ?? '—')}</td>
                   <td>{n}</td>
                   <td>{sp.claimed ? 'yes' : <span className="muted">no</span>}</td>
+                  <td>{levels.get(sp.id) ? <span title={`Shared ${levels.get(sp.id)!.shared_at.slice(0, 10)}`}>{levelLabel(levels.get(sp.id)!.level)}</span> : <span className="muted">—</span>}</td>
                 </tr>
               );
             })}

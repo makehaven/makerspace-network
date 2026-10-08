@@ -1,6 +1,6 @@
 # Makerspace Network — Roadmap
 
-**Status as of 2026-09-27.** What actually exists and what comes next. Keep this
+**Status as of 2026-10-08.** What actually exists and what comes next. Keep this
 file accurate; it is the starting point for "what is real here."
 
 ## Thesis
@@ -26,10 +26,11 @@ meetings, but a person can see and reach a verified person in any state.
 | Interop survey (`docs/INTEROP.md`) | **Built** |
 | Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |
 | Region map (`data/geo/`, `src/components/RegionMap.tsx`) | **Built** — inline SVG county map, no tiles and no CSP exemption |
-| Claim / roles model (`docs/GOVERNANCE.md`) | **Built, not yet switched on** — sign-in, claim, roster, steward page and rules tests landed 2026-09-23; needs Firestore and Auth enabled in the console (`docs/PEOPLE.md`) |
+| People layer (`docs/GOVERNANCE.md`, `docs/PEOPLE.md`) | **Live since 2026-10-07** — sign-in, claim, roster, steward page, partners, invitations, meetings, groups (on the site; email needs Postmark). First real use at the 2026-10-07 CT meeting |
+| Your space: listing, annual data | **Live** — staff answer the listing (a submission the steward merges) and the annual data standard, saved as they type |
 | Achievement namespace | **Live** — `makerspace.network/achievements/<id>/v<n>`, HTML + static JSON |
 | Custom domains | **Live** — apex, `connecticut.` and `standards.` all resolve to Firebase and serve 200 over TLS (checked 2026-08-29) |
-| Standards of Excellence tool | **Built and hosted** — `tools/standards` git subtree, served verbatim at `/tools/standards/` |
+| Standards of Excellence | **Moved into the site 2026-10-08** — framework as data (`data/standards/`), assessment under Your space, private to staff, summary shared on request. `docs/STANDARDS.md` |
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
@@ -117,8 +118,12 @@ Three things it has to do, in order of why anyone asked for it:
 - [x] Enforce every rule server-side from the first commit — see the Nexus
       custom-claims warning at the end of GOVERNANCE. There is no Function in
       the write path; the rules are the server
-- [ ] **Switch it on**: Firestore and Auth in the console, deploy, bootstrap
-      the network admin, sync the index. Steps in `docs/PEOPLE.md`
+- [x] **Switch it on**: Firestore and Auth in the console, deploy, bootstrap
+      the network admin, sync the index (2026-10-07). Email-link sign-in is
+      capped at a few emails a day on the Spark plan; Blaze lifts it
+- [ ] Steward screen to review and merge listing submissions (by hand until then)
+- [ ] Annual data: pre-fill from the record and last year, a core-ten first,
+      "we don't track this", estimates, hand a section to a colleague
 - [x] Meetings: a steward turns a roster filter into a meeting with a frozen
       invitation list; invitees answer and add it to their calendar on the
       People page; the steward records attendance and sees how many spaces
@@ -152,24 +157,32 @@ Once this exists the Standards tool can save an assessment against a space
 instead of a browser, which removes the "export a file and email it" step that
 stalls pilot feedback. That is phase 1's remaining item, and it depends on this.
 
-### Phase 1 — Host the Standards tool *(mostly done)*
+### Phase 1 — Standards of Excellence *(done; moved into the site)*
 
-The assessment tool is a single self-contained HTML file with `localStorage` and
-no backend, so hosting it costs nothing.
+First hosted verbatim as a single-file browser tool (git subtree from
+`makehaven/Makerspace-Standards`). Pilot feedback in Sept 2026 stalled on file
+exports being the only way data left the browser, so on 2026-10-08 it moved in:
+one home for a space's listing, annual data and assessment.
 
-- [x] Brought in as a git subtree at `tools/standards`, so
-      `makehaven/Makerspace-Standards` keeps working and updates can be pulled
-      with `git subtree pull`
-- [x] Served verbatim at `/tools/standards/` — copied into `public/` by
-      `scripts/sync-tools.mjs`, never bundled through the site's React
-- [ ] Link participating spaces from their directory records via `standards.level`,
-      published only with explicit consent
-- [ ] Save assessments server-side, attached to the space, for signed-in people
-      (needs phase 0b). Pilot feedback in Sept 2026 stalled on file exports
-      being the only way data leaves the browser
+- [x] Framework as versioned data: `data/standards/framework.v1.json`, checked
+      by the validator; the original tool kept in `tools/standards/` as the
+      reference `test/standards.test.mjs` runs the new arithmetic against
+- [x] Assessment under Your space: pre-filled profile, 0–3 anchors, evidence and
+      plan per standard, autosave, any colleague continues
+- [x] Private to the space's staff, enforced in the rules; a summary (level,
+      domain averages, health check) shared and withdrawn by the space
+- [x] `standards.makerspace.network` 301s to the site
+- [ ] Network benchmark: a steward view over shared summaries — counts,
+      medians, ranges, never a named space
+- [ ] Not carried over yet: evidence file uploads, the shared resource library,
+      action-plan CSV export
+- [ ] Settle open decision 7 before any level is shown publicly or linked from
+      a directory record
 
 ### Phase 2 — Annual data and the network benchmark
 
+- [x] The Annual Data instrument is collected on the site, per space and year,
+      private to the space and its steward (2026-10-07)
 - [ ] Run the Annual Data instrument on its own terms. `makethedata.org` has
       gone dark along with Nation of Makers, so there is no national dataset to
       align to — design the instrument so another state network can adopt it

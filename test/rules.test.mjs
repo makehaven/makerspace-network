@@ -672,3 +672,43 @@ test('someone proposes an unlisted space or organisation and joins it in the sam
   b.set(doc(db, 'memberships', 'eve_proposed-evil-ct'), { ...membership('eve', 'proposed-evil-ct', 'space_admin', 'active'), state: 'CT', region_id: null });
   await assertFails(b.commit());
 });
+
+// ---------- Standards of Excellence ----------
+
+const assessment = (uid, extra = {}) => ({ framework_version: 1, flags: { membership: true }, goal: 'operational',
+  answers: { S001: { score: 2, evidence: 'Filings on file' } }, updated_by: uid, updated_at: T, ...extra });
+const summary = (uid, extra = {}) => ({ framework_version: 1, level: 'foundational', avg: 1.4, evidence_share: 0.5,
+  applicable: 60, scored: 40, urgent: 2, domains: [{ code: '1', name: 'Governance', applicable: 10, avg: 1.5 }],
+  health: ['Yes'], shared_by: uid, shared_at: T, ...extra });
+
+test('a space\'s staff keep its assessment; nobody else reads it, the steward included', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_editor');
+  await activate('al', 'al@makehaven.org', 'makehaven', 'space_admin');
+  await activate('mem', 'mem@gmail.com', 'makehaven', 'space_contact');
+  await activate('sp', 'sp@sparkmakerspace.org', 'spark', 'space_admin');
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertSucceeds(setDoc(doc(jo, 'assessments', 'makehaven'), assessment('jo')));
+  // A colleague continues, one standard at a time (autosave).
+  const al = user('al', 'al@makehaven.org');
+  await assertSucceeds(updateDoc(doc(al, 'assessments', 'makehaven'), { 'answers.S002': { score: 1 }, updated_by: 'al', updated_at: T }));
+  await assertSucceeds(getDoc(doc(al, 'assessments', 'makehaven')));
+  for (const [u, e] of [['mem', 'mem@gmail.com'], ['sp', 'sp@sparkmakerspace.org'], ['ctsteward', 's@x.org'], ['admin', 'a@x.org']]) {
+    await assertFails(getDoc(doc(user(u, e), 'assessments', 'makehaven')));
+  }
+  await assertFails(updateDoc(doc(al, 'assessments', 'makehaven'), { 'answers.S003': { score: 3 }, updated_by: 'jo', updated_at: T }));
+  await assertFails(setDoc(doc(jo, 'assessments', 'makehaven'), assessment('jo', { goal: 'perfect' })));
+});
+
+test('staff share a summary; stewards read it; it never carries a single standard\'s score', async () => {
+  await activate('jo', 'jo@makehaven.org', 'makehaven', 'space_admin');
+  await activate('mem', 'mem@gmail.com', 'makehaven', 'space_contact');
+  const jo = user('jo', 'jo@makehaven.org');
+  await assertFails(setDoc(doc(jo, 'assessment_summaries', 'makehaven'), summary('jo', { answers: { S001: { score: 2 } } })));
+  await assertFails(setDoc(doc(user('mem', 'mem@gmail.com'), 'assessment_summaries', 'makehaven'), summary('mem')));
+  await assertSucceeds(setDoc(doc(jo, 'assessment_summaries', 'makehaven'), summary('jo')));
+  await assertSucceeds(getDoc(doc(user('ctsteward', 's@x.org'), 'assessment_summaries', 'makehaven')));
+  await assertSucceeds(getDocs(collection(user('admin', 'a@x.org'), 'assessment_summaries')));
+  await assertFails(getDoc(doc(user('mem', 'mem@gmail.com'), 'assessment_summaries', 'makehaven')));
+  // Withdrawing is the space's own call.
+  await assertSucceeds(deleteDoc(doc(jo, 'assessment_summaries', 'makehaven')));
+});

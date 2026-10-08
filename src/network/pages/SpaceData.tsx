@@ -4,7 +4,7 @@
 // network publishes aggregates only). Anyone with standing at the space can
 // come back and continue — the page always opens on what is already saved.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSession } from '../session';
 import { CAPABILITIES, CAPABILITY_DOMAINS, VOCAB, spaceById } from '../../data';
 import { STAFF_ROLES } from '../model';
@@ -13,14 +13,18 @@ import {
   saveSpaceMetrics, submitListing, type ListingAnswers, type MetricValue,
 } from '../spaceData';
 import { PageLink, SignIn } from './shared';
+import StandardsAssessment from './StandardsAssessment';
 
 const options = (vocab: keyof typeof VOCAB) => [...VOCAB[vocab].values()].filter((v) => v.id !== 'unknown');
 const num = (v: string): number | null => (v.trim() === '' || Number.isNaN(Number(v)) ? null : Number(v));
 
 export default function SpaceData({ spaceId }: { spaceId?: string }) {
   const s = useSession();
-  const [tab, setTab] = useState<'listing' | 'annual'>(
-    new URLSearchParams(window.location.search).get('tab') === 'annual' ? 'annual' : 'listing');
+  type Tab = 'listing' | 'annual' | 'standards';
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    return t === 'annual' || t === 'standards' ? t : 'listing';
+  });
 
   // Arriving straight from the join form ("Answer now"), the session still
   // holds the memberships from before the join. Reload them once on arrival.
@@ -45,10 +49,11 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
           <p className="eyebrow">Your space</p>
           <h1>{space?.name ?? 'Space data'}</h1>
           <p className="lede">
-            Two sets of questions. The <strong>listing</strong> is what the public directory says about
-            you. The <strong>annual data</strong> is how the network compares and understands its spaces:
-            it is never shown attributed to you, only in totals and ranges across spaces. Answer what
-            you can and come back for the rest — anyone on your staff can pick it up.
+            Three parts. The <strong>listing</strong> is what the public directory says about you.
+            The <strong>annual data</strong> is how the network understands its spaces — never shown
+            attributed to you, only in totals and ranges. The <strong>Standards self-assessment</strong> is
+            for your own improvement and stays with your staff. Answer what you can and come back for
+            the rest — anyone on your staff can pick it up.
           </p>
         </div>
       </section>
@@ -61,9 +66,14 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
           <>
             <div className="tabs" >
               <button className={tab === 'listing' ? 'on' : ''} onClick={() => setTab('listing')}>Public listing</button>
-              <button className={tab === 'annual' ? 'on' : ''} onClick={() => setTab('annual')}>Annual data — members, sq ft, finances (private)</button>
+              <button className={tab === 'annual' ? 'on' : ''} onClick={() => setTab('annual')}>Annual data — members, sq ft, finances</button>
+              <button className={tab === 'standards' ? 'on' : ''} onClick={() => setTab('standards')}>Standards self-assessment</button>
             </div>
-            {tab === 'listing' ? <ListingForm spaceId={space.id} canEdit={!!mine} /> : <AnnualForm spaceId={space.id} canEdit={!!mine} />}
+            {tab === 'listing' && <ListingForm spaceId={space.id} canEdit={!!mine} />}
+            {tab === 'annual' && <AnnualForm spaceId={space.id} canEdit={!!mine} />}
+            {tab === 'standards' && (mine
+              ? <StandardsAssessment spaceId={space.id} canEdit />
+              : <p className="notice">A space's self-assessment is private to its own staff — stewards see only the summary a space chooses to share.</p>)}
           </>
         )}
       </div>
@@ -190,6 +200,8 @@ function AnnualForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean })
   const [meta, setMeta] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   useEffect(() => {
     setM(null); setMeta(null); setMsg(null);
@@ -200,9 +212,21 @@ function AnnualForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean })
   }, [spaceId, year]);
 
   if (!m) return <p>Loading…</p>;
+  // Save a moment after each change: a long form that only saves at the
+  // bottom loses everything to one closed tab.
+  function autosave(next: Record<string, MetricValue>, nextCaps: string[]) {
+    if (!canEdit) return;
+    window.clearTimeout(timer.current); setMsg('Unsaved changes…');
+    timer.current = window.setTimeout(() => {
+      setMsg('Saving…');
+      saveSpaceMetrics(spaceId, year, s.user!.uid, next, nextCaps)
+        .then(() => { setMsg('All changes saved'); setMeta(null); })
+        .catch((x) => setMsg(x instanceof Error ? x.message : String(x)));
+    }, 800);
+  }
   const set = (k: string, v: MetricValue | null) => {
     const next = { ...m }; if (v === null || v === '') delete next[k]; else next[k] = v;
-    setM(next); setMsg(null);
+    setM(next); setMsg(null); autosave(next, caps);
   };
   const filled = METRIC_SECTIONS.flatMap((x) => x.fields).filter((x) => m[x.key] !== undefined).length;
   const total = METRIC_SECTIONS.flatMap((x) => x.fields).length;
@@ -226,7 +250,7 @@ function AnnualForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean })
           <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {[0, 1, 2].map((i) => reportingYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
           </select></label>
-        <p className="muted" style={{ alignSelf: 'end' }}>{filled} of {total} answered</p>
+        <p className="muted" style={{ alignSelf: 'end' }}>{filled} of {total} answered{canEdit && msg ? <> · <span className="std-save">{msg}</span></> : null}</p>
       </div>
       {meta && <p className="notice info">{meta}</p>}
 
@@ -270,14 +294,14 @@ function AnnualForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean })
         {REFERRAL_CAPABILITIES.map(([id, label, note]) => (
           <label key={id} className={`check ${caps.includes(id) ? 'on' : ''}`} title={note}>
             <input type="checkbox" checked={caps.includes(id)}
-                   onChange={(e) => { setCaps(e.target.checked ? [...caps, id] : caps.filter((c) => c !== id)); setMsg(null); }} />
+                   onChange={(e) => { const next = e.target.checked ? [...caps, id] : caps.filter((c) => c !== id); setCaps(next); autosave(m, next); }} />
             {label}
           </label>
         ))}
       </div>
 
       {msg && <p className="muted">{msg}</p>}
-      {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button></div>}
+      {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save now'}</button></div>}
       </fieldset>
     </form>
   );

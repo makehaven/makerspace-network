@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Region, Space } from '../types';
-import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, completeness, STANDARDS_URL } from '../data';
+import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, completeness } from '../data';
 import { href, navigate } from '../App';
 import RegionMap from '../components/RegionMap';
 import Logo from '../components/Logo';
@@ -286,7 +286,10 @@ export default function Directory({ region }: { region: Region }) {
                  onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join'); }}>
                 Run a space here? Join the network
               </a>
-              <a className="btn ghost" href={STANDARDS_URL}>Standards self-assessment</a>
+              <a className="btn ghost" href={href('standards')}
+                 onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('standards'); }}>
+                Standards self-assessment
+              </a>
             </div>
           </div>
           <dl className="hero-stats">

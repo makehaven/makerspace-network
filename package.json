@@ -4,22 +4,22 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/sync-tools.mjs && vite",
+    "dev": "vite",
     "build": "node scripts/clean-public.mjs && tsc --noEmit && vite build && node scripts/build-achievements.mjs",
     "build:standards": "node scripts/build-standards.mjs",
     "build:all": "npm run build && npm run build:standards",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "validate": "node scripts/validate.mjs",
-    "sync-tools": "node scripts/sync-tools.mjs",
     "check": "npm run validate && npm run typecheck",
     "deploy": "npm run check && npm run build:all && firebase deploy --only hosting,firestore",
     "deploy:site": "npm run check && npm run build && firebase deploy --only hosting:site,firestore",
     "deploy:standards": "npm run build:standards && firebase deploy --only hosting:standards",
     "test:rules": "firebase emulators:exec --only firestore --project makerspace-net \"node --test test/rules.test.mjs\"",
     "deploy:rules": "firebase deploy --only firestore:rules",
-    "dev:emulated": "node scripts/sync-tools.mjs && VITE_USE_EMULATORS=1 vite",
-    "test:inbound": "npm --prefix functions run build && firebase emulators:exec --only firestore,functions --project makerspace-net \"node --test test/inbound.test.mjs\""
+    "dev:emulated": "VITE_USE_EMULATORS=1 vite",
+    "test:inbound": "npm --prefix functions run build && firebase emulators:exec --only firestore,functions --project makerspace-net \"node --test test/inbound.test.mjs\"",
+    "test:standards": "node --test test/standards.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",

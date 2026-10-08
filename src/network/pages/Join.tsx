@@ -390,9 +390,9 @@ function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void })
   ) : (
     <>
       <h3>Next: tell the network about your space</h3>
-      <p>Two short sets of questions — your public listing, and the network's annual data, which is private to your space and the steward and only ever published in totals. Ten minutes now, or come back later.</p>
+      <p>Start with the network's annual data — members, square feet, staff, finances. It saves as you go, is private to your space and the steward, and is only ever published in totals. The public listing and the Standards self-assessment are there too, whenever you're ready.</p>
       <div className="btn-row">
-        <PageLink className="btn" page="space-data" params={{ space: spaceId }}>Answer now</PageLink>
+        <PageLink className="btn" page="space-data" params={{ space: spaceId, tab: 'annual' }}>Answer now</PageLink>
         <button className="btn ghost" onClick={onDone}>Later</button>
       </div>
     </>
@@ -465,9 +465,10 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
       {m.status === 'active' && STAFF_ROLES.includes(m.role) && spaceById(m.space_id) && (
         <div className="manage">
           <h4>Manage {spaceName}</h4>
-          <p className="muted" style={{ margin: 0 }}>The space itself: the network's annual data (private — members, square feet, staff, finances), its public listing, and who is connected to it.</p>
+          <p className="muted" style={{ margin: 0 }}>The space itself: the network's annual data (members, square feet, staff, finances), your Standards self-assessment (private to your staff), the public listing, and who is connected to it.</p>
           <div className="btn-row">
             <PageLink className="btn" page="space-data" params={{ space: m.space_id, tab: 'annual' }}>Annual data — members, sq ft, finances</PageLink>
+            <PageLink className="btn ghost" page="space-data" params={{ space: m.space_id, tab: 'standards' }}>Standards self-assessment</PageLink>
             <PageLink className="btn ghost" page="space-data" params={{ space: m.space_id }}>Public listing</PageLink>
             {m.role === 'space_admin' && <>
               <PageLink className="btn ghost" page="steward" params={{ tab: 'people' }}>People &amp; requests</PageLink>

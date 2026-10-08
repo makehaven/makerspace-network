@@ -175,11 +175,37 @@ for (const file of readdirSync(join(root, 'data/alignments')).filter((f) => f.en
   }
 }
 
+// --- Standards of Excellence framework ---
+// Assessments are stored against a framework version, so a version's standard
+// ids, domains and modules must stay internally consistent.
+let stdCount = 0;
+for (const file of readdirSync(join(root, 'data/standards')).filter((f) => /^framework\.v\d+\.json$/.test(f))) {
+  const fw = read(`data/standards/${file}`);
+  const at = (msg) => errors.push(`${file}: ${msg}`);
+  if (file !== `framework.v${fw.version}.json`) at(`file name does not match version ${fw.version}`);
+  const domains = new Set((fw.domains ?? []).map((d) => d.code));
+  const modules = new Set((fw.modules ?? []).map((m) => m.id));
+  const flags = new Set((fw.flags ?? []).map((f) => f.key));
+  for (const m of fw.modules ?? []) if (!m.always && !flags.has(m.flag)) at(`module ${m.id}: unknown flag ${m.flag}`);
+  const seen = new Set();
+  for (const st of fw.standards ?? []) {
+    if (seen.has(st.id)) at(`duplicate standard ${st.id}`);
+    seen.add(st.id);
+    if (!domains.has(st.domain)) at(`${st.id}: unknown domain ${st.domain}`);
+    if (!modules.has(st.module)) at(`${st.id}: unknown module ${st.module}`);
+    if (![1, 2, 3].includes(st.tier)) at(`${st.id}: tier must be 1–3`);
+    if (!Array.isArray(st.anchors) || st.anchors.length !== 4 || st.anchors.some((a) => !a?.trim())) at(`${st.id}: needs four scoring anchors (0–3)`);
+    if (!st.text?.trim()) at(`${st.id}: no text`);
+  }
+  for (const h of fw.health_check ?? []) if (!seen.has(h.standard)) at(`health check "${h.question}": unknown standard ${h.standard}`);
+  stdCount += seen.size;
+}
+
 for (const w of warnings) console.warn(`  warn  ${w}`);
 for (const e of errors) console.error(`  ERROR ${e}`);
 
 console.log(
   `\n${count} spaces · ${regionIds.size} regions · ${achCount} achievements · ` +
-    `${alignCount} alignment files · ${errors.length} errors · ${warnings.length} warnings`,
+    `${alignCount} alignment files · ${stdCount} standards · ${errors.length} errors · ${warnings.length} warnings`,
 );
 process.exit(errors.length ? 1 : 0);

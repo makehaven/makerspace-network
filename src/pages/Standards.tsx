@@ -1,4 +1,6 @@
-import { REPO_URL, STANDARDS_URL } from '../data';
+import { REPO_URL } from '../data';
+import { href, navigate } from '../App';
+import { FRAMEWORK } from '../standards/framework';
 
 export default function Standards() {
   return (
@@ -8,23 +10,26 @@ export default function Standards() {
           <p className="eyebrow">Tools</p>
           <h1>Standards of Excellence</h1>
           <p className="lede">
-            A self-assessment framework for makerspaces — 84 standards across six domains —
-            and the question none of the other makerspace standards ask: not what a space
-            has, but whether it is well run.
+            A self-assessment framework for makerspaces — {FRAMEWORK.standards.length} standards across six
+            core domains and five optional ones — and the question none of the other makerspace
+            standards ask: not what a space has, but whether it is well run.
           </p>
         </div>
       </section>
 
       <div className="wrap narrow prose" style={{ paddingTop: 26 }}>
         <p>
-          <a className="btn" href={STANDARDS_URL}>Open the assessment tool</a>
+          <a className="btn" href={href('join')}
+             onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join'); }}>
+            Start your assessment
+          </a>
           {' '}
-          <a className="btn ghost" href="https://github.com/makehaven/Makerspace-Standards">Framework source</a>
+          <a className="btn ghost" href={`${REPO_URL}/blob/main/data/standards/framework.v${FRAMEWORK.version}.json`}>Framework source</a>
         </p>
 
         <p>
-          It runs entirely in your browser. Everything is stored in <code>localStorage</code>;
-          there is no backend and nothing is transmitted anywhere.
+          Sign in, open <strong>Your space</strong>, and choose <strong>Standards self-assessment</strong>.
+          It saves as you go, and anyone on your space's staff can pick it up where a colleague left off.
         </p>
 
         <h2>How it works</h2>
@@ -54,23 +59,24 @@ export default function Standards() {
         <h2>Your scores are nobody else's business</h2>
         <p>
           A benchmarking tool that leaks per-standard scores to funders is a tool that quietly
-          teaches everyone to inflate their scores. So there are two separate exports, and only
-          one of them ever leaves the building:
+          teaches everyone to inflate their scores. So the assessment has two parts, and only
+          one of them can ever leave your space:
         </p>
         <ul>
           <li>
-            <strong>Full assessment</strong> — private. All scores, all evidence, all actions.
-            For the space's own board and staff.
+            <strong>Your assessment</strong> — every score, every piece of evidence, every plan.
+            Readable by your own staff and nobody else; not the regional steward, not the
+            network. The database refuses anyone else, not just the page.
           </li>
           <li>
-            <strong>Network share file</strong> — profile, operating metrics, capabilities, and a
-            summary readiness picture. No per-standard data, no evidence, and notes are never
-            shareable at all.
+            <strong>A summary you choose to share</strong> — your level, your average in each
+            domain and the health check. Never a single standard's score, your evidence or
+            your notes. Shared by pressing a button, withdrawn the same way.
           </li>
         </ul>
         <p>
-          A network coordinator imports share files and reports readiness only in aggregate —
-          level counts, medians, ranges — never attributed to a named space.
+          The network reports shared summaries only in aggregate — level counts, medians,
+          ranges — never attributed to a named space.
         </p>
 
         <h2>Why the network cares</h2>
@@ -89,7 +95,7 @@ export default function Standards() {
           <p style={{ margin: '4px 0 0' }}>
             The framework is being stress-tested against real operations and is expected to
             change. A{' '}
-            <a href="https://github.com/makehaven/Makerspace-Standards/blob/main/STANDARDS_GAPS.md">
+            <a href={`${REPO_URL}/blob/main/docs/STANDARDS_GAPS.md`}>
               gap analysis
             </a>{' '}
             against one space's 186 documented operational processes found real holes — the

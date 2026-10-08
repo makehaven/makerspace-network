@@ -1,4 +1,4 @@
-import { REPO_URL, STANDARDS_URL, SPACES, completeness } from '../data';
+import { REPO_URL, SPACES, completeness } from '../data';
 import { href, navigate } from '../App';
 
 const CONTACT = 'mailto:directory@makerspace.network';
@@ -104,10 +104,11 @@ export default function ForSpaces() {
             <thead><tr><th>Tool</th><th>What it is</th><th>Status</th></tr></thead>
             <tbody>
               <tr>
-                <td><a href={STANDARDS_URL}>Standards of Excellence</a></td>
-                <td>An 84-standard self-assessment across six domains, asking whether a space
-                    is <em>well run</em> rather than what equipment it owns. Runs entirely in
-                    your browser; nothing is sent anywhere unless you choose to share it.</td>
+                <td><a href={href('standards')}
+                       onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('standards'); }}>Standards of Excellence</a></td>
+                <td>An 84-standard self-assessment, asking whether a space is <em>well run</em>
+                    rather than what equipment it owns. Under Your space, private to your staff;
+                    the network sees only a summary, and only if you share it.</td>
                 <td><span className="pill ok">Live</span></td>
               </tr>
               <tr>
