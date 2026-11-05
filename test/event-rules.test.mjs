@@ -12,7 +12,7 @@ let env;
 const user = (uid, email = `${uid}@example.org`) => env.authenticatedContext(uid, { email, email_verified: true }).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
 const event = (o = {}) => ({ title: 'Bonanza', status: 'announced', region_id: 'us-ct', capacity: 100, tiers: [], sponsor_tiers: [], sponsors: [], terms: 'x', terms_version: 'v1', updated_at: T, ...o });
-const reg = (o = {}) => ({ event_id: 'ev', region_id: 'us-ct', name: 'Jo', email: 'jo@example.org', status: 'waitlisted', price_cents: 5000, amount_paid_cents: 0, attended: null, updated_at: T, ...o });
+const reg = (o = {}) => ({ event_id: 'ev', region_id: 'us-ct', name: 'Jo', email: 'jo@example.org', email_lower: 'jo@example.org', status: 'waitlisted', price_cents: 5000, amount_paid_cents: 0, attended: null, updated_at: T, ...o });
 
 before(async () => {
   env = await initializeTestEnvironment({
@@ -275,4 +275,15 @@ test('a photo can be fetched by address, but the folder cannot be listed, and on
   await assertFails(listAll(ref(env.unauthenticatedContext().storage(), 'makers/riley')));
   await assertFails(deleteObject(ref(asUser('other'), 'makers/riley/g.jpg')));
   await assertSucceeds(deleteObject(ref(asUser('riley'), 'makers/riley/g.jpg')));
+});
+
+test('a person reads their own ticket by verified address, and nobody else\'s', async () => {
+  const jo = () => env.authenticatedContext('jo', { email: 'jo@example.org', email_verified: true }).firestore();
+  await assertSucceeds(getDoc(doc(jo(), 'event_registrations', 'r1')));
+  await assertSucceeds(getDocs(query(collection(jo(), 'event_registrations'), where('email_lower', '==', 'jo@example.org'))));
+  await assertFails(getDocs(query(collection(jo(), 'event_registrations'), where('email_lower', '==', 'other@example.org'))));
+  await assertFails(getDocs(collection(jo(), 'event_registrations')));
+  const unverified = env.authenticatedContext('fake', { email: 'jo@example.org', email_verified: false }).firestore();
+  await assertFails(getDoc(doc(unverified, 'event_registrations', 'r1')));
+  await assertFails(updateDoc(doc(jo(), 'event_registrations', 'r1'), { status: 'confirmed', updated_at: T }));
 });

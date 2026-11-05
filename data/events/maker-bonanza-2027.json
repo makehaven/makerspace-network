@@ -70,7 +70,7 @@
     {
       "id": "scholarship",
       "name": "Scholarship",
-      "description": "A limited number, for anyone for whom the full price is a barrier. No application.",
+      "description": "Use this if the $50 price would keep you from coming: you're a student, between jobs, on a tight budget, or paying your own way and it's a stretch. No application and no proof needed. If an employer or organisation is paying for you, please choose general admission so this stays available for someone who needs it.",
       "price_cents": 2500,
       "limit": 25,
       "requires_code": false,
@@ -153,6 +153,10 @@
     {
       "what": "ClimateHaven confirmed as venue; default prices and sponsor levels accepted; no age question for the social",
       "where": "J.R. Logan, 2026-11-05"
+    },
+    {
+      "what": "Excited, challenged, organisation and prior unconference questions, adapted",
+      "where": "Bonanza! 2026 registration questions on Luma"
     }
   ],
   "gaps": [

@@ -53,7 +53,7 @@ export default function EventPage({ id }: { id: string }) {
       <div className="wrap" style={{ paddingTop: 40 }}>
         <p>No event at this address.</p>
         {/* A draft looks like this to anyone not signed in as its steward, and sign-in is per host. */}
-        <p className="muted">Organising this event? <a href="https://makerspace.network/?page=join">Sign in on makerspace.network</a>, then come back to this page there.</p>
+        <p className="muted">Organising this event? <a href={`https://makerspace.network/?page=home&next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in on makerspace.network</a> and we'll bring you back.</p>
       </div>
     );
   }
@@ -176,7 +176,22 @@ function AboutYou({ event, a, set }: { event: EventDoc; a: Answers; set: (patch:
           ))}
         </div>
       </fieldset>
-      <label className="field"><span>Your town and state</span><input maxLength={80} value={a.town} onChange={(e) => set({ town: e.target.value })} /></label>
+      <div className="two">
+        <label className="field"><span>Your town and state</span><input required maxLength={80} value={a.town} onChange={(e) => set({ town: e.target.value })} /></label>
+        <label className="field"><span>Your organisation or business, if you have one</span><input maxLength={160} value={a.organization} onChange={(e) => set({ organization: e.target.value })} /></label>
+      </div>
+      {/* The two questions the first Bonanza's facilitators built the day around. */}
+      <label className="field"><span>What are you excited about in what you make or do right now?</span>
+        <textarea required rows={2} maxLength={800} value={a.excited} onChange={(e) => set({ excited: e.target.value })} /></label>
+      <label className="field"><span>What's challenging you right now?</span>
+        <textarea required rows={2} maxLength={800} value={a.challenged} onChange={(e) => set({ challenged: e.target.value })} /></label>
+      <fieldset className="event-fieldset">
+        <legend>Have you been to an unconference before?</legend>
+        <div className="btn-row">
+          <label className="check"><input type="radio" name="unconference" checked={a.unconference_before === true} onChange={() => set({ unconference_before: true })} /><span>Yes</span></label>
+          <label className="check"><input type="radio" name="unconference" checked={a.unconference_before === false} onChange={() => set({ unconference_before: false })} /><span>No</span></label>
+        </div>
+      </fieldset>
       <details className="fold">
         <summary>Help shape the day <span className="muted">(optional)</span></summary>
         <label className="field"><span>What do you make, or want to?</span>
@@ -212,7 +227,7 @@ function OptIns({ a, c, set }: { a: Answers; c: Consents; set: (k: ConsentKey, v
   return (
     <fieldset className="event-fieldset">
       <legend>Staying in touch: your call on each</legend>
-      <div className="checks">
+      <div className="checks single">
         <Check checked={c.attendee_list} onChange={(v) => { set('attendee_list', v); if (!v) set('peer_contact', false); }}>
           Show my name, space and what I make to other people coming to this event
         </Check>
@@ -244,8 +259,9 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
   const [showCode, setShowCode] = useState(!!initialCode);
   const [code, setCode] = useState(initialCode);
   const [attested, setAttested] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // A signed-in visitor shouldn't have to retype what their account already knows.
+  const [name, setName] = useState(auth.currentUser?.displayName ?? '');
+  const [email, setEmail] = useState(auth.currentUser?.email ?? '');
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
   const [consents, setConsents] = useState<Consents>(NO_CONSENTS);
   const [terms, setTerms] = useState(false);
@@ -317,7 +333,7 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
         <Check checked={terms} onChange={setTerms}>I agree to the event terms</Check>
 
         {error && <p className="error">{error}</p>}
-        <button className="btn" disabled={busy || !terms || (!!event.min_age && !ageOk) || (!tierId && !showCode)}>
+        <button className="btn" disabled={busy || !terms || (!!event.min_age && !ageOk) || (!tierId && !showCode) || (!!tier?.attestation && !showCode && !attested)}>
           {busy ? 'One moment…' : full ? 'Join the waitlist' : !showCode && tier?.price_cents ? `Continue to pay ${money(tier.price_cents)}` : 'Register'}
         </button>
         {!full && !!tier?.price_cents && <p className="muted" style={{ marginTop: 8 }}>Card payment is handled by Stripe. {event.hosts.find((h) => h.role === 'fiduciary')?.name ?? 'The host'} receives the payment and it appears under that name on your statement.</p>}
@@ -328,8 +344,8 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
 
 function Interest({ id }: { id: string }) {
   const params = q();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(auth.currentUser?.displayName ?? '');
+  const [email, setEmail] = useState(auth.currentUser?.email ?? '');
   const [space, setSpace] = useState<string | null>(null);
   const [other, setOther] = useState('');
   const [trap, setTrap] = useState('');
@@ -391,8 +407,8 @@ function SponsorSection({ id, event, stats }: { id: string; event: EventDoc; sta
   const [tierId, setTierId] = useState(q().get('level') ?? '');
   const [org, setOrg] = useState('');
   const [orgUrl, setOrgUrl] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(auth.currentUser?.displayName ?? '');
+  const [email, setEmail] = useState(auth.currentUser?.email ?? '');
   const [note, setNote] = useState('');
   const [trap, setTrap] = useState('');
   const [busy, setBusy] = useState(false);

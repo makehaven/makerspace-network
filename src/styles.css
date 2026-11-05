@@ -610,3 +610,15 @@ details.form-card > summary { cursor: pointer; }
 .maker-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .maker-filters .field { margin: 0; min-width: 170px; }
 .tabs > a { align-self: center; padding: 8px 14px; font-size: 0.97rem; }
+
+/* ---------- home ---------- */
+.home-tasks, .home-card { margin-top: 16px; }
+.home-tasks ul { margin-bottom: 0; }
+.home-foot { margin-top: 22px; }
+
+/* Long lists of choices on forms: plain rows in aligned columns, not pills, so
+   the eye can run down them. */
+.event-fieldset .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 4px 18px; }
+.event-fieldset .checks.single { grid-template-columns: 1fr; }
+.event-fieldset .checks .check { display: flex; align-items: flex-start; gap: 9px; padding: 4px 0; border: 0; border-radius: 0; background: none; font-size: 0.95rem; color: var(--ink); }
+.event-fieldset .checks .check input { margin-top: 3px; }

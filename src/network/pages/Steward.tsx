@@ -389,7 +389,7 @@ function ListingsTab() {
   return (
     <div style={{ marginTop: 14 }}>
       <p className="muted">
-        A space's staff answer their listing under Your space; it reaches the public directory once it is
+        A space's staff answer their listing from their Home page; it reaches the public directory once it is
         merged into <code>data/spaces/&lt;id&gt;.json</code> with the space as the source. Ask Claude to merge a
         submission, or make the change as a pull request, then mark it merged here.
       </p>

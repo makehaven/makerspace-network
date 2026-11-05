@@ -14,7 +14,7 @@ import FeedbackButton from './components/FeedbackButton';
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
 const NetworkPages = lazy(() => import('./network/NetworkPages'));
-const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group', 'space-data', 'event-admin', 'maker-edit']);
+const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group', 'space-data', 'event-admin', 'maker-edit', 'home']);
 // An event's public page needs Firestore but no sign-in, so unlike the pages
 // above it stays on the regional host instead of being handed to the apex.
 const EventPage = lazy(() => import('./events/EventPage'));
@@ -86,8 +86,8 @@ export const href = (page: string, params: Record<string, string> = {}) => {
 
 function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
   const here = parse().page;
-  // A space's data pages belong to 'Your space'.
-  const current = here === page || (page === 'join' && here === 'space-data');
+  // Everything about you and your space belongs to Home.
+  const current = here === page || (page === 'home' && ['join', 'space-data', 'maker-edit'].includes(here));
   return (
     <a
       href={href(page, params)}
@@ -130,7 +130,7 @@ export default function App() {
           <nav className="nav">
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="for-spaces">For makerspaces</Link>
-            <Link page="join">Your space</Link>
+            <Link page="home">Home</Link>
             <Link page="makers">Makers</Link>
             <Link page="people">People</Link>
             <Link page="groups">Groups</Link>

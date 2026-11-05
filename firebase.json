@@ -94,6 +94,13 @@
       ],
       "rewrites": [
         {
+          "source": "/api/events/mine",
+          "function": {
+            "functionId": "eventMine",
+            "region": "us-central1"
+          }
+        },
+        {
           "source": "/api/events/register",
           "function": {
             "functionId": "eventRegister",

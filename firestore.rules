@@ -745,7 +745,9 @@ service cloud.firestore {
     // offer a waitlisted person a place, or leave a note, and nothing else.
     match /event_registrations/{rid} {
       function d() { return request.resource.data; }
-      allow read: if convenes(resource.data.region_id);
+      // A person sees their own ticket, proved by a verified address. Home uses this.
+      allow read: if convenes(resource.data.region_id)
+        || (emailVerified() && resource.data.email_lower == tokenEmail());
       allow create, delete: if false;
       allow update: if convenes(resource.data.region_id)
         && d().diff(resource.data).affectedKeys().hasOnly(['attended', 'checked_in_at', 'status', 'offered_at', 'steward_note', 'updated_at'])

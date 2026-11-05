@@ -226,12 +226,12 @@ function PeopleTab({ event, regs, orgs, onChange }: { event: EventDoc; regs: Wit
 
   const csv = () => {
     const head = ['name', 'email', 'status', 'ticket', 'paid', 'space', 'town', 'relationship', 'tracks', 'makes', 'could_offer', 'dietary', 'access', 'over_21', 'referred_by', 'code',
-      'ok_attendee_list', 'ok_peer_contact', 'ok_followup', 'ok_network', 'ok_space_share', 'ok_space_intro', 'looking_for_space', 'wants', 'attended', 'registered'];
+      'ok_attendee_list', 'ok_peer_contact', 'ok_followup', 'ok_network', 'ok_space_share', 'ok_space_intro', 'looking_for_space', 'wants', 'organisation', 'excited_about', 'challenged_by', 'unconference_before', 'attended', 'registered'];
     const rows = regs.map((r) => [
       r.name, r.email, r.status, r.tier_name, (r.amount_paid_cents / 100).toFixed(2), spaceOf(r), r.answers.town, r.answers.relationship.join('; '),
       r.answers.tracks.join('; '), r.answers.makes, r.answers.offer_session, r.answers.dietary, r.answers.access_needs, r.answers.over_21 ?? '',
       r.referred_by ?? '', r.code ?? '', r.consents.attendee_list, r.consents.peer_contact, r.consents.followup, r.consents.network,
-      r.consents.space_share, r.consents.space_intro, r.answers.looking_for_space, (r.answers.looking_for ?? []).join('; '), r.attended ?? '', r.created_at,
+      r.consents.space_share, r.consents.space_intro, r.answers.looking_for_space, (r.answers.looking_for ?? []).join('; '), r.answers.organization ?? '', r.answers.excited ?? '', r.answers.challenged ?? '', r.answers.unconference_before ?? '', r.attended ?? '', r.created_at,
     ]);
     download(`${event.title.replace(/\W+/g, '-').toLowerCase()}-registrations.csv`, [head, ...rows].map((l) => l.map(csvEsc).join(',')).join('\n'));
   };
@@ -427,7 +427,7 @@ function NetworkTab({ event, regs, interest, orgs }: { event: EventDoc; regs: Wi
 
       <div className="card form-card">
         <h2>Spaces in {REGIONS.find((r) => r.id === event.region_id)?.name ?? 'this region'}</h2>
-        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Your space page.</p>
+        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page.</p>
         <div className="scroll-x">
           <table className="data">
             <thead><tr><th>Space</th><th>Home space of</th><th>Came through its link</th><th>Interested</th><th>Link</th></tr></thead>

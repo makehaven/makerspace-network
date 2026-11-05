@@ -225,6 +225,10 @@ export interface Answers {
   looking_for_space: boolean;
   looking_for: string[];
   town: string;
+  organization: string;
+  unconference_before: boolean | null;
+  excited: string;
+  challenged: string;
   makes: string;
   offer_session: string;
   tracks: string[];
@@ -255,6 +259,10 @@ export function cleanAnswers(v: unknown, trackIds: string[]): Answers {
     looking_for_space: o.looking_for_space === true,
     looking_for: list(o.looking_for).filter((x) => (LOOKING_FOR as readonly string[]).includes(x)),
     town: str(o.town, 80),
+    organization: str(o.organization, 160),
+    unconference_before: typeof o.unconference_before === 'boolean' ? o.unconference_before : null,
+    excited: str(o.excited, 800),
+    challenged: str(o.challenged, 800),
     makes: str(o.makes, 500),
     offer_session: str(o.offer_session, 500),
     tracks: list(o.tracks).filter((t) => trackIds.includes(t)),

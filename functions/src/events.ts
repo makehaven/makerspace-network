@@ -466,6 +466,22 @@ async function spaceNames() {
   return new Map(s.docs.map((d) => [d.id, d.get('name') as string]));
 }
 
+// ---------- a signed-in person's own ticket ----------
+
+/** Home shows a person their ticket by verified address; this swaps that same
+ *  proof for the private link, which stays out of Firestore's readable fields. */
+export const eventMine = endpoint([], async (req, body) => {
+  await rateLimit(req, 'mine', 60);
+  const token = (req.get('authorization') ?? '').replace(/^Bearer /, '');
+  const who = await getAuth().verifyIdToken(token).catch(() => null);
+  if (!who?.email || !who.email_verified) throw new Refused(401, 'not_signed_in', 'Please sign in again.');
+  const eventId = typeof body.event_id === 'string' ? body.event_id : '';
+  const rows = await regsOf(eventId).where('email_lower', '==', who.email.toLowerCase()).get();
+  if (rows.empty) throw new Refused(404, 'no_registration', 'No ticket at this address.');
+  const secret = (await secretRef(rows.docs[0].id).get()).get('manage_token') as string;
+  return { manage_url: manageUrl(returnOrigin(req.get('origin'), isEmulator), eventId, rows.docs[0].id, secret) };
+});
+
 // ---------- interest list ----------
 
 export const eventInterest = endpoint([], async (req, body) => {

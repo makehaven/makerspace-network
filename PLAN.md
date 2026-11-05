@@ -192,6 +192,7 @@ instructors for the spaces. Spec: `docs/GOVERNANCE.md` §Makers.
 - [x] Public Makers page, filter by craft and by what people are open to
 - [x] A person's look at each photo; attendance earned from check-in, not claimed
 - [x] Fellow attendees see shared profiles through their event link
+- [x] Home: what needs you, your tickets, your profile and your space; sign-in returns you to where you were
 - [ ] Switch on Storage for photos
 - [ ] An open makers mailing list; groups still require `verified`
 - [ ] Prefill a profile from a registration

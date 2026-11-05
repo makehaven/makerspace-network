@@ -16,7 +16,7 @@ to do four things for the network beyond selling a ticket:
    to hear from us is the phone call `PLAN.md` calls the highest-value work in
    phase 0. The Network tab lists them.
 2. **Spaces get a reason to sign in.** Each space has a referral link. Its staff
-   see their counts on Your space, so claiming a listing has an immediate payoff.
+   see their counts on their Home page, so claiming a listing has an immediate payoff.
 3. **Spaces get members.** "Introduce me to a makerspace near me" is the brief's
    second goal, made into a list of people who said yes.
 4. **Makers get connected.** The attendee list, and an invitation to the network,
@@ -149,7 +149,7 @@ where that hangs. It is not worth building for one account.
 3. Deploy the event and maker Functions by name, which avoids needing the group mail
    secrets yet, using `--account jrlogan@makehaven.org`:
    ```sh
-   firebase deploy --only functions:eventRegister,functions:eventManage,functions:eventInterest,functions:eventSponsor,functions:eventStripeWebhook,functions:eventRegistrationChanged,functions:eventSponsorChanged,functions:eventChanged,functions:makerCreated,functions:makerDeleted,functions:makerWorkChanged
+   firebase deploy --only functions:eventRegister,functions:eventManage,functions:eventMine,functions:eventInterest,functions:eventSponsor,functions:eventStripeWebhook,functions:eventRegistrationChanged,functions:eventSponsorChanged,functions:eventChanged,functions:makerCreated,functions:makerDeleted,functions:makerWorkChanged
    ```
    Photo uploads also need Storage switched on once: Firebase console → Storage →
    Get started. Then `firebase deploy --only storage`.

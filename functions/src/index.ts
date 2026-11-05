@@ -184,5 +184,5 @@ export const invitationMailer = onDocumentWritten(
 );
 
 export { groupMailer, groupInbound, groupUnsubscribe } from './groups';
-export { eventRegister, eventManage, eventInterest, eventSponsor, eventStripeWebhook, eventRegistrationChanged, eventSponsorChanged, eventChanged } from './events';
+export { eventRegister, eventManage, eventMine, eventInterest, eventSponsor, eventStripeWebhook, eventRegistrationChanged, eventSponsorChanged, eventChanged } from './events';
 export { makerCreated, makerDeleted, makerWorkChanged } from './makers';

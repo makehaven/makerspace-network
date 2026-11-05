@@ -39,14 +39,14 @@
   ],
   "$comment_events": "MakerRelationship is asked at event registration (docs/EVENTS.md). Unlike NetworkRole it grants nothing: it is what a person says about themselves, multiple answers allowed. Kept in step with RELATIONSHIPS in functions/src/eventLogic.ts by test/events.test.mjs.",
   "MakerRelationship": [
-    { "id": "space_leader", "label": "I run or help run a makerspace" },
-    { "id": "space_member", "label": "I'm a member of a makerspace" },
-    { "id": "independent_maker", "label": "I make things independently" },
-    { "id": "entrepreneur", "label": "I'm building a hardware or physical-product venture" },
+    { "id": "space_leader", "label": "I help run a makerspace" },
+    { "id": "space_member", "label": "I'm a makerspace member" },
+    { "id": "independent_maker", "label": "I make things on my own" },
+    { "id": "entrepreneur", "label": "I'm building a product or venture" },
     { "id": "software_builder", "label": "I build software" },
-    { "id": "student_faculty", "label": "I'm a student or faculty member" },
-    { "id": "partner", "label": "I work with or support makers" },
-    { "id": "curious", "label": "I'm curious and new to this" }
+    { "id": "student_faculty", "label": "I'm a student or faculty" },
+    { "id": "partner", "label": "I support makers" },
+    { "id": "curious", "label": "I'm new and curious" }
   ],
   "$comment_makers": "Vocabularies for maker profiles (docs/GOVERNANCE.md, Makers). Self-described, and grant nothing. MakerOpenTo follows MakeHaven's member availability field; LookingFor draws on its inventor needs. Kept in step with functions/src by test/events.test.mjs. MakerDiscipline extends the capability domains with the arts and software, so a person's craft and a space's equipment can be matched by id where they overlap.",
   "MakerDiscipline": [

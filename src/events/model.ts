@@ -45,22 +45,23 @@ export interface EventStats {
 }
 
 export const RELATIONSHIP_WORDS: [string, string][] = [
-  ['space_leader', 'I run or help run a makerspace'],
-  ['space_member', "I'm a member of a makerspace"],
-  ['independent_maker', 'I make things independently'],
-  ['entrepreneur', "I'm building a hardware or physical-product venture"],
+  ['space_leader', 'I help run a makerspace'],
+  ['space_member', "I'm a makerspace member"],
+  ['independent_maker', 'I make things on my own'],
+  ['entrepreneur', "I'm building a product or venture"],
   ['software_builder', 'I build software'],
-  ['student_faculty', "I'm a student or faculty member"],
-  ['partner', 'I work with or support makers'],
-  ['curious', "I'm curious and new to this"],
+  ['student_faculty', "I'm a student or faculty"],
+  ['partner', 'I support makers'],
+  ['curious', "I'm new and curious"],
 ];
 
 export interface Answers {
   relationship: string[]; home_space_id: string | null; home_space_other: string; looking_for_space: boolean;
-  looking_for: string[]; town: string; makes: string; offer_session: string; tracks: string[]; dietary: string; access_needs: string; over_21: boolean | null;
+  looking_for: string[]; town: string; organization: string; unconference_before: boolean | null; excited: string; challenged: string; makes: string; offer_session: string; tracks: string[]; dietary: string; access_needs: string; over_21: boolean | null;
 }
 export const EMPTY_ANSWERS: Answers = {
   relationship: [], home_space_id: null, home_space_other: '', looking_for_space: false, looking_for: [],
+  organization: '', unconference_before: null, excited: '', challenged: '',
   town: '', makes: '', offer_session: '', tracks: [], dietary: '', access_needs: '', over_21: null,
 };
 
@@ -91,8 +92,12 @@ export const money = (cents: number) =>
 export class ApiError extends Error { constructor(public code: string, msg: string) { super(msg); } }
 
 /** Same origin, through a Hosting rewrite, so the site's CSP needs no exception. */
-export async function api<T = Record<string, unknown>>(path: 'register' | 'manage' | 'interest' | 'sponsor', body: unknown): Promise<T> {
-  const res = await fetch(`/api/events/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+export async function api<T = Record<string, unknown>>(path: 'register' | 'manage' | 'interest' | 'sponsor' | 'mine', body: unknown, idToken?: string): Promise<T> {
+  const res = await fetch(`/api/events/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
+    body: JSON.stringify(body),
+  });
   const json = await res.json().catch(() => ({})) as { code?: string; error?: string };
   if (!res.ok) throw new ApiError(json.code ?? 'error', json.error ?? 'Something went wrong. Please try again.');
   return json as T;

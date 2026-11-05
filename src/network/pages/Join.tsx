@@ -474,7 +474,7 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
   );
 }
 
-function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spaceName: string }) {
+export function MembershipCard({ m, spaceName, compact = false }: { m: Membership & { id: string }; spaceName: string; compact?: boolean }) {
   const s = useSession();
   const [functions, setFunctions] = useState(m.functions);
   const [pref, setPref] = useState<ContactPreference>(m.contact_preference);
@@ -514,7 +514,7 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
           : "Once the space's admin or the steward confirms you, you'll appear to other verified people and receive meeting invitations."}</p>
       )}
 
-      <form className="you-at" onSubmit={async (e) => {
+      {compact ? <p className="muted" style={{ margin: '10px 0 0' }}><PageLink page="join">Your role and how people reach you</PageLink></p> : <form className="you-at" onSubmit={async (e) => {
         e.preventDefault();
         await updateRosterSettings(s.user!.uid, s.person!, m, spaceName, { functions, contact_preference: organiser ? pref : 'relay', invitations });
         setSaved(true); void s.refresh();
@@ -544,7 +544,7 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
           Invite me to network meetings that concern {spaceName}
         </label>
         <div className="btn-row"><button className="btn ghost" disabled={saved}>{saved ? 'Saved' : 'Save my settings'}</button></div>
-      </form>
+      </form>}
     </div>
   );
 }

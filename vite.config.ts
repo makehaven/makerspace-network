@@ -11,7 +11,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:5101',
         changeOrigin: false,
         rewrite: (p) => {
-          const fn: Record<string, string> = { register: 'eventRegister', manage: 'eventManage', interest: 'eventInterest', sponsor: 'eventSponsor', 'stripe-webhook': 'eventStripeWebhook' };
+          const fn: Record<string, string> = { register: 'eventRegister', manage: 'eventManage', mine: 'eventMine', interest: 'eventInterest', sponsor: 'eventSponsor', 'stripe-webhook': 'eventStripeWebhook' };
           return `/makerspace-net/us-central1/${fn[p.split('/').pop() ?? '']}`;
         },
       },

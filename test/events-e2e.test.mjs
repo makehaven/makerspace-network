@@ -530,3 +530,30 @@ test('fellow attendees see a shared profile through their link, but never a hidd
   assert.equal(by.Private, null);
   assert.equal(by['Taken Down'], null);
 });
+
+// ---------- a signed-in person's own ticket ----------
+test('Home swaps a verified sign-in for that person\'s private link, and nothing else', async () => {
+  const d = await confirm('home@example.org');
+  const idTokenFor = async (email) => {
+    const key = 'fake-api-key'; const base = `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1`;
+    await getAuth().getUserByEmail(email).then((u) => getAuth().deleteUser(u.uid)).catch(() => undefined);
+    await getAuth().createUser({ email, password: 'test-only-pass', emailVerified: email !== 'unverified@example.org' });
+    const r = await fetch(`${base}/accounts:signInWithPassword?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: 'test-only-pass', returnSecureToken: true }) });
+    return (await r.json()).idToken;
+  };
+  const mine = (token) => call('eventMine', { event_id: EV }, { Authorization: `Bearer ${token}` });
+  const ok = await mine(await idTokenFor('home@example.org'));
+  assert.match(ok.body.manage_url, new RegExp(`r=${d.id}&t=${await tokenOf(d.id)}`));
+  assert.equal((await mine(await idTokenFor('stranger@example.org'))).status, 404);
+  assert.equal((await mine(await idTokenFor('unverified@example.org'))).status, 401);
+  assert.equal((await mine('not-a-token')).status, 401);
+});
+
+test('the questions from the first Bonanza are kept, and sent to no one through the attendee list', async () => {
+  const me = await confirm('q@example.org', { name: 'Q', consents: { attendee_list: true }, answers: { excited: 'Casting bronze', challenged: 'Finding a kiln', organization: 'Q Works', unconference_before: false } });
+  const a = (await me.ref.get()).get('answers');
+  assert.equal(a.excited, 'Casting bronze');
+  assert.equal(a.unconference_before, false);
+  const out = await call('eventManage', { r: me.id, t: await tokenOf(me.id), action: 'attendees' });
+  assert.ok(!JSON.stringify(out.body).includes('Finding a kiln'), 'challenges stay with the organisers');
+});

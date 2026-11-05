@@ -226,6 +226,10 @@ is the next step, as it already is for `space_contact`.
 **Scope.** Open to anyone; Connecticut is who it is built for first. Like the roster,
 it is not bounded by region.
 
+Home (`?page=home`) is where signing in lands. It leads with what needs the person
+and shows only what applies, so nobody is asked to join a space first. A ticket
+appears there by verified address.
+
 Not built yet: an open makers mailing list (groups still require `verified`),
 prefilling a profile from a registration, and a demand summary by town for the
 state's inventory work, which must never name anyone.
