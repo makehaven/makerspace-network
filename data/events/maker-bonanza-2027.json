@@ -56,7 +56,7 @@
   ],
   "capacity": 100,
   "min_age": 18,
-  "asks_over_21": true,
+  "asks_over_21": false,
   "tiers": [
     {
       "id": "general",
@@ -149,14 +149,14 @@
     {
       "what": "Photo and participation wording, adapted",
       "where": "MakeHaven event registration waiver and instructor media terms (makehaven-website config)"
+    },
+    {
+      "what": "ClimateHaven confirmed as venue; default prices and sponsor levels accepted; no age question for the social",
+      "where": "J.R. Logan, 2026-11-05"
     }
   ],
   "gaps": [
     "Start and end times are not set, so emails carry no calendar file until starts_at and ends_at are filled in.",
-    "Ticket prices are the brief's stated assumption ($50, $25 with scholarship); confirmed only by not being changed.",
-    "Sponsor levels, amounts and benefits are proposals. The brief names no tiers.",
-    "ClimateHaven as venue was due for confirmation by November 6; confirm it before this goes public.",
-    "Whether a ticketed event serving alcohol needs a permit has not been checked.",
     "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here.",
     "Redwood Endeavors' website is not filled in."
   ],

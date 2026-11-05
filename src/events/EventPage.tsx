@@ -55,11 +55,11 @@ export default function EventPage({ id }: { id: string }) {
     <>
       <Hero event={event} stats={stats} />
       <div className="wrap narrow event-body">
-        {event.status === 'draft' && <p className="notice"><strong>Draft.</strong> Only stewards can see this page. Nothing here is public yet, and neither tickets nor sponsorship can be taken.</p>}
+        {event.status === 'draft' && <p className="notice"><strong>Draft preview.</strong> Only stewards can see this page. The forms below show what people will see, but they will not submit until the event is announced or open.</p>}
         {event.status === 'cancelled' && <p className="notice">This event has been cancelled.</p>}
         {view === 'sponsor' ? <SponsorSection id={id} event={event} stats={stats} /> : <>
           <About event={event} stats={stats} />
-          {event.status === 'open' && <Register id={id} event={event} stats={stats} />}
+          {(event.status === 'open' || event.status === 'draft') && <Register id={id} event={event} stats={stats} />}
           {event.status === 'announced' && <Interest id={id} />}
           {event.status === 'closed' && <p className="notice">Registration is closed.</p>}
           <Sponsors id={id} event={event} />
@@ -82,7 +82,7 @@ function Hero({ event, stats }: { event: EventDoc; stats: EventStats | null }) {
           {event.hosts.length > 0 && <> · Hosted by {event.hosts.filter((h) => h.role === 'host').map((h) => h.name).join(' and ')}</>}
         </p>
         <div className="btn-row" style={{ marginTop: 16 }}>
-          {event.status === 'open' && <a className="btn" href="#register">Get a ticket</a>}
+          {(event.status === 'open' || event.status === 'draft') && <a className="btn" href="#register">Get a ticket</a>}
           {event.status === 'announced' && <a className="btn" href="#interest">Tell me when tickets open</a>}
           {low && <span className="pill flag">{stats!.spots_left} places left</span>}
         </div>
@@ -353,7 +353,7 @@ function Interest({ id }: { id: string }) {
 // ---------- sponsors ----------
 
 function Sponsors({ id, event }: { id: string; event: EventDoc }) {
-  const show = event.status !== 'draft' && event.status !== 'cancelled';
+  const show = event.status !== 'cancelled';
   return (
     <section className="event-sponsors">
       {event.sponsors.length > 0 && <>
