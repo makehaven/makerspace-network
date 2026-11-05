@@ -15,24 +15,14 @@
   "location": "ClimateHaven and MakeHaven, 770 Chapel Street, New Haven",
   "hosts": [
     {
-      "name": "MakeHaven",
-      "url": "https://www.makehaven.org",
-      "role": "host"
-    },
-    {
-      "name": "Redwood Endeavors",
-      "url": null,
-      "role": "host"
+      "name": "Bonanza, from Redwood Endeavors",
+      "url": "https://www.redwoodendeavors.org",
+      "role": "lead"
     },
     {
       "name": "MakeHaven",
       "url": "https://www.makehaven.org",
       "role": "fiduciary"
-    },
-    {
-      "name": "ClimateHaven",
-      "url": null,
-      "role": "venue"
     }
   ],
   "includes": [
@@ -122,9 +112,17 @@
       "slots": null
     }
   ],
-  "sponsors": [],
+  "sponsors": [
+    {
+      "name": "ClimateHaven",
+      "tier_id": null,
+      "url": "https://www.climatehaven.tech",
+      "logo": null,
+      "note": "Venue sponsor"
+    }
+  ],
   "terms_version": "2026-11-draft-2",
-  "terms": "DRAFT, not yet reviewed.\n\nTickets. Tickets are sold by MakeHaven, a co-host, which handles the event's money. You can refund your own paid ticket from the link in your email until the end of January 4, 2027, when the catering count is set. After that there are no refunds, but you can transfer your ticket to someone else from the same link.\n\nYour information. Your name, email and registration answers are seen by the organisers, MakeHaven and Redwood Endeavors, and are used to run this event and to send you logistics about it. We share them with Redwood Endeavors for this event, and Redwood Endeavors may follow up with you about it. Anything beyond that is your choice, using the opt-ins on this form, which you can change at any time from the link in your email. Sponsors do not receive attendee contact details.\n\nPhotos. Photos from the event will be posted to social media and may be used to promote MakeHaven, Makerspace Network and future events. You may ask not to be photographed during the event, and you may ask in writing for material featuring your likeness to be removed.\n\nParticipation. You must be 18 or older. Sessions are discussion, light crafting and teaching; no heavy machinery is used. Any assistance is given on a best-effort basis with no guarantee on any work. MakeHaven can take no responsibility for damage to property or person. You are responsible for your own safety and actions, and you agree to follow all safety instructions and signage.\n\nConduct. Treat people with respect. Harassment, discrimination and threatening behaviour are not welcome, and organisers may ask anyone to leave, without a refund. Raise any concern with an organiser on the day, or by replying to your confirmation email.",
+  "terms": "DRAFT, not yet reviewed.\n\nTickets. Tickets are sold by MakeHaven, a partner makerspace, which handles the event's money. You can refund your own paid ticket from the link in your email until the end of January 4, 2027, when the catering count is set. After that there are no refunds, but you can transfer your ticket to someone else from the same link.\n\nYour information. Your name, email and registration answers are seen by the organisers, MakeHaven and Redwood Endeavors, and are used to run this event and to send you logistics about it. We share them with Redwood Endeavors for this event, and Redwood Endeavors may follow up with you about it. Anything beyond that is your choice, using the opt-ins on this form, which you can change at any time from the link in your email. Sponsors do not receive attendee contact details.\n\nPhotos. Photos from the event will be posted to social media and may be used to promote MakeHaven, Makerspace Network and future events. You may ask not to be photographed during the event, and you may ask in writing for material featuring your likeness to be removed.\n\nParticipation. You must be 18 or older. Sessions are discussion, light crafting and teaching; no heavy machinery is used. Any assistance is given on a best-effort basis with no guarantee on any work. MakeHaven can take no responsibility for damage to property or person. You are responsible for your own safety and actions, and you agree to follow all safety instructions and signage.\n\nConduct. Treat people with respect. Harassment, discrimination and threatening behaviour are not welcome, and organisers may ask anyone to leave, without a refund. Raise any concern with an organiser on the day, or by replying to your confirmation email.",
   "statement_descriptor": "MAKER BONANZA",
   "payment_host": "makehaven",
   "notify_email": "sponsorship@makehaven.org",
@@ -157,12 +155,15 @@
     {
       "what": "Excited, challenged, organisation and prior unconference questions, adapted",
       "where": "Bonanza! 2026 registration questions on Luma"
+    },
+    {
+      "what": "Bonanza leads, ClimateHaven sponsors by donating the space, MakeHaven is a partner alongside other makerspaces that agree to promote it",
+      "where": "J.R. Logan, 2026-11-05"
     }
   ],
   "gaps": [
     "Start and end times are not set, so emails carry no calendar file until starts_at and ends_at are filled in.",
-    "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here.",
-    "Redwood Endeavors' website is not filled in."
+    "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here."
   ],
   "refund_until": "2027-01-05T05:00:00.000Z"
 }

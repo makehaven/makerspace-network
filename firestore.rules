@@ -33,6 +33,7 @@ rules_version = '2';
 //   event_space_stats/{ev~sp} what one space's staff may see about their own people
 //   event_sponsors/{id}       sponsor inquiries and payments; stewards only
 //   event_interest/{id}       "tell me when tickets open"; stewards only
+//   event_partners/{ev~space} a makerspace that agreed to promote an event; public
 //   event_codes/{ev~CODE}     comp and sponsor codes; stewards only
 //   event_finance/{id}        the budget behind an event; stewards only
 //   makers/{uid}              a maker's self-described profile; work/ beneath it (GOVERNANCE §Makers)
@@ -776,6 +777,25 @@ service cloud.firestore {
     match /event_interest/{iid} {
       allow read: if convenes(resource.data.region_id);
       allow write: if false;
+    }
+
+    // A partner is a space that said yes. Its own staff say so, or a steward records
+    // that they did. The name must match the space's, so the page cannot be made to
+    // list anything else.
+    match /event_partners/{pid} {
+      function d() { return request.resource.data; }
+      function mayAct(eventId, spaceId) {
+        return isOrganiserAt(spaceId) || convenes(get(path('events', eventId)).data.region_id);
+      }
+      allow read: if true;
+      allow create: if d().keys().hasOnly(['event_id', 'space_id', 'space_name', 'agreed_by', 'created_at'])
+        && pid == d().event_id + '~' + d().space_id
+        && exists(path('events', d().event_id))
+        && spaceExists(d().space_id) && d().space_name == space(d().space_id).name
+        && d().agreed_by == uid() && isIso(d().created_at)
+        && mayAct(d().event_id, d().space_id);
+      allow delete: if mayAct(resource.data.event_id, resource.data.space_id);
+      allow update: if false;
     }
 
     // Unreadable by the public, so a code cannot be listed or guessed at leisure.

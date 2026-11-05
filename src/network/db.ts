@@ -716,6 +716,14 @@ export async function eventsForSpace(spaceId: string) {
       home: (data?.home ?? 0) as number,
       referred: (data?.referred ?? 0) as number,
       people: (data?.people ?? []) as { name: string; email: string }[],
+      partner: (await getDoc(doc(db, 'event_partners', `${d.id}~${spaceId}`)).catch(() => null))?.exists() ?? false,
     };
   }));
+}
+
+/** A space agreeing to promote an event to its members, or changing its mind. */
+export async function setEventPartner(eventId: string, spaceId: string, spaceName: string, uid: string, on: boolean) {
+  const ref = doc(db, 'event_partners', `${eventId}~${spaceId}`);
+  if (on) await setDoc(ref, { event_id: eventId, space_id: spaceId, space_name: spaceName, agreed_by: uid, created_at: new Date().toISOString() });
+  else await deleteDoc(ref);
 }

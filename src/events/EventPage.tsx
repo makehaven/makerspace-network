@@ -4,12 +4,12 @@
 // network; a maker should not need a login to buy a ticket.
 
 import { useEffect, useMemo, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../network/firebase';
 import { SPACES } from '../data';
 import { href } from '../App';
 import {
-  EMPTY_ANSWERS, LOOKING_FOR_WORDS, NO_CONSENTS, RELATIONSHIP_WORDS, api, money,
+  type EventPartner, EMPTY_ANSWERS, LOOKING_FOR_WORDS, NO_CONSENTS, RELATIONSHIP_WORDS, api, money,
   type Answers, type ConsentKey, type Consents, type EventDoc, type EventStats, type MyRegistration,
 } from './model';
 
@@ -20,6 +20,7 @@ const go = (url: string) => { window.location.assign(url); };
 function useEvent(id: string) {
   const [event, setEvent] = useState<EventDoc | null | undefined>(undefined);
   const [stats, setStats] = useState<EventStats | null>(null);
+  const [partners, setPartners] = useState<EventPartner[]>([]);
   useEffect(() => {
     let live = true;
     (async () => {
@@ -32,14 +33,16 @@ function useEvent(id: string) {
       if (!live) return;
       setEvent(e?.exists() ? (e.data() as EventDoc) : null);
       setStats(s?.exists() ? (s.data() as EventStats) : null);
+      const p = await getDocs(query(collection(db, 'event_partners'), where('event_id', '==', id))).catch(() => null);
+      if (live) setPartners((p?.docs ?? []).map((d) => d.data() as EventPartner).sort((a, b) => a.space_name.localeCompare(b.space_name)));
     })();
     return () => { live = false; };
   }, [id]);
-  return { event, stats };
+  return { event, stats, partners };
 }
 
 export default function EventPage({ id }: { id: string }) {
-  const { event, stats } = useEvent(id);
+  const { event, stats, partners } = useEvent(id);
   const params = q();
   const regId = params.get('r');
   const token = params.get('t');
@@ -70,7 +73,7 @@ export default function EventPage({ id }: { id: string }) {
           {(event.status === 'open' || event.status === 'draft') && <Register id={id} event={event} stats={stats} />}
           {event.status === 'announced' && <Interest id={id} />}
           {event.status === 'closed' && <p className="notice">Registration is closed.</p>}
-          <Sponsors id={id} event={event} />
+          <Sponsors id={id} event={event} partners={partners} />
         </>}
       </div>
     </>
@@ -87,7 +90,7 @@ function Hero({ event, stats }: { event: EventDoc; stats: EventStats | null }) {
         <p className="lede">{event.tagline}</p>
         <p className="muted" style={{ marginTop: 12 }}>
           {event.location}
-          {event.hosts.length > 0 && <> · Hosted by {event.hosts.filter((h) => h.role === 'host').map((h) => h.name).join(' and ')}</>}
+          {event.hosts.some((h) => h.role === 'lead') && <> · Led by {event.hosts.filter((h) => h.role === 'lead').map((h) => h.name).join(' and ')}</>}
         </p>
         <div className="btn-row" style={{ marginTop: 16 }}>
           {(event.status === 'open' || event.status === 'draft') && <a className="btn" href="#register">Get a ticket</a>}
@@ -376,24 +379,27 @@ function Interest({ id }: { id: string }) {
 
 // ---------- sponsors ----------
 
-function Sponsors({ id, event }: { id: string; event: EventDoc }) {
+function Sponsors({ id, event, partners }: { id: string; event: EventDoc; partners: EventPartner[] }) {
   const show = event.status !== 'cancelled';
   return (
     <section className="event-sponsors">
+      {partners.length > 0 && <>
+        <h2>Partner makerspaces</h2>
+        <p>{partners.map((p, i) => <span key={p.space_id}>{i > 0 && ' · '}<a href={href('space', { space: p.space_id })}>{p.space_name}</a></span>)}</p>
+      </>}
+      <p className="muted"><a href="https://makerspace.network/?page=home">Run a makerspace? Sign in to become a partner and promote this to your members.</a></p>
       {event.sponsors.length > 0 && <>
-        <h2>Made possible by</h2>
+        <h2>Sponsors</h2>
         <ul className="sponsor-list">
           {event.sponsors.map((s) => (
-            <li key={s.name}>
+            <li key={s.name} className="sponsor-item">
               {s.url ? <a href={s.url} rel="noopener">{s.logo ? <img src={s.logo} alt={s.name} /> : s.name}</a>
                      : s.logo ? <img src={s.logo} alt={s.name} /> : s.name}
+              {s.note && <span className="muted"> {s.note}</span>}
             </li>
           ))}
         </ul>
       </>}
-      {event.hosts.some((h) => h.role === 'venue') && (
-        <p className="muted">Venue: {event.hosts.filter((h) => h.role === 'venue').map((h) => h.name).join(', ')}</p>
-      )}
       {show && event.sponsor_tiers.length > 0 && (
         <p><a href={href('event', { event: id, view: 'sponsor' })}>Sponsor {event.title}</a></p>
       )}

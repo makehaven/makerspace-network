@@ -287,3 +287,29 @@ test('a person reads their own ticket by verified address, and nobody else\'s', 
   await assertFails(getDoc(doc(unverified, 'event_registrations', 'r1')));
   await assertFails(updateDoc(doc(jo(), 'event_registrations', 'r1'), { status: 'confirmed', updated_at: T }));
 });
+
+// ---------- partner makerspaces ----------
+const partner = (o = {}) => ({ event_id: 'ev', space_id: 'spark', space_name: 'Spark', agreed_by: 'sparkadmin', created_at: T, ...o });
+const seedSpark = () => env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'spaces_index', 'spark'), { name: 'Spark', kind: 'makerspace' }));
+test('a space\'s own staff can say yes; members and strangers cannot speak for it', async () => {
+  await seedSpark();
+  await assertFails(setDoc(doc(anon(), 'event_partners', 'ev~spark'), partner()));
+  await assertFails(setDoc(doc(user('someone'), 'event_partners', 'ev~spark'), partner({ agreed_by: 'someone' })));
+  await assertFails(setDoc(doc(user('sparkmember'), 'event_partners', 'ev~spark'), partner({ agreed_by: 'sparkmember' })));
+  await assertSucceeds(setDoc(doc(user('sparkadmin'), 'event_partners', 'ev~spark'), partner()));
+  await assertSucceeds(getDocs(query(collection(anon(), 'event_partners'), where('event_id', '==', 'ev'))));
+  await assertFails(deleteDoc(doc(user('someone'), 'event_partners', 'ev~spark')));
+  await assertSucceeds(deleteDoc(doc(user('sparkadmin'), 'event_partners', 'ev~spark')));
+});
+test('a steward can record a space that agreed; another region\'s steward cannot', async () => {
+  await seedSpark();
+  await assertSucceeds(setDoc(doc(user('ct'), 'event_partners', 'ev~spark'), partner({ agreed_by: 'ct' })));
+  await deleteDoc(doc(user('ct'), 'event_partners', 'ev~spark'));
+  await assertFails(setDoc(doc(user('ri'), 'event_partners', 'ev~spark'), partner({ agreed_by: 'ri' })));
+});
+test('the name must be the space\'s real name, and the id must match', async () => {
+  await seedSpark();
+  await assertFails(setDoc(doc(user('sparkadmin'), 'event_partners', 'ev~spark'), partner({ space_name: 'Buy my stuff' })));
+  await assertFails(setDoc(doc(user('sparkadmin'), 'event_partners', 'ev~other'), partner()));
+  await assertFails(setDoc(doc(user('sparkadmin'), 'event_partners', 'nope~spark'), partner({ event_id: 'nope' })));
+});

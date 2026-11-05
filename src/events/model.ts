@@ -6,7 +6,8 @@ export interface TicketTier {
   limit: number | null; requires_code: boolean; attestation: string | null;
 }
 export interface SponsorTier { id: string; name: string; amount_cents: number; benefits: string[]; slots: number | null }
-export interface ListedSponsor { name: string; tier_id: string | null; url: string | null; logo: string | null }
+export interface ListedSponsor { name: string; tier_id: string | null; url: string | null; logo: string | null; note?: string }
+export interface EventPartner { event_id: string; space_id: string; space_name: string; agreed_by: string; created_at: string }
 export type EventStatus = 'draft' | 'announced' | 'open' | 'closed' | 'cancelled';
 
 export interface EventDoc {

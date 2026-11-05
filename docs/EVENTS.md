@@ -26,6 +26,15 @@ Everything a person types is a claim, not a fact. Nothing here writes to
 `data/spaces`, and nothing grants a role: an attendee naming a place not in the
 directory creates a lead to verify, per the rule on never inventing directory data.
 
+## Who is who on the page
+
+Bonanza, from Redwood Endeavors, leads. ClimateHaven is a sponsor, donating the
+space. MakeHaven handles the money, because someone has to be the fiduciary, and is
+otherwise listed as one partner among the makerspaces that agree to promote the event
+to their members. A space is listed only once it has said yes: its staff can say so
+from Home, or a steward records it on the Network tab. This keeps the network from
+reading as MakeHaven's.
+
 ## What it does not do yet
 
 - **The roster is still only for people at an organisation.** Everyone else is

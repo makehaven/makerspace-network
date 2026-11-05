@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where, deleteDoc } from 'firebase/firestore';
+import { setEventPartner } from '../db';
 import { db } from '../firebase';
 import { useSession } from '../session';
 import { listSpaceIndex, type WithId } from '../db';
@@ -96,7 +97,7 @@ export default function EventAdmin() {
           {tab === 'overview' && <Overview id={id} event={event} regs={regs} sponsors={sponsors} interest={interest} finance={finance} onSaved={setFinance} />}
           {tab === 'people' && <PeopleTab event={event} regs={regs} orgs={orgs} onChange={load} />}
           {tab === 'sponsors' && <SponsorsTab id={id} event={event} sponsors={sponsors} onChange={load} />}
-          {tab === 'network' && <NetworkTab event={event} regs={regs} interest={interest} orgs={orgs} />}
+          {tab === 'network' && <NetworkTab id={id} event={event} regs={regs} interest={interest} orgs={orgs} />}
           {tab === 'settings' && <SettingsTab id={id} event={event} onChange={load} />}
         </>
       )}
@@ -361,11 +362,18 @@ function SponsorsTab({ id, event, sponsors, onChange }: { id: string; event: Eve
 
 // ---------- network: what this event does for the network ----------
 
-function NetworkTab({ event, regs, interest, orgs }: { event: EventDoc; regs: WithId<Reg>[]; interest: WithId<Interested>[]; orgs: WithId<SpaceIndex>[] }) {
+function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: EventDoc; regs: WithId<Reg>[]; interest: WithId<Interested>[]; orgs: WithId<SpaceIndex>[] }) {
   const coming = regs.filter((r) => r.status === 'confirmed' || r.status === 'waitlisted');
   const byId = useMemo(() => new Map(orgs.map((o) => [o.id, o])), [orgs]);
   const regionSpaces = orgs.filter((o) => (o.kind ?? 'makerspace') === 'makerspace' && o.region_id === event.region_id && !o.proposed).sort((a, b) => a.name.localeCompare(b.name));
   const [copied, setCopied] = useState(false);
+  const s = useSession();
+  const [partners, setPartners] = useState<Set<string>>(new Set());
+  const loadPartners = async () => {
+    const p = await getDocs(query(collection(db, 'event_partners'), where('event_id', '==', id)));
+    setPartners(new Set(p.docs.map((d) => d.get('space_id') as string)));
+  };
+  useEffect(() => { void loadPartners(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   // The terms promise that anything beyond logistics is the person's choice, so
   // these lists name people only if they ticked "invite me". What the rest said
@@ -427,15 +435,16 @@ function NetworkTab({ event, regs, interest, orgs }: { event: EventDoc; regs: Wi
 
       <div className="card form-card">
         <h2>Spaces in {REGIONS.find((r) => r.id === event.region_id)?.name ?? 'this region'}</h2>
-        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page.</p>
+        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page. Tick Partner only once a space has agreed to promote the event; it then appears on the public page. Staff who have signed in can also say yes themselves from Home.</p>
         <div className="scroll-x">
           <table className="data">
-            <thead><tr><th>Space</th><th>Home space of</th><th>Came through its link</th><th>Interested</th><th>Link</th></tr></thead>
+            <thead><tr><th>Partner</th><th>Space</th><th>Home space of</th><th>Came through its link</th><th>Interested</th><th>Link</th></tr></thead>
             <tbody>
               {regionSpaces.map((o) => {
                 const c = countFor(o.id);
                 return (
                   <tr key={o.id}>
+                    <td><input type="checkbox" aria-label={`${o.name} agreed to be a partner`} checked={partners.has(o.id)} onChange={async (e) => { await setEventPartner(id, o.id, o.name, s.user!.uid, e.target.checked); await loadPartners(); }} /></td>
                     <td>{o.name}{o.claimed ? '' : <span className="muted"> · unclaimed</span>}</td>
                     <td>{c.home}</td><td>{c.referred}</td><td>{c.interested}</td>
                     <td><code>{event.public_url}?ref={o.id}</code></td>
