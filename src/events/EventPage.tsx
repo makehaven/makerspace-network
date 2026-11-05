@@ -48,7 +48,15 @@ export default function EventPage({ id }: { id: string }) {
   useEffect(() => { if (event) document.title = `${event.title} — Makerspace Network`; }, [event]);
 
   if (event === undefined) return <div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>;
-  if (event === null) return <div className="wrap" style={{ paddingTop: 40 }}><p>No event at this address.</p></div>;
+  if (event === null) {
+    return (
+      <div className="wrap" style={{ paddingTop: 40 }}>
+        <p>No event at this address.</p>
+        {/* A draft looks like this to anyone not signed in as its steward, and sign-in is per host. */}
+        <p className="muted">Organising this event? <a href="https://makerspace.network/?page=join">Sign in on makerspace.network</a>, then come back to this page there.</p>
+      </div>
+    );
+  }
 
   if (regId && token) return <Manage id={id} event={event} regId={regId} token={token} />;
   return (
