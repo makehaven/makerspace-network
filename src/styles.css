@@ -563,3 +563,50 @@ details.form-card > summary { cursor: pointer; }
 
 .merge { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; font-size: 0.86rem; }
 .merge select { width: auto; padding: 4px 8px; font-size: 0.86rem; }
+
+/* ---------- events ---------- */
+.event-body { padding-top: 30px; padding-bottom: 50px; display: grid; gap: 22px; }
+.event-form form { display: grid; gap: 10px; }
+.event-fieldset { border: 0; padding: 0; margin: 6px 0; }
+.event-fieldset legend { font-size: 0.86rem; font-weight: 600; color: var(--ink-2); padding: 0; margin-bottom: 6px; }
+.event-terms { white-space: pre-wrap; font-size: 0.9rem; color: var(--ink-2); }
+.ticket-choice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: var(--radius-sm); cursor: pointer; }
+.ticket-choice input { margin-top: 5px; accent-color: var(--accent); }
+.ticket-choice.on { border-color: var(--accent); background: var(--accent-soft); }
+.ticket-choice.out { opacity: 0.55; cursor: default; }
+.ticket-desc { display: block; font-size: 0.9rem; margin-top: 2px; }
+.sponsor-tiers { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.sponsor-tier { cursor: pointer; display: block; }
+.sponsor-tier input { position: absolute; opacity: 0; }
+.sponsor-tier.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.sponsor-tier:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sponsor-tier.out { opacity: 0.55; cursor: default; }
+.sponsor-tier ul { margin: 8px 0 0; padding-left: 18px; font-size: 0.92rem; color: var(--ink-2); }
+.sponsor-amount { font-size: 1.25rem; font-weight: 600; margin: 2px 0 0; }
+.sponsor-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; }
+.sponsor-list img { max-height: 54px; max-width: 170px; }
+.next-steps { padding-left: 18px; margin: 0; }
+.next-steps li { margin-bottom: 8px; }
+.attendee-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.attendee-list li { padding: 10px 0; border-top: 1px solid var(--line); }
+.event-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0; }
+.event-facts .fact { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.9rem; color: var(--ink-2); }
+.event-facts .fact strong { display: block; font-size: 1.35rem; color: var(--ink); }
+.event-banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+
+.attendee-work { display: block; max-width: 240px; max-height: 160px; border-radius: var(--radius-sm); margin: 6px 0; }
+
+/* ---------- makers ---------- */
+.maker-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin-top: 18px; }
+.maker-card { display: block; padding: 0; overflow: hidden; color: inherit; text-decoration: none; }
+.maker-card:hover { box-shadow: var(--shadow-lift); color: inherit; }
+.maker-card img, .maker-card .no-work { display: block; width: 100%; height: 170px; object-fit: cover; background: var(--paper-2); }
+.maker-card .body { padding: 12px 14px 14px; }
+.maker-card h3 { font-size: 1.05rem; }
+.maker-gallery { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); margin: 12px 0; }
+.maker-gallery figure { margin: 0; }
+.maker-gallery img { width: 100%; border-radius: var(--radius-sm); display: block; }
+.maker-gallery figcaption { font-size: 0.9rem; color: var(--ink-2); margin-top: 4px; }
+.maker-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.maker-filters .field { margin: 0; min-width: 170px; }
+.tabs > a { align-self: center; padding: 8px 14px; font-size: 0.97rem; }

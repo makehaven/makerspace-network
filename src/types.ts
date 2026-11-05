@@ -61,6 +61,8 @@ export interface Region {
   summary?: string;
   steward?: { organization?: string; contact?: string; note?: string };
   counties?: string[];
+  /** An event to feature on the region's page. Static, so the directory still loads no Firebase. */
+  featured_event?: { id: string; title: string; date_label: string; blurb: string };
 }
 
 export interface EnumEntry {

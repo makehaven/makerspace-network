@@ -1,0 +1,164 @@
+{
+  "$comment": "A draft, loaded into Firestore from Event admin as status 'draft' and edited there. Holds only what the public page will say. The budget, sponsor prospects and attendee data never belong in this public repository. Every open assumption is listed in gaps; scripts/validate.mjs checks the shape.",
+  "id": "maker-bonanza-2027",
+  "title": "Maker Bonanza",
+  "tagline": "A day for Connecticut's makers, prototypers, artists and builders to trade ideas, find collaborators and meet the community they didn't know was there.",
+  "description": [
+    "Maker Bonanza is an unconference: the people who come set the agenda. There are no keynotes to sit through. You propose what you want to talk about, teach or figure out, and the room sorts itself around it.",
+    "It's for anyone who makes things: makerspace members and the people who run makerspaces, independent makers, artists and crafters, hardware and climate-tech founders, software builders, students and faculty. You don't need to belong to a makerspace to come, and if you've been wondering whether one is for you, this is a good way to find out."
+  ],
+  "status": "draft",
+  "region_id": "us-ct",
+  "date_label": "Friday, January 22, 2027",
+  "starts_at": null,
+  "ends_at": null,
+  "location": "ClimateHaven and MakeHaven, 770 Chapel Street, New Haven",
+  "hosts": [
+    {
+      "name": "MakeHaven",
+      "url": "https://www.makehaven.org",
+      "role": "host"
+    },
+    {
+      "name": "Redwood Endeavors",
+      "url": null,
+      "role": "host"
+    },
+    {
+      "name": "MakeHaven",
+      "url": "https://www.makehaven.org",
+      "role": "fiduciary"
+    },
+    {
+      "name": "ClimateHaven",
+      "url": null,
+      "role": "venue"
+    }
+  ],
+  "includes": [
+    "Morning coffee and tea",
+    "Catered lunch",
+    "An evening social"
+  ],
+  "tracks": [
+    {
+      "id": "arts",
+      "label": "Arts, crafting and design"
+    },
+    {
+      "id": "ventures",
+      "label": "Entrepreneurship and hardware prototyping"
+    },
+    {
+      "id": "spaces",
+      "label": "Makerspace leadership, operations and community"
+    }
+  ],
+  "capacity": 100,
+  "min_age": 18,
+  "asks_over_21": true,
+  "tiers": [
+    {
+      "id": "general",
+      "name": "General admission",
+      "description": "",
+      "price_cents": 5000,
+      "limit": null,
+      "requires_code": false,
+      "attestation": null
+    },
+    {
+      "id": "scholarship",
+      "name": "Scholarship",
+      "description": "A limited number, for anyone for whom the full price is a barrier. No application.",
+      "price_cents": 2500,
+      "limit": 25,
+      "requires_code": false,
+      "attestation": "The full price would be a barrier for me."
+    },
+    {
+      "id": "comp",
+      "name": "Complimentary",
+      "description": "For sponsors, facilitators and partners.",
+      "price_cents": 0,
+      "limit": null,
+      "requires_code": true,
+      "attestation": null
+    }
+  ],
+  "sponsor_pitch": "Sponsorship is what makes the day affordable for the people it's for: tickets come close to covering food, and not much else. Sponsors put their name in front of the people building things in Connecticut, and help connect a community that has never been in one room.",
+  "sponsor_tiers": [
+    {
+      "id": "presenting",
+      "name": "Presenting sponsor",
+      "amount_cents": 250000,
+      "benefits": [
+        "Named with the event on the page, signage and programme",
+        "Logo on the event page and in participant emails",
+        "A word from the stage at the opening",
+        "Six tickets"
+      ],
+      "slots": 1
+    },
+    {
+      "id": "supporting",
+      "name": "Supporting sponsor",
+      "amount_cents": 100000,
+      "benefits": [
+        "Logo on the event page and signage",
+        "Named in participant emails",
+        "Three tickets"
+      ],
+      "slots": null
+    },
+    {
+      "id": "community",
+      "name": "Community sponsor",
+      "amount_cents": 50000,
+      "benefits": [
+        "Name on the event page and signage",
+        "Two tickets"
+      ],
+      "slots": null
+    }
+  ],
+  "sponsors": [],
+  "terms_version": "2026-11-draft-2",
+  "terms": "DRAFT, not yet reviewed.\n\nTickets. Tickets are sold by MakeHaven, a co-host, which handles the event's money. You can refund your own paid ticket from the link in your email until the end of January 4, 2027, when the catering count is set. After that there are no refunds, but you can transfer your ticket to someone else from the same link.\n\nYour information. Your name, email and registration answers are seen by the organisers, MakeHaven and Redwood Endeavors, and are used to run this event and to send you logistics about it. We share them with Redwood Endeavors for this event, and Redwood Endeavors may follow up with you about it. Anything beyond that is your choice, using the opt-ins on this form, which you can change at any time from the link in your email. Sponsors do not receive attendee contact details.\n\nPhotos. Photos from the event will be posted to social media and may be used to promote MakeHaven, Makerspace Network and future events. You may ask not to be photographed during the event, and you may ask in writing for material featuring your likeness to be removed.\n\nParticipation. You must be 18 or older. Sessions are discussion, light crafting and teaching; no heavy machinery is used. Any assistance is given on a best-effort basis with no guarantee on any work. MakeHaven can take no responsibility for damage to property or person. You are responsible for your own safety and actions, and you agree to follow all safety instructions and signage.\n\nConduct. Treat people with respect. Harassment, discrimination and threatening behaviour are not welcome, and organisers may ask anyone to leave, without a refund. Raise any concern with an organiser on the day, or by replying to your confirmation email.",
+  "statement_descriptor": "MAKER BONANZA",
+  "payment_host": "makehaven",
+  "notify_email": "sponsorship@makehaven.org",
+  "public_url": "https://connecticut.makerspace.network/bonanza",
+  "sources": [
+    {
+      "what": "Date, venue, tracks, audience, capacity, hospitality, co-hosts, $50/$25 pricing assumption",
+      "where": "Maker Bonanza: Event Brief (Google Doc, modified 2026-10-27)"
+    },
+    {
+      "what": "January 22 confirmed by the organisers; MakeHaven as fiduciary; software builders as audience",
+      "where": "Email thread on the brief, 2026-10-21 to 2026-10-30"
+    },
+    {
+      "what": "Registration on makerspace.network with MakeHaven's Stripe",
+      "where": "J.R. Logan, 2026-11-05"
+    },
+    {
+      "what": "Scholarship cap of 25, age 18, refund approach, sponsorship address, sharing with Redwood for this event",
+      "where": "J.R. Logan, 2026-11-05"
+    },
+    {
+      "what": "Photo and participation wording, adapted",
+      "where": "MakeHaven event registration waiver and instructor media terms (makehaven-website config)"
+    }
+  ],
+  "gaps": [
+    "Start and end times are not set, so emails carry no calendar file until starts_at and ends_at are filled in.",
+    "Ticket prices are the brief's stated assumption ($50, $25 with scholarship); confirmed only by not being changed.",
+    "Sponsor levels, amounts and benefits are proposals. The brief names no tiers.",
+    "ClimateHaven as venue was due for confirmation by November 6; confirm it before this goes public.",
+    "Whether a ticketed event serving alcohol needs a permit has not been checked.",
+    "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here.",
+    "Redwood Endeavors' website is not filled in."
+  ],
+  "refund_until": "2027-01-05T05:00:00.000Z"
+}

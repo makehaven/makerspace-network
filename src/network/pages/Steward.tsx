@@ -11,6 +11,7 @@ import {
   listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups, mergeOrganisation,
 } from '../db';
 import { normalizeUrl, stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
+import { MakersReviewTab } from './MakerEdit';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel, stewardRegionIds } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 import { InvitationsTab } from './Invitations';
@@ -23,10 +24,10 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'listings' | 'stewards' | 'feedback';
+  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'listings' | 'stewards' | 'feedback' | 'makers';
   const [tab, setTab] = useState<Tab>(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    return (['people', 'invitations', 'meetings', 'spaces', 'listings', 'stewards', 'feedback'] as const).find((x) => x === t) ?? 'people';
+    return (['people', 'invitations', 'meetings', 'spaces', 'listings', 'stewards', 'feedback', 'makers'] as const).find((x) => x === t) ?? 'people';
   });
 
   return (
@@ -57,6 +58,8 @@ export default function Steward() {
               {!!s.stewardship && <button className={tab === 'listings' ? 'on' : ''} onClick={() => setTab('listings')}>Listings</button>}
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
               {!!s.stewardship && <button className={tab === 'feedback' ? 'on' : ''} onClick={() => setTab('feedback')}>Feedback</button>}
+              {!!s.stewardship && <button className={tab === 'makers' ? 'on' : ''} onClick={() => setTab('makers')}>Makers</button>}
+              {!!s.stewardship && <PageLink page="event-admin" params={{ event: 'maker-bonanza-2027' }}>Maker Bonanza</PageLink>}
             </div>
             {tab === 'people' && <PeopleTab />}
             {tab === 'invitations' && <InvitationsTab />}
@@ -65,6 +68,7 @@ export default function Steward() {
             {tab === 'listings' && <ListingsTab />}
             {tab === 'stewards' && <StewardsTab />}
             {tab === 'feedback' && <FeedbackTab />}
+            {tab === 'makers' && <MakersReviewTab />}
           </>
         )}
       </div>

@@ -7,6 +7,8 @@ import People from './pages/People';
 import Steward from './pages/Steward';
 import { GroupPage, GroupsPage } from './pages/Groups';
 import SpaceData from './pages/SpaceData';
+import EventAdmin from './pages/EventAdmin';
+import MakerEdit from './pages/MakerEdit';
 
 export default function NetworkPages({ page, spaceId }: { page: string; spaceId?: string }) {
   return (
@@ -17,6 +19,8 @@ export default function NetworkPages({ page, spaceId }: { page: string; spaceId?
       {page === 'groups' && <GroupsPage />}
       {page === 'group' && <GroupPage />}
       {page === 'space-data' && <SpaceData spaceId={spaceId} />}
+      {page === 'event-admin' && <EventAdmin />}
+      {page === 'maker-edit' && <MakerEdit />}
     </SessionProvider>
   );
 }

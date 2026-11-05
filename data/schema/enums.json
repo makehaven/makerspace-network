@@ -1,6 +1,6 @@
 {
   "$comment": "Controlled vocabularies for the Makerspace Network directory. Versioned: adding a value is a minor bump, removing or renaming one is a major bump. okw and fablabs_io keys record the crosswalk to those standards; see docs/INTEROP.md.",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "$comment_people": "Vocabularies for the people layer (phase 0b, docs/GOVERNANCE.md). NetworkRole maps onto Nexus SystemRole so a person in both systems has one obvious mapping.",
   "NetworkRole": [
     { "id": "network_admin", "label": "Network admin", "nexus": "platform_admin" },
@@ -36,6 +36,51 @@
     { "id": "email", "label": "Show my email to verified people" },
     { "id": "phone", "label": "Show my phone to verified people" },
     { "id": "relay", "label": "Relay messages, never show my address" }
+  ],
+  "$comment_events": "MakerRelationship is asked at event registration (docs/EVENTS.md). Unlike NetworkRole it grants nothing: it is what a person says about themselves, multiple answers allowed. Kept in step with RELATIONSHIPS in functions/src/eventLogic.ts by test/events.test.mjs.",
+  "MakerRelationship": [
+    { "id": "space_leader", "label": "I run or help run a makerspace" },
+    { "id": "space_member", "label": "I'm a member of a makerspace" },
+    { "id": "independent_maker", "label": "I make things independently" },
+    { "id": "entrepreneur", "label": "I'm building a hardware or physical-product venture" },
+    { "id": "software_builder", "label": "I build software" },
+    { "id": "student_faculty", "label": "I'm a student or faculty member" },
+    { "id": "partner", "label": "I work with or support makers" },
+    { "id": "curious", "label": "I'm curious and new to this" }
+  ],
+  "$comment_makers": "Vocabularies for maker profiles (docs/GOVERNANCE.md, Makers). Self-described, and grant nothing. MakerOpenTo follows MakeHaven's member availability field; LookingFor draws on its inventor needs. Kept in step with functions/src by test/events.test.mjs. MakerDiscipline extends the capability domains with the arts and software, so a person's craft and a space's equipment can be matched by id where they overlap.",
+  "MakerDiscipline": [
+    { "id": "woodworking", "label": "Woodworking" },
+    { "id": "metalworking", "label": "Metalworking" },
+    { "id": "digital_fabrication", "label": "3D printing, laser and CNC" },
+    { "id": "electronics", "label": "Electronics and robotics" },
+    { "id": "software", "label": "Software" },
+    { "id": "textiles", "label": "Textiles and fibre" },
+    { "id": "ceramics", "label": "Ceramics and pottery" },
+    { "id": "jewelry", "label": "Jewellery and small metals" },
+    { "id": "art_design", "label": "Art and design" },
+    { "id": "print", "label": "Print" },
+    { "id": "craft", "label": "Other crafts" },
+    { "id": "media", "label": "Photo, video and audio" },
+    { "id": "repair", "label": "Repair" },
+    { "id": "science", "label": "Science" }
+  ],
+  "MakerOpenTo": [
+    { "id": "collaborating", "label": "Collaborating on projects" },
+    { "id": "volunteer_teaching", "label": "Teaching or mentoring, as a volunteer" },
+    { "id": "paid_teaching", "label": "Teaching or coaching, paid" },
+    { "id": "freelance", "label": "Freelance and commissions" },
+    { "id": "employment", "label": "Full-time work" }
+  ],
+  "LookingFor": [
+    { "id": "tool_access", "label": "Access to tools and space" },
+    { "id": "collaborators", "label": "People to make things with" },
+    { "id": "learning", "label": "Learning new skills" },
+    { "id": "customers", "label": "Customers or places to sell" },
+    { "id": "fabricators", "label": "Fabricators or suppliers" },
+    { "id": "cofounders_funding", "label": "Co-founders or funding" },
+    { "id": "teaching_opportunities", "label": "Places to teach" },
+    { "id": "community", "label": "A community of makers" }
   ],
   "PartnerType": [
     { "id": "government", "label": "Government agency or office", "nexus": "org_type:government_agency" },

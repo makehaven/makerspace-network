@@ -12,6 +12,9 @@ export interface IcsMeeting {
   duration_min: number;
   status: 'scheduled' | 'cancelled';
   updated_at: string;
+  /** Where the calendar entry links to, and what it calls that. Defaults to the meeting's page. */
+  url?: string;
+  link_text?: string;
 }
 
 const SITE = 'https://makerspace.network';
@@ -37,7 +40,7 @@ function fold(line: string): string {
 
 export function meetingIcs(m: IcsMeeting): string {
   const end = new Date(Date.parse(m.starts_at) + m.duration_min * 60_000).toISOString();
-  const url = `${SITE}/?page=people&meeting=${encodeURIComponent(m.id)}`;
+  const url = m.url ?? `${SITE}/?page=people&meeting=${encodeURIComponent(m.id)}`;
   const cancelled = m.status === 'cancelled';
   const lines = [
     'BEGIN:VCALENDAR',
@@ -55,7 +58,7 @@ export function meetingIcs(m: IcsMeeting): string {
     // Every edit bumps updated_at, so its seconds are a sequence that only rises.
     `SEQUENCE:${Math.floor(Date.parse(m.updated_at) / 1000)}`,
     `SUMMARY:${esc(m.title)}`,
-    `DESCRIPTION:${esc(`${m.agenda}${m.agenda ? '\n\n' : ''}Answer and see who is coming: ${url}`)}`,
+    `DESCRIPTION:${esc(`${m.agenda}${m.agenda ? '\n\n' : ''}${m.link_text ?? 'Answer and see who is coming'}: ${url}`)}`,
     ...(m.location ? [`LOCATION:${esc(m.location)}`] : []),
     `URL:${url}`,
     `STATUS:${cancelled ? 'CANCELLED' : 'CONFIRMED'}`,

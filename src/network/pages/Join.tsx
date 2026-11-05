@@ -12,6 +12,7 @@ import {
 import { can } from '../capabilities';
 import { PendingInvitations } from './Invitations';
 import { getListingSubmission, getSpaceMetrics, reportingYear } from '../spaceData';
+import { eventsForSpace } from '../db';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, partnerTypeLabel, roleLabel } from './shared';
 
 const BOOTSTRAP = ['jrlogan@makehaven.org'];
@@ -401,6 +402,34 @@ function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void })
 
 // ---------- signed in and already a member ----------
 
+/** Events a space's staff can bring their community to: their own link to share
+ *  and how many have come through it. Names only for people who opted to share. */
+function SpaceEvents({ spaceId }: { spaceId: string }) {
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof eventsForSpace>>>([]);
+  const [copied, setCopied] = useState<string | null>(null);
+  useEffect(() => { eventsForSpace(spaceId).then(setRows).catch(() => undefined); }, [spaceId]);
+  return (
+    <>
+      {rows.map((e) => {
+        const link = `${e.public_url}?ref=${spaceId}`;
+        return (
+          <div key={e.id} className="notice info" style={{ marginTop: 12 }}>
+            <h4>{e.title}, {e.date_label}</h4>
+            <p style={{ margin: '0 0 8px' }}>
+              Share this link with your community. {e.home + e.referred > 0
+                ? <>So far: {e.home} registered with this as their home space, {e.referred} through your link.</>
+                : 'People who register through it are counted for your space.'}
+            </p>
+            <code>{link}</code>{' '}
+            <button className="linkish" onClick={async () => { await navigator.clipboard.writeText(link); setCopied(e.id); }}>{copied === e.id ? 'Copied' : 'Copy'}</button>
+            {e.people.length > 0 && <p style={{ margin: '8px 0 0' }}>Coming, and happy for you to know: {e.people.map((p) => `${p.name} (${p.email})`).join(', ')}</p>}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
   const s = useSession();
   const person = s.person!;
@@ -476,6 +505,7 @@ function MembershipCard({ m, spaceName }: { m: Membership & { id: string }; spac
             </>}
             <PageLink className="btn ghost" page="space" params={{ space: m.space_id }}>Public page</PageLink>
           </div>
+          <SpaceEvents spaceId={m.space_id} />
         </div>
       )}
       {m.status === 'pending' && (
