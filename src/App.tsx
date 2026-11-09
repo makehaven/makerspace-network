@@ -14,22 +14,32 @@ import FeedbackButton from './components/FeedbackButton';
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
 const NetworkPages = lazy(() => import('./network/NetworkPages'));
-const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group', 'space-data']);
+const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group', 'space-data', 'event-admin', 'maker-edit', 'home']);
+// An event's public page needs Firestore but no sign-in, so unlike the pages
+// above it stays on the regional host instead of being handed to the apex.
+const EventPage = lazy(() => import('./events/EventPage'));
+// Likewise makers: browsing them needs no sign-in, on any host.
+const MakerPages = lazy(() => import('./makers/MakerPages'));
 
 // Query-string routing, no router library — same convention as the sibling
 // Entrepreneurship Nexus app.
-type Route = { page: string; id?: string; achievement?: string; version?: number };
+type Route = { page: string; id?: string; achievement?: string; version?: number; event?: string; maker?: string };
 
 // Achievement definitions are the one thing here with a permanent, path-based
 // URL, because it is baked into signed credentials. Everything else is
 // query-string routed.
 const ACHIEVEMENT_PATH = /^\/achievements\/([a-z0-9-]+)\/v(\d+)\/?$/;
+// Events get a short path too, because it goes on flyers and in other people's emails.
+const EVENT_PATH = /^\/events\/([a-z0-9-]+)\/?$/;
+const EVENT_ALIASES: Record<string, string> = { '/bonanza': 'maker-bonanza-2027', '/bonanza/': 'maker-bonanza-2027' };
 
 const parse = (): Route => {
   const m = ACHIEVEMENT_PATH.exec(window.location.pathname);
   if (m) return { page: 'achievement', achievement: m[1], version: Number(m[2]) };
+  const ev = EVENT_ALIASES[window.location.pathname] ?? EVENT_PATH.exec(window.location.pathname)?.[1];
+  if (ev) return { page: 'event', event: ev };
   const q = new URLSearchParams(window.location.search);
-  return { page: q.get('page') ?? 'directory', id: q.get('space') ?? undefined };
+  return { page: q.get('page') ?? 'directory', id: q.get('space') ?? undefined, event: q.get('event') ?? undefined, maker: q.get('maker') ?? undefined };
 };
 
 // Sign-in is kept per origin, so a person signed in at the apex is signed out
@@ -76,8 +86,8 @@ export const href = (page: string, params: Record<string, string> = {}) => {
 
 function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
   const here = parse().page;
-  // A space's data pages belong to 'Your space'.
-  const current = here === page || (page === 'join' && here === 'space-data');
+  // Everything about you and your space belongs to Home.
+  const current = here === page || (page === 'home' && ['join', 'space-data', 'maker-edit'].includes(here));
   return (
     <a
       href={href(page, params)}
@@ -120,7 +130,8 @@ export default function App() {
           <nav className="nav">
             <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
             <Link page="for-spaces">For makerspaces</Link>
-            <Link page="join">Your space</Link>
+            <Link page="home">Home</Link>
+            <Link page="makers">Makers</Link>
             <Link page="people">People</Link>
             <Link page="groups">Groups</Link>
             <Link page="about">About</Link>
@@ -142,6 +153,16 @@ export default function App() {
                      </div>;
         })()}
         {route.page === 'about' && <About region={region} />}
+        {(route.page === 'makers' || route.page === 'maker') && (
+          <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
+            <MakerPages id={route.page === 'maker' ? route.maker : undefined} />
+          </Suspense>
+        )}
+        {route.page === 'event' && route.event && (
+          <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
+            <EventPage id={route.event} />
+          </Suspense>
+        )}
         {NETWORK_PAGES.has(route.page) && (
           <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
             <NetworkPages page={route.page} spaceId={route.id} />

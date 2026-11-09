@@ -201,11 +201,41 @@ for (const file of readdirSync(join(root, 'data/standards')).filter((f) => /^fra
   stdCount += seen.size;
 }
 
+// ---------- event drafts ----------
+// Prices and tiers reach real card charges, so their shape is worth checking
+// here too, and a draft has to say what it has not settled.
+let eventCount = 0;
+const eventDir = join(root, 'data/events');
+for (const file of readdirSync(eventDir).filter((f) => f.endsWith('.json'))) {
+  const ev = read(`data/events/${file}`);
+  const at = (m) => errors.push(`data/events/${file}: ${m}`);
+  eventCount++;
+  if (ev.id !== file.replace(/\.json$/, '')) at(`id "${ev.id}" does not match the filename`);
+  if (ev.region_id && !regionIds.has(ev.region_id)) at(`unknown region ${ev.region_id}`);
+  if (ev.status !== 'draft') at('a repository event must be status "draft"; publishing happens from Event admin');
+  if (!Array.isArray(ev.sources) || !ev.sources.length) at('no sources');
+  if (!Array.isArray(ev.gaps)) at('no gaps array');
+  if (!Number.isInteger(ev.capacity) || ev.capacity < 1) at('capacity must be a positive integer');
+  for (const [list, cents] of [[ev.tiers, 'price_cents'], [ev.sponsor_tiers, 'amount_cents']]) {
+    const ids = new Set();
+    for (const t of list ?? []) {
+      if (ids.has(t.id)) at(`duplicate tier ${t.id}`);
+      ids.add(t.id);
+      if (!Number.isInteger(t[cents]) || t[cents] < 0) at(`tier ${t.id}: ${cents} must be whole cents`);
+      if (t[cents] > 0 && t[cents] < 50) at(`tier ${t.id}: below Stripe's 50-cent minimum`);
+    }
+  }
+  if ((ev.tiers ?? []).some((t) => t.price_cents === 0 && !t.requires_code)) warnings.push(`data/events/${file}: a free ticket with no code`);
+  if ((ev.statement_descriptor ?? '').length > 22) at('statement_descriptor over 22 characters');
+  // Stripe rejects these characters in a statement descriptor.
+  if (/[<>\\'"*]/.test(ev.statement_descriptor ?? '')) at('statement_descriptor has a character Stripe refuses');
+}
+
 for (const w of warnings) console.warn(`  warn  ${w}`);
 for (const e of errors) console.error(`  ERROR ${e}`);
 
 console.log(
   `\n${count} spaces · ${regionIds.size} regions · ${achCount} achievements · ` +
-    `${alignCount} alignment files · ${stdCount} standards · ${errors.length} errors · ${warnings.length} warnings`,
+    `${alignCount} alignment files · ${stdCount} standards · ${eventCount} events · ${errors.length} errors · ${warnings.length} warnings`,
 );
 process.exit(errors.length ? 1 : 0);

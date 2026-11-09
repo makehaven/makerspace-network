@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Photos of work on maker profiles (docs/GOVERNANCE.md §Makers). The file name is
+// random and listing is off, so a photo awaiting review cannot be found by anyone
+// who was not handed its address; Firestore decides who is handed it.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /makers/{uid}/{file} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        // JPEG only: the browser re-encodes every photo, which strips the location
+        // data in a phone picture, and this keeps SVG and its scripts out.
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size < 4 * 1024 * 1024;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if false;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

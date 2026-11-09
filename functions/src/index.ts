@@ -1,7 +1,7 @@
 // The people layer's Cloud Functions. Everything else is browser + Firestore
 // rules; these exist only where a browser cannot act: sending and receiving
-// email. All optional — without them, messages, meetings, invitations and
-// group posts still work on the site. Needs the Blaze plan and Postmark
+// email, and taking money (events.ts). The mailers are optional — without them, messages, meetings, invitations and
+// group posts still work on the site. Event tickets need events.ts deployed. Needs the Blaze plan and Postmark
 // (functions/src/postmark.ts for the secrets, docs/GROUPS.md for group mail).
 
 import { initializeApp } from 'firebase-admin/app';
@@ -184,3 +184,5 @@ export const invitationMailer = onDocumentWritten(
 );
 
 export { groupMailer, groupInbound, groupUnsubscribe } from './groups';
+export { eventRegister, eventManage, eventMine, eventInterest, eventSponsor, eventStripeWebhook, eventRegistrationChanged, eventSponsorChanged, eventChanged } from './events';
+export { makerCreated, makerDeleted, makerWorkChanged } from './makers';

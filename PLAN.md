@@ -1,6 +1,6 @@
 # Makerspace Network — Roadmap
 
-**Status as of 2026-10-08.** What actually exists and what comes next. Keep this
+**Status as of 2026-11-05.** What actually exists and what comes next. Keep this
 file accurate; it is the starting point for "what is real here."
 
 ## Thesis
@@ -34,6 +34,8 @@ meetings, but a person can see and reach a verified person in any state.
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
+| Events: tickets, sponsors, network follow-through (`docs/EVENTS.md`) | **Built and tested in the emulator 2026-11-05, not deployed.** Maker Bonanza (2027-01-22) is the first; needs Blaze, Postmark, a MakeHaven Stripe key |
+| Makers: profiles for anyone who makes things (`docs/GOVERNANCE.md` §Makers) | **Built and tested in the emulator 2026-11-05, not deployed** |
 | Reciprocity architecture (`docs/RECIPROCITY.md`) | **Designed, not started** — Open Badges 3.0, member-carried |
 | Network achievement framework | **Not started** — the scarce work in phase 3 |
 
@@ -163,6 +165,38 @@ Three things it has to do, in order of why anyone asked for it:
 Once this exists the Standards tool can save an assessment against a space
 instead of a browser, which removes the "export a file and email it" step that
 stalls pilot feedback. That is phase 1's remaining item, and it depends on this.
+
+### Phase 0c — Events: Maker Bonanza *(built, not deployed)*
+
+A statewide unconference on 2027-01-22, MakeHaven as fiduciary, Redwood Endeavors
+co-hosting. Sponsors confirmed by 2026-11-20, registration opens 2026-12-01. It is
+the network's first reach past the people who run spaces, to the makers
+themselves. Spec and setup: `docs/EVENTS.md`.
+
+- [x] Public event page, guest ticketing, waitlist, scholarship and comp tickets
+- [x] Stripe Checkout on MakeHaven's account; only a signed webhook settles
+- [x] Sponsor page: card or invoice; a person approves anything listed publicly
+- [x] Separate opt-ins, changeable from an emailed link; attendee list by consent
+- [x] Referral links per space; counts on Your space, names only by opt-in
+- [x] Steward page: break-even, roster and check-in, codes, CSV, network follow-up
+- [ ] **Switch it on**: Blaze, Postmark, Stripe key and webhook, deploy functions
+- [ ] Settle the gaps in `data/events/maker-bonanza-2027.json`
+- [x] Self-service refund until the catering count, transfer after it
+
+### Phase 0d — Makers *(built, not deployed)*
+
+Everyone who makes things, with or without a space, and a pool of collaborators and
+instructors for the spaces. Spec: `docs/GOVERNANCE.md` §Makers.
+
+- [x] Self-described profile with photos of work; each person chooses who sees it
+- [x] Public Makers page, filter by craft and by what people are open to
+- [x] A person's look at each photo; attendance earned from check-in, not claimed
+- [x] Fellow attendees see shared profiles through their event link
+- [x] Home: what needs you, your tickets, your profile and your space; sign-in returns you to where you were
+- [ ] Switch on Storage for photos
+- [ ] An open makers mailing list; groups still require `verified`
+- [ ] Prefill a profile from a registration
+- [ ] Demand by town, aggregate only, for the state's inventory work
 
 ### Phase 1 — Standards of Excellence *(done; moved into the site)*
 

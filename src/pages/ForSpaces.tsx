@@ -107,7 +107,7 @@ export default function ForSpaces() {
                 <td><a href={href('standards')}
                        onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('standards'); }}>Standards of Excellence</a></td>
                 <td>An 84-standard self-assessment, asking whether a space is <em>well run</em>
-                    rather than what equipment it owns. Under Your space, private to your staff;
+                    rather than what equipment it owns. On your Home page, private to your staff;
                     the network sees only a summary, and only if you share it.</td>
                 <td><span className="pill ok">Live</span></td>
               </tr>

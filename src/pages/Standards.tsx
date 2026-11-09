@@ -28,7 +28,7 @@ export default function Standards() {
         </p>
 
         <p>
-          Sign in, open <strong>Your space</strong>, and choose <strong>Standards self-assessment</strong>.
+          Sign in, open <strong>Home</strong>, and choose <strong>Standards self-assessment</strong>.
           It saves as you go, and anyone on your space's staff can pick it up where a colleague left off.
         </p>
 

@@ -302,6 +302,13 @@ export default function Directory({ region }: { region: Region }) {
       </section>
 
       <div className="wrap" style={{ paddingTop: narrow ? 16 : 30 }}>
+        {region.featured_event && (
+          <div className="notice info event-banner">
+            <span><strong>{region.featured_event.title}, {region.featured_event.date_label}.</strong> {region.featured_event.blurb}</span>
+            <a className="btn small" href={href('event', { event: region.featured_event.id })}
+               onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('event', { event: region.featured_event!.id }); }}>Find out more</a>
+          </div>
+        )}
         <div className="cols">
           {/* On a phone the rail is not a column beside anything — it would sit
               on top of the results. Move it below the map instead, folded. */}

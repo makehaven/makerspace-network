@@ -19,7 +19,10 @@
     "deploy:rules": "firebase deploy --only firestore:rules",
     "dev:emulated": "VITE_USE_EMULATORS=1 vite",
     "test:inbound": "npm --prefix functions run build && firebase emulators:exec --only firestore,functions --project makerspace-net \"node --test test/inbound.test.mjs\"",
-    "test:standards": "node --test test/standards.test.mjs"
+    "test:standards": "node --test test/standards.test.mjs",
+    "test:events": "npm --prefix functions run build && node --test test/events.test.mjs",
+    "test:events:rules": "firebase emulators:exec --only firestore,storage --project makerspace-net \"node --test test/event-rules.test.mjs\"",
+    "test:events:e2e": "npm --prefix functions run build && sh test/with-event-env.sh firebase emulators:exec --only auth,firestore,functions,storage --project makerspace-net \"node --test test/events-e2e.test.mjs\""
   },
   "dependencies": {
     "firebase": "^12.19.0",

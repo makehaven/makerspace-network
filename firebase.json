@@ -14,7 +14,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com; frame-src 'self' https://makerspace-net.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+              "value": "default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://firebasestorage.googleapis.com; connect-src 'self' https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com; frame-src 'self' https://makerspace-net.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
             },
             {
               "key": "X-Content-Type-Options",
@@ -64,6 +64,15 @@
               "value": "no-cache"
             }
           ]
+        },
+        {
+          "source": "/api/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
+          ]
         }
       ],
       "redirects": [
@@ -84,6 +93,48 @@
         }
       ],
       "rewrites": [
+        {
+          "source": "/api/events/mine",
+          "function": {
+            "functionId": "eventMine",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/events/register",
+          "function": {
+            "functionId": "eventRegister",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/events/manage",
+          "function": {
+            "functionId": "eventManage",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/events/interest",
+          "function": {
+            "functionId": "eventInterest",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/events/sponsor",
+          "function": {
+            "functionId": "eventSponsor",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/events/stripe-webhook",
+          "function": {
+            "functionId": "eventStripeWebhook",
+            "region": "us-central1"
+          }
+        },
         {
           "source": "**",
           "destination": "/index.html"
@@ -149,6 +200,12 @@
     "ui": {
       "enabled": false
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "storage": {
+      "port": 9399
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
