@@ -424,12 +424,11 @@ function PartnerAsk({ id, event, partners, onAdded, startOpen = false }: {
           <h4>You get</h4>
           <ul>
             <li><strong>Your logo on the event page</strong>, linked to your listing.</li>
-            <li><strong>One free ticket</strong> for someone from your space.</li>
             <li><strong>Half price for your members</strong>, with your own code{memberPrice ? ` (${money(memberPrice)} instead of ${money(generalPrice)})` : ''}.</li>
           </ul>
         </div>
       </div>
-      <p className="muted">Nothing to sign or pay. Your codes are emailed to you once you're listed.</p>
+      <p className="muted">Nothing to sign or pay. Your code is emailed to you once you're listed.</p>
       {!open && !sent && <button className="btn" onClick={() => setOpen(true)}>Become a partner makerspace</button>}
 
       {open && !sent && <>
@@ -466,9 +465,9 @@ function PartnerAsk({ id, event, partners, onAdded, startOpen = false }: {
       </>}
 
       {sent && (listed.has(sent.space ?? '') && mine.some((m) => m.space_id === sent.space)
-        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is now listed on the event page. Your free ticket and members' code are on their way by email, and on your Home page.</p>{shareLink(sent.space!)}</>
+        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is now listed on the event page. Your members' code is on its way by email, and on your Home page.</p>{shareLink(sent.space!)}</>
         : <>
-            <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day, and email you your free ticket and members' code.</p>
+            <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day, and email you your members' code.</p>
             {sent.space && shareLink(sent.space)}
           </>)}
     </div>

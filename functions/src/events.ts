@@ -826,9 +826,10 @@ export const eventChanged = onDocumentWritten({ document: 'events/{id}', region:
 // ---------- partner makerspaces: what a space gets for saying yes ----------
 //
 // A partner agrees to share the event and send at least one person. In return,
-// besides its logo on the page: one free seat, and a half-price code for its
-// members. Both codes are made here, never in the browser, so a space's staff
-// can be shown theirs (event_partner_kits) without reading every code.
+// besides its logo on the page, it gets a half-price code for its members, made
+// here rather than in the browser so a space's staff can be shown theirs
+// (event_partner_kits) without reading every code. A free seat is not automatic:
+// the steward gives those to particular spaces from Event admin.
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const randomCode = (n: number) => [...randomBytes(n)].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
@@ -868,7 +869,7 @@ export const eventPartnerChanged = onDocumentWritten(
       const kit = (await kitRef.get()).data() as PartnerKit | undefined;
       if (!kit) return;
       const rows = (await regsOf(kit.event_id).get()).docs.map((d) => d.data() as RegRow);
-      for (const code of [kit.seat_code, kit.member_code]) {
+      for (const code of [kit.seat_code, kit.member_code].filter(Boolean)) {
         if (!rows.some((r) => r.code === code && holdsSeat(r, Date.now()))) await db().doc(`event_codes/${kit.event_id}~${code}`).delete();
       }
       await kitRef.delete();
@@ -890,19 +891,16 @@ export const eventPartnerChanged = onDocumentWritten(
       } as EventDoc['tiers'][number];
       await eventRef(after.event_id).update({ tiers: FieldValue.arrayUnion(memberTier), updated_at: nowIso() });
     }
-    const seatTier = ev.tiers.find((t) => t.requires_code && t.price_cents === 0);
     const prefix = after.space_id.split('-')[0].toUpperCase().slice(0, 10);
-    const seatCode = `SEAT-${randomCode(6)}`;
     const memberCode = `${prefix}-${randomCode(4)}`;
     const iso = nowIso();
     const codeRow = { event_id: after.event_id, region_id: ev.region_id, space_id: after.space_id, created_at: iso };
-    if (seatTier) await db().doc(`event_codes/${after.event_id}~${seatCode}`).set({ ...codeRow, tier_id: seatTier.id, max_uses: 1, note: `Partner seat: ${after.space_name}` });
     await db().doc(`event_codes/${after.event_id}~${memberCode}`).set({ ...codeRow, tier_id: MEMBER_TIER, max_uses: MEMBER_CODE_USES, note: `Members of ${after.space_name}` });
 
     const to = await partnerContacts(after.event_id, after.space_id, after.agreed_by);
     const kit: PartnerKit = {
       event_id: after.event_id, region_id: ev.region_id, space_id: after.space_id, space_name: after.space_name,
-      seat_code: seatTier ? seatCode : '', member_code: memberCode, member_uses: MEMBER_CODE_USES,
+      seat_code: '', member_code: memberCode, member_uses: MEMBER_CODE_USES,
       member_price_cents: memberTier.price_cents, sent_to: [], created_at: iso,
     };
     await kitRef.set(kit);
@@ -917,22 +915,16 @@ export const eventPartnerChanged = onDocumentWritten(
       '',
       'As a partner you have agreed to share the event with your community and to send at least one person.',
       '',
-      ...(seatTier ? [
-        'YOUR FREE SEAT (one person)',
-        `Code ${seatCode}, or use this link, which fills it in:`,
-        link(seatCode),
-        '',
-      ] : []),
       `HALF PRICE FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)}, up to ${MEMBER_CODE_USES} people)`,
       `Code ${memberCode}. Send your active members this link:`,
       link(memberCode),
       '',
-      'Everyone who registers through these links is counted for your space. Your organisers can see the codes and counts on their Home page at makerspace.network.',
+      'Everyone who registers through this link is counted for your space. Your organisers can see the code and counts on their Home page at makerspace.network.',
       '',
       'Questions, or need more member places? Reply to this email.',
     ].join('\n');
     try {
-      await sendMail(to.join(', '), `${ev.title}: your partner seat and members' code`, text, undefined, ev.reply_to_email || ev.notify_email);
+      await sendMail(to.join(', '), `${ev.title}: your members' half-price code`, text, undefined, ev.reply_to_email || ev.notify_email);
       await kitRef.update({ sent_to: to });
     } catch (err) { logger.warn('partner kit mail failed', err); }
   },

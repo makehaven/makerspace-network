@@ -378,17 +378,16 @@ function PartnerKits({ id, event, regs }: { id: string; event: EventDoc; regs: W
   const link = (k: PartnerKit, code: string) => `${event.public_url}?ref=${k.space_id}&code=${code}#register`;
   return (
     <div className="card form-card" style={{ marginTop: 16 }}>
-      <h2>Partner seats and member codes ({kits.length})</h2>
-      <p className="muted">Each partner makerspace gets one free seat and a half-price code for its members ({kits[0] ? money(kits[0].member_price_cents) : 'half price'}), made and emailed automatically when it becomes a partner. Removing a partner deletes its unused codes.</p>
+      <h2>Partner member codes ({kits.length})</h2>
+      <p className="muted">Each partner gets a half-price code for its members ({kits[0] ? money(kits[0].member_price_cents) : 'half price'}), made and emailed automatically when it becomes a partner. Removing a partner deletes its unused codes. Free seats are not automatic: give them below.</p>
       {kits.length > 0 && <>
         <div className="scroll-x">
           <table className="data">
-            <thead><tr><th>Makerspace</th><th>Free seat</th><th>Members' code</th><th>Emailed to</th></tr></thead>
+            <thead><tr><th>Makerspace</th><th>Members' code</th><th>Emailed to</th></tr></thead>
             <tbody>
               {kits.map((k) => (
                 <tr key={k.id}>
                   <td>{k.space_name}</td>
-                  <td><code>{k.seat_code}</code> {used(k.seat_code) ? <span className="pill ok">used</span> : <span className="muted">unused</span>}</td>
                   <td><code>{k.member_code}</code> <span className="muted">{used(k.member_code)} of {k.member_uses}</span></td>
                   <td>{k.sent_to.length ? k.sent_to.join(', ') : <span className="muted">nobody yet: send it yourself</span>}</td>
                 </tr>
@@ -397,10 +396,77 @@ function PartnerKits({ id, event, regs }: { id: string; event: EventDoc; regs: W
           </table>
         </div>
         <button className="btn ghost small" onClick={() => download(`${id}-partner-codes.csv`,
-          ['makerspace,seat_code,seat_link,member_code,member_link,emailed_to', ...kits.map((k) => [k.space_name, k.seat_code, link(k, k.seat_code), k.member_code, link(k, k.member_code), k.sent_to.join(' ')].map(csvEsc).join(','))].join('\n'))}>
+          ['makerspace,member_code,member_link,emailed_to', ...kits.map((k) => [k.space_name, k.member_code, link(k, k.member_code), k.sent_to.join(' ')].map(csvEsc).join(','))].join('\n'))}>
           Download as CSV
         </button>
       </>}
+    </div>
+  );
+}
+
+// ---------- free seats: given by hand to particular spaces ----------
+
+const SEAT_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const seatCode = () => 'SEAT-' + [...crypto.getRandomValues(new Uint8Array(6))].map((b) => SEAT_ALPHABET[b % SEAT_ALPHABET.length]).join('');
+
+/** One single-use free ticket for a chosen makerspace or partner organisation,
+ *  credited to it. Random, because a free seat must not be guessable. */
+function FreeSeats({ id, event, regs, orgs }: { id: string; event: EventDoc; regs: WithId<Reg>[]; orgs: WithId<SpaceIndex>[] }) {
+  const comp = event.tiers.find((t) => t.requires_code && t.price_cents === 0);
+  const [seats, setSeats] = useState<WithId<CodeRow>[]>([]);
+  const [org, setOrg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const load = async () => {
+    const r = await getDocs(query(collection(db, 'event_codes'), where('event_id', '==', id), where('region_id', '==', event.region_id)));
+    setSeats(r.docs.map((d) => ({ id: d.id.split('~')[1], ...(d.data() as CodeRow) })).filter((c) => c.tier_id === comp?.id && c.space_id));
+  };
+  useEffect(() => { void load().catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  const choices = orgs.filter((o) => o.region_id === event.region_id && !o.proposed).sort((a, b) => a.name.localeCompare(b.name));
+  const nameOf = (sid: string) => orgs.find((o) => o.id === sid)?.name ?? sid;
+  const link = (c: WithId<CodeRow>) => `${event.public_url}?ref=${c.space_id}&code=${c.id}#register`;
+  const taker = (code: string) => regs.find((r) => r.code === code && ['confirmed', 'pending_payment', 'offered', 'waitlisted'].includes(r.status));
+  if (!comp) return null;
+  return (
+    <div className="card form-card">
+      <h2>Free seats ({seats.length})</h2>
+      <p className="muted">One free ticket for a space you choose, credited to it. Each code works once. Send the link; it fills the code in.</p>
+      <div className="inline-fields">
+        <label className="field"><span>For</span>
+          <select value={org} onChange={(e) => setOrg(e.target.value)}>
+            <option value="">Choose a makerspace or partner…</option>
+            {choices.map((o) => <option key={o.id} value={o.id}>{o.name}{o.kind === 'partner' ? ' (partner organisation)' : ''}</option>)}
+          </select></label>
+        <button className="btn" disabled={!org || busy} onClick={async () => {
+          setBusy(true);
+          try {
+            const code = seatCode();
+            await setDoc(doc(db, 'event_codes', `${id}~${code}`), { event_id: id, region_id: event.region_id, tier_id: comp.id, max_uses: 1, note: `Free seat: ${nameOf(org)}`, space_id: org, created_at: isoNow() });
+            setOrg(''); await load();
+          } finally { setBusy(false); }
+        }}>Give a free seat</button>
+      </div>
+      {seats.length > 0 && (
+        <div className="scroll-x">
+          <table className="data">
+            <thead><tr><th>For</th><th>Code</th><th>Used by</th><th>Link to send</th><th></th></tr></thead>
+            <tbody>
+              {seats.sort((a, b) => nameOf(a.space_id!).localeCompare(nameOf(b.space_id!))).map((c) => {
+                const r = taker(c.id);
+                return (
+                  <tr key={c.id}>
+                    <td>{nameOf(c.space_id!)}</td>
+                    <td><code>{c.id}</code></td>
+                    <td>{r ? r.name : <span className="muted">unused</span>}</td>
+                    <td><code>{link(c)}</code> <button className="linkish" onClick={async () => { await navigator.clipboard.writeText(link(c)); setCopied(c.id); }}>{copied === c.id ? 'Copied' : 'Copy'}</button></td>
+                    <td>{!r && <button className="linkish" onClick={async () => { await deleteDoc(doc(db, 'event_codes', `${id}~${c.id}`)); await load(); }}>Withdraw</button>}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -537,6 +603,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
       </div>
 
       <PartnerKits id={id} event={event} regs={regs} />
+      <FreeSeats id={id} event={event} regs={regs} orgs={orgs} />
 
       {interest.length > 0 && (
         <div className="card form-card">

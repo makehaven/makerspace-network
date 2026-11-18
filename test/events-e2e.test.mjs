@@ -242,41 +242,47 @@ test('a partner request is kept for a steward, and does not join the ticket-inte
   assert.equal((await db.collection('event_interest').get()).size, 0);
 });
 
-test('a new partner gets one free seat and a half-price members code, emailed to whoever asked', async () => {
+test('a new partner gets a half-price members code, emailed to whoever asked, and no automatic free seat', async () => {
   await call('eventInterest', { event_id: EV, partner: true, name: 'Pat', email: 'pat@example.org', home_space_id: 'spark' });
   await db.doc(`event_partners/${EV}~spark`).set({ event_id: EV, space_id: 'spark', space_name: 'Spark', agreed_by: 'steward', created_at: T });
   const kit = await waitFor(async () => (await db.doc(`event_partner_kits/${EV}~spark`).get()).data());
   assert.ok(kit, 'kit made');
-  assert.match(kit.seat_code, /^SEAT-[A-Z2-9]{6}$/);
+  assert.equal(kit.seat_code, '');
   assert.match(kit.member_code, /^SPARK-[A-Z2-9]{4}$/);
   assert.equal(kit.member_price_cents, 2500);
+  const codes = (await db.collection('event_codes').get()).docs.map((d) => d.get('tier_id'));
+  assert.deepEqual(codes, ['member'], 'only the member code; free seats are given by hand');
   // The request was used for the address, then cleared.
   assert.equal((await db.collection('event_partner_requests').get()).size, 0);
   const member = (await db.doc(`events/${EV}`).get()).get('tiers').find((t) => t.id === 'member');
   assert.equal(member.price_cents, 2500);
   assert.equal(member.requires_code, true);
 
-  assert.equal((await signup('seat@example.org', { code: kit.seat_code })).body.outcome, 'confirmed');
-  assert.equal((await signup('seat2@example.org', { code: kit.seat_code })).body.code, 'code_used_up');
-  assert.equal((await regByEmail('seat@example.org')).get('referred_by'), 'spark');
   const m = await signup('m@example.org', { code: kit.member_code });
   assert.equal(m.body.outcome, 'checkout');
   assert.equal(stripeCalls.at(-1).params['line_items[0][price_data][unit_amount]'], '2500');
+  assert.equal((await regByEmail('m@example.org')).get('referred_by'), 'spark');
 
-  // Stepping back removes the unused code and keeps the used one.
+  // Stepping back keeps a code someone is using.
   await db.doc(`event_partners/${EV}~spark`).delete();
   await waitFor(async () => !(await db.doc(`event_partner_kits/${EV}~spark`).get()).exists);
-  assert.equal((await db.doc(`event_codes/${EV}~${kit.seat_code}`).get()).exists, true);
   assert.equal((await db.doc(`event_codes/${EV}~${kit.member_code}`).get()).exists, true, 'a pending member checkout still holds its code');
 
-  // Back again, then gone before anyone used the new codes: both are deleted.
+  // Back again, then gone before anyone used the new code: it is deleted.
   await db.doc(`event_partners/${EV}~spark`).set({ event_id: EV, space_id: 'spark', space_name: 'Spark', agreed_by: 'steward', created_at: T });
   const again = await waitFor(async () => (await db.doc(`event_partner_kits/${EV}~spark`).get()).data());
-  assert.notEqual(again.seat_code, kit.seat_code);
+  assert.notEqual(again.member_code, kit.member_code);
   await db.doc(`event_partners/${EV}~spark`).delete();
   await waitFor(async () => !(await db.doc(`event_partner_kits/${EV}~spark`).get()).exists);
-  assert.equal((await db.doc(`event_codes/${EV}~${again.seat_code}`).get()).exists, false);
   assert.equal((await db.doc(`event_codes/${EV}~${again.member_code}`).get()).exists, false);
+});
+
+test('a free seat given to a space works once, at no charge, and credits that space', async () => {
+  await db.doc(`event_codes/${EV}~SEAT-ABC234`).set({ event_id: EV, region_id: 'us-ct', tier_id: 'comp', max_uses: 1, note: 'Free seat: Spark', space_id: 'spark', created_at: T });
+  assert.equal((await signup('seat@example.org', { code: 'seat-abc234' })).body.outcome, 'confirmed');
+  assert.equal(stripeCalls.length, 0);
+  assert.equal((await regByEmail('seat@example.org')).get('referred_by'), 'spark');
+  assert.equal((await signup('seat2@example.org', { code: 'SEAT-ABC234' })).body.code, 'code_used_up');
 });
 
 test('the emailed link: wrong token refused; right token edits opt-ins and records the decision', async () => {

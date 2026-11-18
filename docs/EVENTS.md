@@ -283,8 +283,9 @@ equal choice. It needs no application, as before.
 
 **Partner makerspaces (2026-11-18).** Member codes are now a partner benefit, not
 something every space gets. A partner **agrees to** share the event with its
-community and send at least one person. It **gets** its logo on the page, one free
-seat, and a half-price code for its members.
+community and send at least one person. It **gets** its logo on the page and a
+half-price code for its members. Free seats are **not** automatic: the steward
+gives them to particular spaces (Network tab → *Free seats*).
 
 - A space asks on the partner page, `<public_url>?view=partner`, which the steward
   emails to makerspaces; the event page itself has only a small link to it. Anyone can
@@ -293,15 +294,18 @@ seat, and a half-price code for its members.
   Network tab. An organiser signed in on the event's host lists their own space at
   once. Either way the result is an `event_partners` row.
 - The `eventPartnerChanged` Function then adds the hidden half-price `member` tier
-  if the event lacks it, and makes two codes carrying `space_id`: `SEAT-XXXXXX`
-  (comp, one use) and `<SPACE>-XXXX` (member, 50 uses). Both are random, because a
-  free seat must not be guessable. It records them in
+  if the event lacks it, and makes a member code carrying `space_id`,
+  `<SPACE>-XXXX` (50 uses). It records it in
   `event_partner_kits/{ev~space}`, which the space's organisers see on Home, and
   emails them to whoever asked or else the space's organisers. Replies come to the
   event's reply-to address.
 - Removing a partner deletes its codes that no live registration used.
-- Network tab → *Partner seats and member codes* lists every kit, its use and who
-  it was emailed to, with a CSV.
+- Network tab → *Partner member codes* lists every kit, its use and who it was
+  emailed to, with a CSV.
+- Network tab → *Free seats*: pick a makerspace or partner organisation and give
+  it one free ticket, a random single-use `SEAT-XXXXXX` comp code credited to it
+  (random because a free seat must not be guessable). The table shows who used
+  each, the link to send, and lets you withdraw an unused one.
 
 Each free seat costs the event its food and fees, and each member ticket is $25
 the sponsors cover.
