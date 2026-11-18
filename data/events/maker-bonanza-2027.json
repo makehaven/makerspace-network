@@ -52,7 +52,7 @@
       "id": "general",
       "name": "General admission",
       "description": "",
-      "price_cents": 5000,
+      "price_cents": 6000,
       "limit": null,
       "requires_code": false,
       "attestation": null
@@ -60,18 +60,18 @@
     {
       "id": "scholarship",
       "name": "Scholarship",
-      "description": "Use this if the $50 price would keep you from coming: you're a student, between jobs, on a tight budget, or paying your own way and it's a stretch. No application and no proof needed. If an employer or organisation is paying for you, please choose general admission so this stays available for someone who needs it.",
+      "description": "Use this if the $60 price would keep you from coming: you're a student, between jobs, on a tight budget, or paying your own way and it's a stretch. No application and no proof needed. If an employer or organisation is paying for you, please choose general admission so this stays available for someone who needs it.",
       "price_cents": 2500,
-      "limit": 25,
+      "limit": 10,
       "requires_code": false,
       "attestation": "The full price would be a barrier for me."
     },
     {
       "id": "member",
       "name": "Makerspace member",
-      "description": "Half price for members of Connecticut's makerspaces, with your space's code.",
-      "price_cents": 2500,
-      "limit": null,
+      "description": "A third off for members of our partner makerspaces, with your space's code.",
+      "price_cents": 4000,
+      "limit": 50,
       "requires_code": true,
       "attestation": null
     },
@@ -181,6 +181,10 @@
     {
       "what": "ClimateHaven logo",
       "where": "climatehaven.tech social image, 2026-11-18; see public/sponsors/README.md"
+    },
+    {
+      "what": "Prices: general $60, partner members $40 (50 places), scholarship $25 released in batches of 10",
+      "where": "J.R. Logan, 2026-11-18, after a break-even review against the brief's $8,150 budget and the board's $5,000 loss limit"
     }
   ],
   "gaps": [

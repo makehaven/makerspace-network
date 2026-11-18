@@ -716,6 +716,8 @@ export async function eventsForSpace(spaceId: string) {
       title: d.get('title') as string,
       date_label: d.get('date_label') as string,
       public_url: d.get('public_url') as string,
+      // The live price, not the one copied into the kit when it was made.
+      member_price_cents: ((d.get('tiers') ?? []) as { id: string; price_cents: number }[]).find((t) => t.id === 'member')?.price_cents ?? null,
       home: (data?.home ?? 0) as number,
       referred: (data?.referred ?? 0) as number,
       people: (data?.people ?? []) as { name: string; email: string }[],

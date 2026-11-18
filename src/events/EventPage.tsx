@@ -424,7 +424,7 @@ function PartnerAsk({ id, event, partners, onAdded, startOpen = false }: {
           <h4>You get</h4>
           <ul>
             <li><strong>Your logo on the event page</strong>, linked to your listing.</li>
-            <li><strong>Half price for your members</strong>, with your own code{memberPrice ? ` (${money(memberPrice)} instead of ${money(generalPrice)})` : ''}.</li>
+            <li><strong>A discount for your members</strong>, with your own code{memberPrice ? ` (${money(memberPrice)} instead of ${money(generalPrice)})` : ''}.</li>
           </ul>
         </div>
       </div>

@@ -826,7 +826,7 @@ export const eventChanged = onDocumentWritten({ document: 'events/{id}', region:
 // ---------- partner makerspaces: what a space gets for saying yes ----------
 //
 // A partner agrees to share the event and send at least one person. In return,
-// besides its logo on the page, it gets a half-price code for its members, made
+// besides its logo on the page, it gets a discount code for its members, made
 // here rather than in the browser so a space's staff can be shown theirs
 // (event_partner_kits) without reading every code. A free seat is not automatic:
 // the steward gives those to particular spaces from Event admin.
@@ -881,13 +881,13 @@ export const eventPartnerChanged = onDocumentWritten(
     const ev = (await eventRef(after.event_id).get()).data() as EventDoc | undefined;
     if (!ev) return;
     const general = ev.tiers.find((t) => !t.requires_code && !t.attestation && t.price_cents > 0)?.price_cents ?? 0;
-    // The half-price ticket appears only with a code, so it is added the first
+    // The member ticket appears only with a code, so it is added the first
     // time a space needs one rather than shown to everyone.
     let memberTier = ev.tiers.find((t) => t.id === MEMBER_TIER);
     if (!memberTier) {
       memberTier = {
         id: MEMBER_TIER, name: 'Makerspace member', price_cents: Math.round(general / 2), limit: null, requires_code: true, attestation: null,
-        description: 'Half price for members of our partner makerspaces, with your space\'s code.',
+        description: 'A discount for members of our partner makerspaces, with your space\'s code.',
       } as EventDoc['tiers'][number];
       await eventRef(after.event_id).update({ tiers: FieldValue.arrayUnion(memberTier), updated_at: nowIso() });
     }
@@ -915,7 +915,7 @@ export const eventPartnerChanged = onDocumentWritten(
       '',
       'As a partner you have agreed to share the event with your community and to send at least one person.',
       '',
-      `HALF PRICE FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)}, up to ${MEMBER_CODE_USES} people)`,
+      `A DISCOUNT FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)}, while member places last)`,
       `Code ${memberCode}. Send your active members this link:`,
       link(memberCode),
       '',
@@ -924,7 +924,7 @@ export const eventPartnerChanged = onDocumentWritten(
       'Questions, or need more member places? Reply to this email.',
     ].join('\n');
     try {
-      await sendMail(to.join(', '), `${ev.title}: your members' half-price code`, text, undefined, ev.reply_to_email || ev.notify_email);
+      await sendMail(to.join(', '), `${ev.title}: your members' discount code`, text, undefined, ev.reply_to_email || ev.notify_email);
       await kitRef.update({ sent_to: to });
     } catch (err) { logger.warn('partner kit mail failed', err); }
   },

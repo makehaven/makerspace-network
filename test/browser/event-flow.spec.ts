@@ -19,11 +19,11 @@ test('short checkout validates email and sends no implicit sharing consent', asy
   await page.getByLabel('Email address').fill('Logan');
   await page.getByLabel("I'm 18 or older").check();
   await page.getByLabel('I agree to the event terms').check();
-  await page.getByRole('button', { name: 'Continue to payment · $50' }).click();
+  await page.getByRole('button', { name: 'Continue to payment · $60' }).click();
   await expect(page.locator('#registration-email-error')).not.toBeEmpty();
   expect(submitted).toBeUndefined();
   await page.getByLabel('Email address').fill('maker@example.test');
-  await page.getByRole('button', { name: 'Continue to payment · $50' }).click();
+  await page.getByRole('button', { name: 'Continue to payment · $60' }).click();
   await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
   expect(submitted.consents).toEqual(consents);
   expect(submitted.answers.excited).toBe('');
@@ -159,11 +159,11 @@ test('the scholarship and member tickets stay out of sight until asked for', asy
   await expect(page.getByRole('radio')).toHaveCount(1);
   await expect(page.getByText('Scholarship')).toHaveCount(0);
   await expect(page.getByText('Makerspace member')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Is the $50 price keeping you from coming?' }).click();
+  await page.getByRole('button', { name: 'Is the $60 price keeping you from coming?' }).click();
   await expect(page.getByRole('radio')).toHaveCount(2);
   await expect(page.getByRole('radio', { name: /Scholarship/ })).toBeChecked();
   await expect(page.getByLabel('The full price would be a barrier for me.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Is the $50 price keeping you from coming?' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Is the $60 price keeping you from coming?' })).toHaveCount(0);
   await page.getByLabel('Full name').fill('Test Maker');
   await page.getByLabel('Email address').fill('maker@example.test');
   await page.getByLabel('The full price would be a barrier for me.').check();

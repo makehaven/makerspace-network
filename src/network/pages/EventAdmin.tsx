@@ -168,6 +168,8 @@ function Overview({ id, event, regs, sponsors, interest, finance, onSaved }: {
         <div className="fact"><strong>{money(pledged)}</strong> sponsors pledged</div>
       </div>
 
+      <TierLimits id={id} event={event} regs={regs} />
+
       <div className="card form-card" style={{ marginTop: 16 }}>
         <h2>Budget</h2>
         <p className="muted">Private to stewards. One cost per line: <code>Lunch | 26 | head</code> for a cost per person, <code>Facilitators | 4000</code> for a fixed one. Lines with no number are ignored, so an unpriced item can stay as a reminder.</p>
@@ -362,12 +364,51 @@ function SponsorsTab({ id, event, sponsors, onChange }: { id: string; event: Eve
   );
 }
 
+// ---------- limited tickets: release more of a batch ----------
+
+/** A ticket sold in batches, like the scholarship: see how many are taken and
+ *  release more. Counts every row that holds a place in that tier. */
+function TierLimits({ id, event, regs }: { id: string; event: EventDoc; regs: WithId<Reg>[] }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const limited = event.tiers.filter((t) => t.limit != null);
+  if (!limited.length) return null;
+  const taken = (tid: string) => regs.filter((r) => r.tier_id === tid && ['confirmed', 'pending_payment', 'offered'].includes(r.status)).length;
+  const raise = async (tid: string, by: number) => {
+    setBusy(tid);
+    try {
+      await updateDoc(doc(db, 'events', id), {
+        tiers: event.tiers.map((t) => t.id === tid ? { ...t, limit: Math.max(taken(tid), (t.limit ?? 0) + by) } : t),
+        updated_at: isoNow(),
+      });
+      window.location.reload();
+    } finally { setBusy(null); }
+  };
+  return (
+    <div className="card form-card" style={{ marginTop: 16 }}>
+      <h2>Limited tickets</h2>
+      <table className="data">
+        <thead><tr><th>Ticket</th><th>Price</th><th>Taken</th><th></th></tr></thead>
+        <tbody>
+          {limited.map((t) => (
+            <tr key={t.id}>
+              <td>{t.name}</td><td>{money(t.price_cents)}</td>
+              <td>{taken(t.id)} of {t.limit}{taken(t.id) >= (t.limit ?? 0) && <span className="pill flag"> all taken</span>}</td>
+              <td><button className="btn small ghost" disabled={busy === t.id} onClick={() => void raise(t.id, 10)}>Release 10 more</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ---------- partner kits: a free seat and a members' code per partner ----------
 
 interface PartnerKit { space_id: string; space_name: string; seat_code: string; member_code: string; member_uses: number; member_price_cents: number; sent_to: string[]; created_at: string }
 
 /** Made by the eventPartnerChanged Function when a space becomes a partner. */
 function PartnerKits({ id, event, regs }: { id: string; event: EventDoc; regs: WithId<Reg>[] }) {
+  const member = event.tiers.find((t) => t.id === 'member');
   const [kits, setKits] = useState<WithId<PartnerKit>[]>([]);
   useEffect(() => {
     getDocs(query(collection(db, 'event_partner_kits'), where('event_id', '==', id), where('region_id', '==', event.region_id)))
@@ -379,7 +420,7 @@ function PartnerKits({ id, event, regs }: { id: string; event: EventDoc; regs: W
   return (
     <div className="card form-card" style={{ marginTop: 16 }}>
       <h2>Partner member codes ({kits.length})</h2>
-      <p className="muted">Each partner gets a half-price code for its members ({kits[0] ? money(kits[0].member_price_cents) : 'half price'}), made and emailed automatically when it becomes a partner. Removing a partner deletes its unused codes. Free seats are not automatic: give them below.</p>
+      <p className="muted">Each partner gets a discount code for its members ({member ? `${money(member.price_cents)}${member.limit != null ? `, ${member.limit} member places in all` : ''}` : 'member price'}), made and emailed automatically when it becomes a partner. Removing a partner deletes its unused codes. Free seats are not automatic: give them below.</p>
       {kits.length > 0 && <>
         <div className="scroll-x">
           <table className="data">
