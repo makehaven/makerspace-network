@@ -8,13 +8,13 @@ import { useEffect, useState } from 'react';
 import { useSession } from '../session';
 import { CAPABILITIES, CAPABILITY_DOMAINS, VOCAB, spaceById } from '../../data';
 import { STAFF_ROLES } from '../model';
-import { getListingSubmission, listingFromRecord, submitListing, type ListingAnswers } from '../spaceData';
+import { getListingSubmission, listingFromRecord, submitListing, upgradeListing, type ListingAnswers, type ListingSubmission } from '../spaceData';
 import { PageLink, SignIn } from './shared';
 import StandardsAssessment from './StandardsAssessment';
 import AnnualData from './AnnualData';
 import NumberInput from './NumberInput';
 
-const options = (vocab: keyof typeof VOCAB) => [...VOCAB[vocab].values()].filter((v) => v.id !== 'unknown');
+const options = (vocab: keyof typeof VOCAB) => [...VOCAB[vocab].values()].filter((v) => v.id !== 'unknown' && !v.deprecated);
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export default function SpaceData({ spaceId }: { spaceId?: string }) {
@@ -104,6 +104,15 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
 
 function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }) {
   const s = useSession();
+  return <ListingEditor spaceId={spaceId} canEdit={canEdit} load={() => getListingSubmission(spaceId)}
+    submit={(f) => submitListing(spaceId, s.user!.uid, s.person?.name ?? s.user!.email ?? '', f)} />;
+}
+
+/** The listing form itself, given how to load and send it (the browser tests pass fakes). */
+export function ListingEditor({ spaceId, canEdit, load, submit }: {
+  spaceId: string; canEdit: boolean;
+  load: () => Promise<ListingSubmission | null>; submit: (f: ListingAnswers) => Promise<void>;
+}) {
   const [f, setF] = useState<ListingAnswers | null>(null);
   const [meta, setMeta] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -113,8 +122,8 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    getListingSubmission(spaceId).then((sub) => {
-      setF(sub?.listing ?? listingFromRecord(spaceById(spaceId)));
+    load().then((sub) => {
+      setF(upgradeListing(sub?.listing ?? listingFromRecord(spaceById(spaceId))));
       if (sub) setMeta(`Last submitted by ${sub.submitted_name} on ${day(sub.updated_at)}${sub.status === 'merged' ? ' — merged into the directory' : ' — waiting for the steward to merge'}.`);
     }).catch((e) => setMsg(e instanceof Error ? e.message : String(e)));
   }, [spaceId]);
@@ -128,14 +137,25 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
 
   if (!f) return <p>{msg ?? 'Loading…'}</p>;
   const set = (patch: Partial<ListingAnswers>) => { setF({ ...f, ...patch }); setMsg(null); setDirty(true); };
-  const toggle = (key: 'capabilities' | 'membership_models', id: string, on: boolean) =>
-    set({ [key]: on ? [...(f[key] ?? []), id] : (f[key] ?? []).filter((x) => x !== id) });
+  const toggle = (key: 'capabilities' | 'membership_models', id: string, on: boolean) => {
+    const next: Partial<ListingAnswers> = { [key]: on ? [...(f[key] ?? []), id] : (f[key] ?? []).filter((x) => x !== id) };
+    // A capability taken away takes its level with it.
+    if (key === 'capabilities' && !on && f.capability_levels?.[id]) {
+      const { [id]: _gone, ...rest } = f.capability_levels;
+      next.capability_levels = rest;
+    }
+    set(next);
+  };
+  const setLevel = (id: string, level: string) => {
+    const { [id]: _old, ...rest } = f.capability_levels ?? {};
+    set({ capability_levels: level ? { ...rest, [id]: level } : rest });
+  };
 
   return (
     <form className="card form-card" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true);
       try {
-        await submitListing(spaceId, s.user!.uid, s.person?.name ?? s.user!.email ?? '', f);
+        await submit(f);
         setMsg('Sent. The steward will merge it into your listing, with your space recorded as the source.');
         setDirty(false);
         setMeta(`Last submitted by you just now — waiting for the steward to merge.`);
@@ -150,6 +170,10 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
         <input maxLength={300} value={f.summary ?? ''} onChange={(e) => set({ summary: e.target.value })} /></label>
 
       <h3>What can people make here?</h3>
+      <div className="notice info level-key">
+        <p style={{ margin: '0 0 6px' }}>Tick what you have, then say how much of it, if you like:</p>
+        <ul>{options('CapabilityLevel').map((o) => <li key={o.id}><strong>{o.label}</strong>: {o.description}</li>)}</ul>
+      </div>
       {CAPABILITY_DOMAINS.map((d) => {
         const caps = CAPABILITIES.filter((c) => (c as { domain?: string }).domain === d.id);
         if (!caps.length) return null;
@@ -157,12 +181,23 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
           <div key={d.id}>
             <h4>{d.label}</h4>
             <div className="checks">
-              {caps.map((c) => (
-                <label key={c.id} className={`check ${f.capabilities?.includes(c.id) ? 'on' : ''}`}>
-                  <input type="checkbox" checked={!!f.capabilities?.includes(c.id)} onChange={(e) => toggle('capabilities', c.id, e.target.checked)} />
-                  {c.label}
-                </label>
-              ))}
+              {caps.map((c) => {
+                const on = !!f.capabilities?.includes(c.id);
+                return (
+                  <span key={c.id} className={`check-with-level ${on ? 'on' : ''}`}>
+                    <label className={`check ${on ? 'on' : ''}`}>
+                      <input type="checkbox" checked={on} onChange={(e) => toggle('capabilities', c.id, e.target.checked)} />
+                      {c.label}
+                    </label>
+                    {on && (
+                      <select className="level" aria-label={`How much ${c.label}`} value={f.capability_levels?.[c.id] ?? ''} onChange={(e) => setLevel(c.id, e.target.value)}>
+                        <option value="">How much?</option>
+                        {options('CapabilityLevel').map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                      </select>
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </div>
         );
@@ -182,7 +217,7 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
         <label className="radio"><input type="radio" checked={f.public_access === false} onChange={() => set({ public_access: false })} /> No</label>
         <label className="radio"><input type="radio" checked={f.public_access == null} onChange={() => set({ public_access: null })} /> Not saying</label>
       </div>
-      <h4>Ways to use the space</h4>
+      <h4>How people get access <span className="muted">(pick any)</span></h4>
       <div className="checks">
         {options('MembershipModel').map((o) => (
           <label key={o.id} className={`check ${f.membership_models?.includes(o.id) ? 'on' : ''}`}>
@@ -190,6 +225,13 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
             {o.label}
           </label>
         ))}
+      </div>
+      <div className="radios compact">
+        <span>Who can use it?</span>
+        {options('Eligibility').map((o) => (
+          <label key={o.id} className="radio"><input type="radio" checked={f.eligibility === o.id} onChange={() => set({ eligibility: o.id })} /> {o.label}</label>
+        ))}
+        <label className="radio"><input type="radio" checked={!f.eligibility} onChange={() => set({ eligibility: '' })} /> Not saying</label>
       </div>
       <div className="inline-fields">
         <label className="field"><span>Monthly cost from ($)</span>

@@ -135,6 +135,12 @@ Three things it has to do, in order of why anyone asked for it:
       folded; last year's answers and the listing offered as suggestions to
       accept; "we don't track this" and "estimate" recorded as answers; "Ask a
       colleague" emails a link to one section
+- [x] Clearer questions (2026-11-18, enums 0.7.0): staffing counts each person
+      once (employees full- and part-time, instructors, other contractors);
+      each capability can say how much (basic, equipped, full shop); and the
+      old ways-to-use list is split into how people get access, who may use
+      it, and (moved to annual data) who pays. Old values are deprecated, not
+      removed, and records were migrated
 - [x] Meetings: a steward turns a roster filter into a meeting with a frozen
       invitation list; invitees answer and add it to their calendar on the
       People page; the steward records attendance and sees how many spaces

@@ -121,3 +121,29 @@ test('the header says who is signed in, on any page, without loading Firebase', 
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
 });
+
+test('the listing reads old access answers in the new terms and records how much of each capability', async ({ page }) => {
+  // Keep it off Google's servers; module paths containing "firebase" must still load.
+  await page.route(/^https:\/\/[^/]*(googleapis|gstatic|firebaseapp)\.com\//, (r) => r.abort());
+  await page.goto('/test/browser/network-flow.html?view=listing');
+  // Old values become the new ones; "sponsored" (who pays) is gone from access.
+  await expect(page.getByRole('checkbox', { name: 'Membership', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Free', exact: true })).toBeChecked();
+  await expect(page.getByText('Monthly membership')).toHaveCount(0);
+  await expect(page.getByText('Sponsored / corporate funded')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /Only an affiliated group/ })).toBeChecked();
+  // A level per ticked capability, explained once above the list.
+  await expect(page.getByText('For bike repair: a bag of tools.', { exact: false })).toBeVisible();
+  await page.getByLabel('How much Woodshop — table saw, jointer, planer, bandsaw').selectOption('full_shop');
+  await page.getByLabel('How much 3D printing — FDM').selectOption('basic');
+  // Unticking a capability takes its level with it.
+  await page.getByRole('checkbox', { name: '3D printing — FDM' }).uncheck();
+  await expect(page.getByLabel('How much 3D printing — FDM')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Send listing' }).click();
+  await expect.poll(() => page.evaluate(() => (window as any).__sent)).toBeTruthy();
+  const sent = await page.evaluate(() => (window as any).__sent);
+  expect(sent.capability_levels).toEqual({ woodworking_machine: 'full_shop' });
+  expect(sent.membership_models.sort()).toEqual(['free_access', 'membership']);
+  expect(sent.eligibility).toBe('affiliated_only');
+});
+

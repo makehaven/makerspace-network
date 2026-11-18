@@ -27,7 +27,7 @@
     "access_model": "member_extended_hours",
     "public_access": true,
     "membership_models": [
-      "monthly_membership"
+      "membership"
     ],
     "monthly_cost_usd": {
       "min": 30,

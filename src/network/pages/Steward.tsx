@@ -5,7 +5,7 @@ import { listFeedback, type Feedback } from '../feedback';
 import { listSummaries, summariesFor, type AssessmentSummary } from '../standardsData';
 import { levelLabel } from '../../standards/framework';
 import { REGIONS, SPACES, VOCAB, label, spaceById } from '../../data';
-import { listListingSubmissions, listingFromRecord, markListingMerged, type ListingAnswers, type ListingSubmission } from '../spaceData';
+import { listListingSubmissions, listingFromRecord, markListingMerged, upgradeListing, type ListingAnswers, type ListingSubmission } from '../spaceData';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
   listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups, mergeOrganisation,
@@ -405,26 +405,33 @@ function ListingsTab() {
 }
 
 const LISTING_LABELS: Record<keyof ListingAnswers, string> = {
-  summary: 'Summary', capabilities: 'What people can make', access_model: 'Access', public_access: 'Open to non-members',
-  membership_models: 'Ways to use the space', monthly_cost_min: 'Monthly cost from', monthly_cost_max: 'Monthly cost up to',
+  summary: 'Summary', capabilities: 'What people can make', capability_levels: 'How much of each', access_model: 'Access', public_access: 'Open to non-members',
+  membership_models: 'How people get access', eligibility: 'Who can use it', monthly_cost_min: 'Monthly cost from', monthly_cost_max: 'Monthly cost up to',
   day_pass_usd: 'Day pass', minor_policy: 'Young people', hours_note: 'Hours', email: 'Email', phone: 'Phone', notes: 'Note to the steward',
 };
 const VOCAB_FOR: Partial<Record<keyof ListingAnswers, keyof typeof VOCAB>> = {
-  capabilities: 'Capability', access_model: 'AccessModel', membership_models: 'MembershipModel', minor_policy: 'MinorPolicy',
+  capabilities: 'Capability', access_model: 'AccessModel', membership_models: 'MembershipModel', eligibility: 'Eligibility', minor_policy: 'MinorPolicy',
 };
 
 function ListingDiff({ sub, onMerged }: { sub: ListingSubmission & { id: string }; onMerged: () => Promise<unknown> }) {
   const onFile = listingFromRecord(spaceById(sub.id));
+  const theirs = upgradeListing(sub.listing);
   const say = (k: keyof ListingAnswers, v: unknown): string => {
     if (v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)) return '—';
+    if (k === 'capability_levels') {
+      const e = Object.entries(v as Record<string, string>);
+      return e.length ? e.map(([c, l]) => `${label('Capability', c)}: ${label('CapabilityLevel', l)}`).join('; ') : '—';
+    }
     const voc = VOCAB_FOR[k];
     if (Array.isArray(v)) return v.map((x) => (voc ? label(voc, x) : x)).join(', ');
     if (typeof v === 'boolean') return v ? 'Yes' : 'No';
     return voc ? label(voc, String(v)) : String(v);
   };
-  const same = (a: unknown, b: unknown) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a ?? null) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b ?? null)
-    || (!a && !b);
-  const changes = (Object.keys(LISTING_LABELS) as (keyof ListingAnswers)[]).filter((k) => !same(onFile[k], sub.listing[k]));
+  const norm = (x: unknown) => Array.isArray(x) ? [...x].sort()
+    : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).sort(([p], [q]) => p.localeCompare(q))) : x ?? null;
+  const empty = (x: unknown) => !x || (typeof x === 'object' && !Object.keys(x).length);
+  const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b)) || (empty(a) && empty(b));
+  const changes = (Object.keys(LISTING_LABELS) as (keyof ListingAnswers)[]).filter((k) => !same(onFile[k], theirs[k]));
   return (
     <div className="card form-card" style={{ marginBottom: 12 }}>
       <div className="card-top">
@@ -438,7 +445,7 @@ function ListingDiff({ sub, onMerged }: { sub: ListingSubmission & { id: string 
             <thead><tr><th>Field</th><th>On file</th><th>They say</th></tr></thead>
             <tbody>
               {changes.map((k) => (
-                <tr key={k}><td>{LISTING_LABELS[k]}</td><td className="muted">{say(k, onFile[k])}</td><td><strong>{say(k, sub.listing[k])}</strong></td></tr>
+                <tr key={k}><td>{LISTING_LABELS[k]}</td><td className="muted">{say(k, onFile[k])}</td><td><strong>{say(k, theirs[k])}</strong></td></tr>
               ))}
             </tbody>
           </table>

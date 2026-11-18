@@ -14,6 +14,8 @@ const read = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'));
 const enums = read('data/schema/enums.json');
 const schema = read('data/schema/space.schema.json');
 const ids = (name) => new Set((enums[name] ?? []).map((e) => e.id));
+// Kept so older records still validate and still have labels; new data should not use them.
+const deprecated = (name) => new Set((enums[name] ?? []).filter((e) => e.deprecated).map((e) => e.id));
 
 // Which enum guards which field. The schema records this as $comment because
 // JSON Schema has no way to reference an external vocabulary by name.
@@ -24,6 +26,9 @@ const ENUM_FIELDS = [
   ['operations.access_model', 'AccessModel', (s) => [s.operations?.access_model]],
   ['operations.tax_status', 'TaxStatus', (s) => [s.operations?.tax_status]],
   ['operations.membership_models', 'MembershipModel', (s) => s.operations?.membership_models ?? []],
+  ['operations.eligibility', 'Eligibility', (s) => [s.operations?.eligibility]],
+  ['capability_levels{}', 'CapabilityLevel', (s) => Object.values(s.capability_levels ?? {})],
+  ['capability_levels keys', 'Capability', (s) => Object.keys(s.capability_levels ?? {})],
   ['operations.minor_policy', 'MinorPolicy', (s) => [s.operations?.minor_policy]],
   ['size_tier', 'SizeTier', (s) => [s.size_tier]],
   ['verification.status', 'VerificationStatus', (s) => [s.verification?.status]],
@@ -61,8 +66,13 @@ for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWi
     for (const v of get(s)) {
       if (v !== undefined && v !== null && !allowed.has(v)) {
         at(`${path}: "${v}" is not in the ${enumName} vocabulary`);
+      } else if (v != null && deprecated(enumName).has(v)) {
+        warnings.push(`${file}: ${path}: "${v}" is deprecated in ${enumName}; use ${(enums[enumName].find((e) => e.id === v).replaced_by ?? []).join(' or ') || 'nothing'} instead`);
       }
     }
+  }
+  for (const c of Object.keys(s.capability_levels ?? {})) {
+    if (!(s.capabilities ?? []).includes(c)) at(`capability_levels: "${c}" has a level but is not in capabilities`);
   }
 
   for (const r of s.region_ids ?? []) {

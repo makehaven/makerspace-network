@@ -25,8 +25,9 @@
   "operations": {
     "tax_status": "for_profit",
     "membership_models": [
-      "free_open"
-    ]
+      "free_access"
+    ],
+    "eligibility": "anyone"
   },
   "capabilities": [
     "waterjet",

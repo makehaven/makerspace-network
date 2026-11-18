@@ -48,7 +48,14 @@ export default function SpacePage({ id }: { id: string }) {
                     <div className="cap-domain" key={d.id}>
                       <h4>{d.label}</h4>
                       <div className="tags">
-                        {inDomain.map((c) => <span className="tag on" key={c.id}>{c.label}</span>)}
+                        {inDomain.map((c) => {
+                          const lvl = s.capability_levels?.[c.id];
+                          return (
+                            <span className="tag on" key={c.id} title={lvl ? VOCAB.CapabilityLevel.get(lvl)?.description : undefined}>
+                              {c.label}{lvl && <span className="tag-level"> · {label('CapabilityLevel', lvl)}</span>}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -69,8 +76,9 @@ export default function SpacePage({ id }: { id: string }) {
                   <><dt>Non-members</dt><dd>{ops.public_access ? 'Can use the space by some route' : 'Members or affiliates only'}</dd></>
                 )}
                 {(ops.membership_models?.length ?? 0) > 0 && (
-                  <><dt>Membership</dt><dd>{ops.membership_models!.map((m) => label('MembershipModel', m)).join(', ')}</dd></>
+                  <><dt>Ways in</dt><dd>{ops.membership_models!.map((m) => label('MembershipModel', m)).join(', ')}</dd></>
                 )}
+                {ops.eligibility && (<><dt>Who can use it</dt><dd>{label('Eligibility', ops.eligibility)}</dd></>)}
                 {ops.monthly_cost_usd && (
                   <><dt>Monthly</dt><dd>
                     ${ops.monthly_cost_usd.min}{ops.monthly_cost_usd.max ? `–$${ops.monthly_cost_usd.max}` : ''}

@@ -30,8 +30,7 @@
     "access_model": "staffed_hours_only",
     "public_access": true,
     "membership_models": [
-      "monthly_membership",
-      "annual_membership"
+      "membership"
     ],
     "minor_policy": "minors_in_programs"
   },

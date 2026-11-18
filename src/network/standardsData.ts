@@ -80,7 +80,7 @@ const positive = (v?: MetricValue) => typeof v === 'number' && v > 0;
 export function flagsFromWhatWeKnow(space?: Space, metrics?: Record<string, MetricValue>): Flags {
   const o = space?.operations ?? {};
   return {
-    membership: !!o.membership_models?.some((m) => m === 'monthly_membership' || m === 'annual_membership'),
+    membership: !!o.membership_models?.some((m) => m === 'membership' || m === 'monthly_membership' || m === 'annual_membership'),
     publicAccess: o.public_access === true,
     paidStaff: positive(metrics?.staffFT) || positive(metrics?.staffPT) || (o.staff_fte ?? 0) > 0,
     volunteer: positive(metrics?.volunteers),

@@ -14,9 +14,12 @@ const now = () => new Date().toISOString();
 export interface ListingAnswers {
   summary?: string;
   capabilities?: string[];
+  /** Capability id → CapabilityLevel id, for those the space rated. */
+  capability_levels?: Record<string, string>;
   access_model?: string;
   public_access?: boolean | null;
   membership_models?: string[];
+  eligibility?: string;
   monthly_cost_min?: number | null;
   monthly_cost_max?: number | null;
   day_pass_usd?: number | null;
@@ -35,15 +38,31 @@ export interface ListingSubmission {
   updated_at: string;
 }
 
+/** Enums 0.7.0 split the old ways-to-use list (data/schema/enums.json
+ *  $comment_membership). A submission saved before then is read in the new
+ *  terms, so the form never holds a value it no longer shows. */
+export function upgradeListing(l: ListingAnswers): ListingAnswers {
+  const old = l.membership_models ?? [];
+  const map: Record<string, string | null> = {
+    monthly_membership: 'membership', annual_membership: 'membership', class_only: 'classes',
+    free_open: 'free_access', free_gated: 'free_access', sponsored: null,
+  };
+  const models = [...new Set(old.map((m) => (m in map ? map[m] : m)).filter((m): m is string => !!m))];
+  const eligibility = l.eligibility || (old.includes('free_gated') ? 'affiliated_only' : old.includes('free_open') ? 'anyone' : '');
+  return { ...l, membership_models: models, eligibility, capability_levels: l.capability_levels ?? {} };
+}
+
 /** Start from what the directory already says, so people correct rather than retype. */
 export function listingFromRecord(s?: Space): ListingAnswers {
   const o = s?.operations ?? {};
   return {
     summary: s?.summary ?? '',
     capabilities: s?.capabilities ?? [],
+    capability_levels: s?.capability_levels ?? {},
     access_model: o.access_model ?? '',
     public_access: o.public_access ?? null,
     membership_models: o.membership_models ?? [],
+    eligibility: o.eligibility ?? '',
     monthly_cost_min: o.monthly_cost_usd?.min ?? null,
     monthly_cost_max: o.monthly_cost_usd?.max ?? null,
     day_pass_usd: o.day_pass_usd ?? null,
@@ -99,10 +118,17 @@ export const METRIC_SECTIONS: MetricSection[] = [
     { key: 'affilOther', label: 'Other network affiliations', kind: 'text' },
   ] },
   { title: 'Staffing and people', fields: [
-    { key: 'staffFT', label: 'Paid staff — full-time', kind: 'number', core: true },
-    { key: 'staffPT', label: 'Paid staff — part-time', kind: 'number', core: true },
-    { key: 'contractors', label: 'Contractors (annual)', kind: 'number' },
-    { key: 'contractorExpense', label: 'Contractor expense', kind: 'money' },
+    // Count each person once, in the first of these that fits.
+    { key: 'staffFT', label: 'Employees — full-time', kind: 'number', core: true,
+      hint: 'On payroll, 30 or more hours a week.' },
+    { key: 'staffPT', label: 'Employees — part-time', kind: 'number', core: true,
+      hint: 'On payroll, under 30 hours a week.' },
+    { key: 'instructors', label: 'Instructors', kind: 'number', core: true,
+      hint: "People paid to teach at least one class this year, however they were paid. Don't count employees already counted above." },
+    { key: 'contractors', label: 'Other contractors', kind: 'number',
+      hint: 'Paid regularly for other work during the year: shop techs, cleaning, bookkeeping. Not instructors.' },
+    { key: 'contractorExpense', label: 'Contractor expense', kind: 'money',
+      hint: 'Everything paid to contractors, instructors included.' },
     { key: 'volunteers', label: 'Titled regular volunteers', kind: 'number', core: true },
     { key: 'volunteerHours', label: 'Estimated volunteer hours (annual)', kind: 'number' },
   ] },

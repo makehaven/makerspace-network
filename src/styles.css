@@ -781,3 +781,14 @@ details.form-card > summary { cursor: pointer; }
 .annual-num { flex-wrap: wrap; }
 .annual-num .num-error { order: 10; flex-basis: 100%; margin-top: 0; }
 .annual-num input { flex: 1 1 0; width: auto; min-width: 0; }
+
+/* Capability levels: a checked capability carries a small "how much" choice. */
+.check-with-level { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 100%; }
+.check-with-level .check { flex: 0 1 auto; }
+.check-with-level select.level {
+  width: auto; flex: 0 0 auto; font-size: 0.85rem; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid var(--accent); background: var(--accent-soft); color: var(--ink);
+}
+.level-key ul { margin: 0; padding-left: 18px; }
+.level-key li { margin-bottom: 2px; }
+.tag .tag-level { opacity: 0.75; font-weight: 500; }

@@ -161,7 +161,13 @@
           "items": {
             "type": "string"
           },
-          "$comment": "enum: MembershipModel"
+          "$comment": "enum: MembershipModel",
+          "description": "How people get access: membership, day pass, classes, free. Pick any."
+        },
+        "eligibility": {
+          "type": "string",
+          "$comment": "enum: Eligibility",
+          "description": "Who may use the space at all: anyone, or only an affiliated group."
         },
         "monthly_cost_usd": {
           "type": "object",
@@ -210,6 +216,15 @@
       "uniqueItems": true,
       "$comment": "enum: Capability",
       "description": "What can be made here. Granular by design \u2014 fablabs.io's six values do not discriminate between spaces."
+    },
+    "capability_levels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "enum: CapabilityLevel"
+      },
+      "$comment": "keys: Capability, each also in capabilities[]",
+      "description": "How much of each capability the space has, where known: basic, equipped or full_shop. A capability with no level is simply unrated."
     },
     "equipment": {
       "type": "array",

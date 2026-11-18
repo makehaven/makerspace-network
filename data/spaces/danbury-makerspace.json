@@ -30,8 +30,7 @@
     "access_model": "member_24_7",
     "public_access": true,
     "membership_models": [
-      "monthly_membership",
-      "annual_membership"
+      "membership"
     ],
     "monthly_cost_usd": {
       "min": 25,

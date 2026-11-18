@@ -35,7 +35,7 @@
     "public_access": true,
     "tax_status": "nonprofit_501c3",
     "membership_models": [
-      "monthly_membership"
+      "membership"
     ],
     "minor_policy": "minors_with_adult",
     "monthly_cost_usd": {

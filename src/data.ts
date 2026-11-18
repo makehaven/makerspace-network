@@ -21,6 +21,8 @@ export const VOCAB = {
   Capability: index('Capability'),
   AccessModel: index('AccessModel'),
   MembershipModel: index('MembershipModel'),
+  Eligibility: index('Eligibility'),
+  CapabilityLevel: index('CapabilityLevel'),
   TaxStatus: index('TaxStatus'),
   MinorPolicy: index('MinorPolicy'),
   VerificationStatus: index('VerificationStatus'),
