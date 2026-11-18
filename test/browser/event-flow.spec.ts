@@ -151,3 +151,26 @@ test('profile draft uses only public introduction fields and preserves an existi
   expect(updated.state).toBe('CT');
   expect(updated.visibility).toBe('public');
 });
+
+test('the scholarship and member tickets stay out of sight until asked for', async ({ page }) => {
+  let submitted: any;
+  await page.route('**/api/events/register', async (r) => { submitted = r.request().postDataJSON(); await r.fulfill({ json: { outcome: 'already' } }); });
+  await page.goto(fixture);
+  await expect(page.getByRole('radio')).toHaveCount(1);
+  await expect(page.getByText('Scholarship')).toHaveCount(0);
+  await expect(page.getByText('Makerspace member')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Is the $50 price keeping you from coming?' }).click();
+  await expect(page.getByRole('radio')).toHaveCount(2);
+  await expect(page.getByRole('radio', { name: /Scholarship/ })).toBeChecked();
+  await expect(page.getByLabel('The full price would be a barrier for me.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Is the $50 price keeping you from coming?' })).toHaveCount(0);
+  await page.getByLabel('Full name').fill('Test Maker');
+  await page.getByLabel('Email address').fill('maker@example.test');
+  await page.getByLabel('The full price would be a barrier for me.').check();
+  await page.getByLabel("I'm 18 or older").check();
+  await page.getByLabel('I agree to the event terms').check();
+  await page.getByRole('button', { name: 'Continue to payment · $25' }).click();
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+  expect(submitted.tier_id).toBe('scholarship');
+  expect(submitted.attested).toBe(true);
+});

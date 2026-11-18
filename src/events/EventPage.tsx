@@ -175,7 +175,13 @@ export function Register({ id, event, stats }: { id: string; event: EventDoc; st
   const initialCode = params.get('code') ?? '';
   const soldOut = new Set(stats?.tiers_sold_out ?? []);
   const tiers = event.tiers.filter((t) => !t.requires_code);
-  const [tierId, setTierId] = useState(tiers.find((t) => !soldOut.has(t.id))?.id ?? '');
+  // A need-based ticket (one that asks the buyer to confirm a statement, like the
+  // scholarship) appears only once someone says the price is in the way.
+  const standard = tiers.filter((t) => !t.attestation);
+  const needBased = tiers.filter((t) => t.attestation);
+  const [needShown, setNeedShown] = useState(standard.length === 0);
+  const shown = needShown ? tiers : standard;
+  const [tierId, setTierId] = useState((standard.find((t) => !soldOut.has(t.id)) ?? tiers.find((t) => !soldOut.has(t.id)))?.id ?? '');
   const [showCode, setShowCode] = useState(!!initialCode);
   const [code, setCode] = useState(initialCode);
   const [attested, setAttested] = useState(false);
@@ -222,7 +228,7 @@ export function Register({ id, event, stats }: { id: string; event: EventDoc; st
         setBusy(false);
       }}>
         <div className="radios">
-          {tiers.map((t) => {
+          {shown.map((t) => {
             const out = soldOut.has(t.id);
             return (
               <label key={t.id} className={`ticket-choice${tierId === t.id ? ' on' : ''}${out ? ' out' : ''}`}>
@@ -235,6 +241,13 @@ export function Register({ id, event, stats }: { id: string; event: EventDoc; st
             );
           })}
         </div>
+        {needBased.length > 0 && !needShown && !showCode && (
+          <p><button type="button" className="linkish" onClick={() => {
+            setNeedShown(true);
+            const t = needBased.find((x) => !soldOut.has(x.id));
+            if (t) setTierId(t.id);
+          }}>Is the {standard[0]?.price_cents ? money(standard[0].price_cents) : 'ticket'} price keeping you from coming?</button></p>
+        )}
         {tier?.attestation && !showCode && <Check checked={attested} onChange={setAttested}>{tier.attestation}</Check>}
         {showCode
           ? <label className="field"><span>Invitation or discount code</span><input maxLength={40} value={code} onChange={(e) => setCode(e.target.value)} /></label>
