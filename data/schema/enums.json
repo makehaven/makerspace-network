@@ -1,6 +1,6 @@
 {
   "$comment": "Controlled vocabularies for the Makerspace Network directory. Versioned: adding a value is a minor bump, removing or renaming one is a major bump. okw and fablabs_io keys record the crosswalk to those standards; see docs/INTEROP.md.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "$comment_people": "Vocabularies for the people layer (phase 0b, docs/GOVERNANCE.md). NetworkRole maps onto Nexus SystemRole so a person in both systems has one obvious mapping.",
   "NetworkRole": [
     { "id": "network_admin", "label": "Network admin", "nexus": "platform_admin" },
@@ -668,6 +668,12 @@
       "id": "news_media",
       "label": "News or broadcast media",
       "license": "varies — the individual article's own terms; cite the URL in the source entry"
+    },
+    {
+      "id": "us_census_geocoder",
+      "label": "US Census Bureau geocoder (coordinates for a street address)",
+      "url": "https://geocoding.geo.census.gov",
+      "license": "public domain (US federal government work)"
     }
   ]
 }

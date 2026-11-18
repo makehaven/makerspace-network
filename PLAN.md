@@ -21,7 +21,7 @@ meetings, but a person can see and reach a verified person in any state.
 | Area | Status |
 |---|---|
 | Space schema + vocabularies (`data/schema/`) | **Built** — OKW profile, 42 capabilities, 14 space kinds, provenance model |
-| CT directory records | **20 records**, 5 steward-verified, 15 imported — 10 with street addresses, 16 mappable, 13 with websites |
+| CT directory records | **22 records**, 6 steward-verified or space-confirmed, 16 imported — 13 with street addresses, 17 mappable, 16 with websites. Campus spaces included (Yale CEID, SCSU, SHU, UNH) |
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
 | Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |

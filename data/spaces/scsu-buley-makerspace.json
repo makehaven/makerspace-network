@@ -1,0 +1,70 @@
+{
+  "id": "scsu-buley-makerspace",
+  "name": "SCSU Makerspace at Buley Library",
+  "kind": "university_makerspace",
+  "status": "active",
+  "region_ids": [
+    "us-ct"
+  ],
+  "summary": "Southern Connecticut State University's makerspace, run by the Hilton C. Buley Library on its ground floor: 3D printing, sewing and crafts, a Cricut, button making, a green screen room and lendable kits.",
+  "address": {
+    "street": "501 Crescent Street",
+    "locality": "New Haven",
+    "county": "New Haven",
+    "region": "CT",
+    "postal_code": "06515",
+    "country": "US",
+    "latitude": 41.3305066,
+    "longitude": -72.9445935,
+    "notes": "Ground floor of Hilton C. Buley Library, Southern Connecticut State University."
+  },
+  "contact": {
+    "website": "https://libguides.southernct.edu/makerspace",
+    "phone": "+1-203-392-5750"
+  },
+  "operations": {
+    "access_model": "host_institution_hours",
+    "tax_status": "university"
+  },
+  "capabilities": [
+    "three_d_printing_fdm",
+    "textiles_sewing",
+    "vinyl_cutting",
+    "video_production"
+  ],
+  "sources": [
+    {
+      "system": "space_website",
+      "url": "https://libguides.southernct.edu/makerspace",
+      "retrieved": "2026-11-18",
+      "note": "Library guide: 'provided by the Hilton C. Buley University Library'; 'Visit us on the ground floor of Buley Library!'; service areas Sewing & Crafting, Cricut, Button Making, Green Screen Room/AV Equipment, 3D Printing (two Makerbot Sketch printers); kits to check out. Instagram @scsu_makerspace."
+    },
+    {
+      "system": "space_website",
+      "url": "https://library.southernct.edu/about/contact",
+      "retrieved": "2026-11-18",
+      "note": "Buley Library: 501 Crescent Street, New Haven, CT 06515; main line 203-392-5750 (the library's, not the makerspace's own)."
+    },
+    {
+      "system": "us_census_geocoder",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=501+Crescent+Street,+New+Haven,+CT+06515&benchmark=Public_AR_Current",
+      "retrieved": "2026-11-18",
+      "note": "Coordinates: the Census geocoder's match for the library's street address."
+    }
+  ],
+  "verification": {
+    "status": "imported",
+    "verified_on": "2026-11-18",
+    "gaps": [
+      "whether people outside SCSU may use it is not stated; 3D prints are collected with a University ID",
+      "hours: the library's building hours apply, but the makerspace's own are not stated",
+      "a makerspace email; the phone is the library's main line",
+      "access_model is assumed to follow the library's hours",
+      "membership_models",
+      "minor_policy",
+      "eligibility",
+      "public_access",
+      "coordinates are the Census match for the campus street address, not the library building"
+    ]
+  }
+}
