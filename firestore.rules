@@ -34,6 +34,7 @@ rules_version = '2';
 //   event_sponsors/{id}       sponsor inquiries and payments; stewards only
 //   event_interest/{id}       "tell me when tickets open"; stewards only
 //   event_partners/{ev~space} a makerspace that agreed to promote an event; public
+//   event_partner_requests/{id} "we'll promote this" from the event page; stewards only
 //   event_codes/{ev~CODE}     comp and sponsor codes; stewards only
 //   event_finance/{id}        the budget behind an event; stewards only
 //   makers/{uid}              a maker's self-described profile; work/ beneath it (GOVERNANCE §Makers)
@@ -781,6 +782,13 @@ service cloud.firestore {
     match /event_interest/{iid} {
       allow read: if convenes(resource.data.region_id);
       allow write: if false;
+    }
+
+    // Written only by the eventInterest Function. A steward approves (by creating
+    // the event_partners row) or dismisses, and either way deletes the request.
+    match /event_partner_requests/{rid} {
+      allow read, delete: if convenes(resource.data.region_id);
+      allow create, update: if false;
     }
 
     // A partner is a space that said yes. Its own staff say so, or a steward records

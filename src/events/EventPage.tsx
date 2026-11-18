@@ -4,10 +4,11 @@
 // network; a maker should not need a login to buy a ticket.
 
 import { useEffect, useState } from 'react';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { auth, db } from '../network/firebase';
 import { SPACES } from '../data';
 import SpacePicker from './SpacePicker';
+import Logo from '../components/Logo';
 import { Connections, FoodAndAccess, Introduction } from './Introduction';
 import { meetingIcs } from '../../functions/src/ics';
 import { href } from '../App';
@@ -73,10 +74,10 @@ export default function EventPage({ id }: { id: string }) {
         {event.status === 'cancelled' && <p className="notice">This event has been cancelled.</p>}
         {view === 'sponsor' ? <SponsorSection id={id} event={event} stats={stats} /> : <>
           <About event={event} stats={stats} />
+          <Sponsors id={id} event={event} partners={partners} />
           {(event.status === 'open' || event.status === 'draft') && <Register id={id} event={event} stats={stats} />}
           {event.status === 'announced' && <Interest id={id} />}
           {event.status === 'closed' && <p className="notice">Registration is closed.</p>}
-          <Sponsors id={id} event={event} partners={partners} />
         </>}
       </div>
     </>
@@ -106,6 +107,7 @@ function Hero({ event, stats }: { event: EventDoc; stats: EventStats | null }) {
         <div className="btn-row" style={{ marginTop: 16 }}>
           {(event.status === 'open' || event.status === 'draft') && <a className="btn" href="#register">Get a ticket</a>}
           {event.status === 'announced' && <a className="btn" href="#interest">Tell me when tickets open</a>}
+          {event.status !== 'cancelled' && event.status !== 'closed' && <a className="btn ghost" href="#partner">Run a makerspace? Be a partner</a>}
           {low && <span className="pill flag">{stats!.spots_left} places left</span>}
         </div>
       </div>
@@ -309,31 +311,139 @@ function Interest({ id }: { id: string }) {
 
 // ---------- sponsors ----------
 
-function Sponsors({ id, event, partners }: { id: string; event: EventDoc; partners: EventPartner[] }) {
+export function Sponsors({ id, event, partners }: { id: string; event: EventDoc; partners: EventPartner[] }) {
   const show = event.status !== 'cancelled';
+  const [list, setList] = useState(partners);
+  useEffect(() => setList(partners), [partners]);
   return (
-    <section className="event-sponsors">
-      {partners.length > 0 && <>
-        <h2>Partner makerspaces</h2>
-        <p>{partners.map((p, i) => <span key={p.space_id}>{i > 0 && ' · '}<a href={href('space', { space: p.space_id })}>{p.space_name}</a></span>)}</p>
-      </>}
-      <p className="muted"><a href="https://makerspace.network/?page=home">Run a makerspace? Sign in to become a partner and promote this to your members.</a></p>
+    <section className="event-community" id="partners">
+      <h2>Partner makerspaces</h2>
+      <p className="muted">Makerspaces telling their members about {event.title}.</p>
+      {list.length > 0 && (
+        <ul className="logo-wall">
+          {list.map((p) => {
+            const space = SPACES.find((s) => s.id === p.space_id);
+            return (
+              <li key={p.space_id}>
+                <a href={href('space', { space: p.space_id })}>
+                  {space ? <Logo space={space} large /> : <div className="logo lg mono" aria-hidden="true">{p.space_name.slice(0, 2)}</div>}
+                  <strong>{p.space_name}</strong>
+                  {space?.address?.locality && <small>{space.address.locality}</small>}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {show && <PartnerAsk id={id} event={event} partners={list} onAdded={(p) => setList((l) => [...l, p].sort((a, b) => a.space_name.localeCompare(b.space_name)))} />}
+
       {event.sponsors.length > 0 && <>
         <h2>Sponsors</h2>
-        <ul className="sponsor-list">
-          {event.sponsors.map((s) => (
-            <li key={s.name} className="sponsor-item">
-              {s.url ? <a href={s.url} rel="noopener">{s.logo ? <img src={s.logo} alt={s.name} /> : s.name}</a>
-                     : s.logo ? <img src={s.logo} alt={s.name} /> : s.name}
-              {s.note && <span className="muted"> {s.note}</span>}
-            </li>
-          ))}
+        <ul className="logo-wall sponsors">
+          {event.sponsors.map((s) => {
+            const inner = <>
+              {s.logo ? <div className="sponsor-mark"><img src={s.logo} alt="" /></div> : <div className="sponsor-mark text">{s.name}</div>}
+              <strong>{s.name}</strong>
+              {s.note && <small>{s.note}</small>}
+            </>;
+            return <li key={s.name}>{s.url ? <a href={s.url} rel="noopener">{inner}</a> : <div>{inner}</div>}</li>;
+          })}
         </ul>
       </>}
       {show && event.sponsor_tiers.length > 0 && (
-        <p><a href={href('event', { event: id, view: 'sponsor' })}>Sponsor {event.title}</a></p>
+        <p><a className="btn ghost" href={href('event', { event: id, view: 'sponsor' })}>Sponsor {event.title}</a></p>
       )}
     </section>
+  );
+}
+
+/** "Be a partner": the ask a makerspace hears at a meeting, made into one button.
+ *  An organiser already signed in here lists their own space at once; anyone else
+ *  sends a request a steward approves, because anyone can type a space's name. */
+function PartnerAsk({ id, event, partners, onAdded }: {
+  id: string; event: EventDoc; partners: EventPartner[]; onAdded: (p: EventPartner) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [mine, setMine] = useState<{ space_id: string; name: string }[]>([]);
+  const [name, setName] = useState(auth.currentUser?.displayName ?? '');
+  const [email, setEmail] = useState(auth.currentUser?.email ?? '');
+  const [role, setRole] = useState('');
+  const [space, setSpace] = useState<string | null>(null);
+  const [other, setOther] = useState('');
+  const [trap, setTrap] = useState('');
+  const [sent, setSent] = useState<{ space: string | null; other: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open || !auth.currentUser) return;
+    // Spaces this person organises; the rules let them list those directly.
+    getDocs(query(collection(db, 'memberships'), where('person_id', '==', auth.currentUser.uid))).then((r) => {
+      setMine(r.docs.map((d) => d.data()).filter((m) => m.status === 'active' && ['space_admin', 'space_editor'].includes(m.role))
+        .map((m) => ({ space_id: m.space_id as string, name: SPACES.find((s) => s.id === m.space_id)?.name ?? '' }))
+        .filter((m) => m.name));
+    }).catch(() => undefined);
+  }, [open]);
+
+  const listed = new Set(partners.map((p) => p.space_id));
+  const refLink = (spaceId: string) => `${event.public_url}?ref=${spaceId}`;
+  const shareLink = (spaceId: string) => <p className="share-link">
+    Start sharing now. Sign-ups through this link are counted for your space:<br />
+    <code>{refLink(spaceId)}</code>{' '}
+    <button type="button" className="linkish" onClick={async () => { await navigator.clipboard.writeText(refLink(spaceId)); setCopied(true); }}>{copied ? 'Copied' : 'Copy'}</button>
+  </p>;
+
+  return (
+    <div className="card partner-ask" id="partner">
+      <h3>Run a makerspace? Be a partner.</h3>
+      <ul>
+        <li><strong>Tell your members about the day</strong>: an email, a post, a flyer by the door.</li>
+        <li><strong>Your logo goes here</strong>, linked to your space's listing.</li>
+        <li><strong>You get your own link</strong> that counts sign-ups from your community.</li>
+      </ul>
+      <p className="muted">Free, nothing to sign, and you can step back at any time.</p>
+      {!open && !sent && <button className="btn" onClick={() => setOpen(true)}>Become a partner makerspace</button>}
+
+      {open && !sent && <>
+        {mine.filter((m) => !listed.has(m.space_id)).map((m) => (
+          <p key={m.space_id}><button className="btn" onClick={async () => {
+            setError(null);
+            try {
+              const row = { event_id: id, space_id: m.space_id, space_name: m.name, agreed_by: auth.currentUser!.uid, created_at: new Date().toISOString() };
+              await setDoc(doc(db, 'event_partners', `${id}~${m.space_id}`), row);
+              onAdded(row); setSent({ space: m.space_id, other: '' });
+            } catch (err) { setError(errText(err)); }
+          }}>Add {m.name} as a partner</button></p>
+        ))}
+        <form className="event-form" onSubmit={async (e) => {
+          e.preventDefault(); setError(null);
+          if (!space && !other.trim()) { setError('Please choose your makerspace.'); return; }
+          try {
+            await api('interest', { event_id: id, partner: true, name, email, role, home_space_id: space, home_space_other: space ? '' : other, website: trap });
+            setSent({ space, other });
+          } catch (err) { setError(errText(err)); }
+        }}>
+          {mine.length > 0 && <p className="muted">Or for another space:</p>}
+          <SpacePicker label="Your makerspace" value={space} other={other} onChange={(s, o) => { setSpace(s); setOther(o); }} />
+          <div className="two">
+            <label className="field"><span>Your name</span><input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></label>
+            <label className="field"><span>Email</span><input required type="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          </div>
+          <label className="field"><span>Your role there <span className="muted">(optional)</span></span>
+            <input maxLength={120} placeholder="Director, board member, volunteer…" value={role} onChange={(e) => setRole(e.target.value)} /></label>
+          <label className="sr-only" aria-hidden="true">Leave this empty<input tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} /></label>
+          {error && <p className="error">{error}</p>}
+          <button className="btn">Count us in</button>
+        </form>
+      </>}
+
+      {sent && (listed.has(sent.space ?? '') && mine.some((m) => m.space_id === sent.space)
+        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is listed above.</p>{shareLink(sent.space!)}</>
+        : <>
+            <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day.</p>
+            {sent.space && shareLink(sent.space)}
+          </>)}
+    </div>
   );
 }
 

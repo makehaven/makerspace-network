@@ -174,3 +174,26 @@ test('the scholarship and member tickets stay out of sight until asked for', asy
   expect(submitted.tier_id).toBe('scholarship');
   expect(submitted.attested).toBe(true);
 });
+
+test('a makerspace can ask to be a partner in one step, and partners and sponsors show logos', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let sent: any;
+  await page.route('**/api/events/interest', async (r) => { sent = r.request().postDataJSON(); await r.fulfill({ json: { outcome: 'requested' } }); });
+  await page.goto(`${fixture}?mode=partners`);
+  await expect(page.locator('.logo-wall li', { hasText: 'MakeHaven' }).locator('img')).toBeVisible();
+  await expect(page.locator('.logo-wall.sponsors img')).toBeVisible();
+  await page.getByRole('button', { name: 'Become a partner makerspace' }).click();
+  await expect(page.getByRole('button', { name: 'No makerspace yet' })).toHaveCount(0);
+  await page.getByLabel('Your name').fill('Pat Organiser');
+  await page.getByLabel('Email').fill('pat@example.test');
+  await page.getByRole('button', { name: 'Count us in' }).click();
+  await expect(page.getByText('Please choose your makerspace.')).toBeVisible();
+  expect(sent).toBeUndefined();
+  await page.getByRole('searchbox').fill('Danbury');
+  await page.getByRole('button', { name: /Danbury Makerspace/ }).click();
+  await page.getByRole('button', { name: 'Count us in' }).click();
+  await expect(page.getByText(/will add Danbury Makerspace here shortly/)).toBeVisible();
+  await expect(page.locator('.share-link code')).toContainText('?ref=danbury-makerspace');
+  expect(sent).toMatchObject({ partner: true, home_space_id: 'danbury-makerspace', name: 'Pat Organiser', email: 'pat@example.test' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});

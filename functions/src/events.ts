@@ -487,7 +487,7 @@ export const eventMine = endpoint([], async (req, body) => {
 
 // ---------- interest list ----------
 
-export const eventInterest = endpoint([], async (req, body) => {
+export const eventInterest = endpoint([POSTMARK_SERVER_TOKEN, POSTMARK_FROM_EMAIL], async (req, body) => {
   if (typeof body.website === 'string' && body.website) return { outcome: 'noted' };
   await rateLimit(req, 'interest', 30);
   const ev = await loadEvent(body.event_id);
@@ -497,6 +497,29 @@ export const eventInterest = endpoint([], async (req, body) => {
   const homeSpace = await knownSpace(body.home_space_id);
   // A place not in the directory, as typed: a lead to verify, never a listing.
   const other = !homeSpace && typeof body.home_space_other === 'string' ? body.home_space_other.trim().slice(0, 120) : '';
+
+  // "We'll promote this": a request a steward approves, because anyone can type
+  // a space's name. Nothing is listed publicly until a person says so.
+  if (body.partner === true) {
+    if (!homeSpace && !other) throw new Refused(400, 'bad_space', 'Please choose your makerspace.');
+    const role = typeof body.role === 'string' ? body.role.trim().slice(0, 120) : '';
+    await db().doc(`event_partner_requests/${registrationId(ev.id, `${homeSpace ?? other}|${person.email}`)}`).set({
+      event_id: ev.id, region_id: ev.region_id, name: person.name, email: person.email, role,
+      space_id: homeSpace, space_other: other, created_at: iso,
+    });
+    const to = ev.reply_to_email || ev.notify_email;
+    if (to) {
+      const text = [
+        `${person.name} <${person.email}>${role ? `, ${role}` : ''}, says ${homeSpace ?? other} will promote ${ev.title}.`,
+        ...(homeSpace ? [] : ['This place is not in the directory yet.']),
+        '', `Approve it on the Network tab: ${SITE}/?page=event-admin&event=${ev.id}&tab=network`,
+      ].join('\n');
+      // Reply goes to the person asking; a mail failure must not lose the request.
+      await sendMail(to, `[${ev.title}] Partner request: ${homeSpace ?? other}`, text, undefined, person.email)
+        .catch((e) => logger.warn('partner request mail failed', e));
+    }
+    return { outcome: 'requested' };
+  }
   await db().doc(`event_interest/${registrationId(ev.id, person.email)}`).set({
     event_id: ev.id, region_id: ev.region_id, name: person.name, email: person.email,
     home_space_id: homeSpace, home_space_other: other, referred_by: await knownSpace(body.ref), created_at: iso,

@@ -3,8 +3,10 @@ import { SPACES } from '../data';
 import Logo from '../components/Logo';
 
 /** A searchable list of real spaces, with ordinary keyboard-operable buttons. */
-export default function SpacePicker({ value, other, onChange }: {
+export default function SpacePicker({ value, other, onChange, label }: {
   value: string | null; other: string; onChange: (id: string | null, other: string) => void;
+  /** Replaces "Your makerspace (optional)" where a space is required, and drops "No makerspace yet". */
+  label?: string;
 }) {
   const id = useId();
   const [search, setSearch] = useState('');
@@ -20,7 +22,7 @@ export default function SpacePicker({ value, other, onChange }: {
       `${s.name} ${s.address?.locality ?? ''} ${s.address?.region ?? ''}`.toLowerCase().includes(term)));
   }, [search]);
   return <div className="space-picker">
-    <p className="field-label" id={`${id}-label`}>Your makerspace <span className="muted">(optional)</span></p>
+    <p className="field-label" id={`${id}-label`}>{label ?? <>Your makerspace <span className="muted">(optional)</span></>}</p>
     {!editing ? <div className="space-selected">
       {selected && <Logo space={selected} />}
       <span><strong>{selected?.name || other || (unlisted ? 'Add your makerspace' : 'No makerspace yet')}</strong>
@@ -39,7 +41,7 @@ export default function SpacePicker({ value, other, onChange }: {
       </ul>
       {!results.length && <p>No matching space. Try another name or add yours below.</p>}
       <div className="btn-row">
-        <button type="button" className="btn ghost" onClick={() => { onChange(null, ''); setUnlisted(false); finish(); }}>No makerspace yet</button>
+        {!label && <button type="button" className="btn ghost" onClick={() => { onChange(null, ''); setUnlisted(false); finish(); }}>No makerspace yet</button>}
         <button type="button" className="linkish" onClick={() => { onChange(null, other); setUnlisted(true); finish(); }}>My space isn't listed</button>
       </div>
     </>}

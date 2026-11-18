@@ -27,6 +27,7 @@ interface Sponsor {
   org_name: string; org_url: string; contact_name: string; contact_email: string; tier_id: string | null; tier_name: string | null;
   amount_cents: number | null; amount_paid_cents: number; note: string; pay: string; status: string; created_at: string;
 }
+interface PartnerRequest { name: string; email: string; role: string; space_id: string | null; space_other: string; created_at: string }
 interface Interested { name: string; email: string; home_space_id: string | null; home_space_other?: string; referred_by: string | null; created_at: string }
 interface CodeRow { tier_id: string; max_uses: number; note: string; space_id?: string | null }
 
@@ -461,6 +462,17 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
     setPartners(new Set(p.docs.map((d) => d.get('space_id') as string)));
   };
   useEffect(() => { void loadPartners(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  const [requests, setRequests] = useState<WithId<PartnerRequest>[]>([]);
+  const loadRequests = async () => {
+    const r = await getDocs(query(collection(db, 'event_partner_requests'), where('event_id', '==', id), where('region_id', '==', event.region_id)));
+    setRequests(r.docs.map((d) => ({ id: d.id, ...(d.data() as PartnerRequest) })).sort((a, b) => a.created_at.localeCompare(b.created_at)));
+  };
+  useEffect(() => { void loadRequests().catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  const settle = async (r: WithId<PartnerRequest>, approve: boolean) => {
+    if (approve && r.space_id) await setEventPartner(id, r.space_id, byId.get(r.space_id)?.name ?? r.space_id, s.user!.uid, true);
+    await deleteDoc(doc(db, 'event_partner_requests', r.id));
+    await Promise.all([loadRequests(), loadPartners()]);
+  };
 
   // The terms promise that anything beyond logistics is the person's choice, so
   // these lists name people only if they ticked "invite me". What the rest said
@@ -488,6 +500,27 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
   return (
     <>
       <p className="muted">Everything here is what someone said on a form, not a verified fact. It is a list of people to talk to, and nothing here changes the directory.</p>
+
+      {requests.length > 0 && (
+        <div className="card form-card">
+          <h2>Partner requests ({requests.length})</h2>
+          <p className="muted">From "Become a partner makerspace" on the event page. Approving lists the space publicly with its logo; check the person is plausibly speaking for it first. A place not in the directory needs a record before it can be listed.</p>
+          <ul className="attendee-list">
+            {requests.map((r) => (
+              <li key={r.id}>
+                <strong>{r.space_id ? byId.get(r.space_id)?.name ?? r.space_id : r.space_other}</strong>
+                {!r.space_id && <span className="muted"> · not in the directory</span>}
+                {r.space_id && partners.has(r.space_id) && <span className="muted"> · already a partner</span>}
+                <br /><span>{r.name} &lt;{r.email}&gt;{r.role && `, ${r.role}`}</span>
+                <div className="btn-row" style={{ marginTop: 6 }}>
+                  {r.space_id && !partners.has(r.space_id) && <button className="btn small" onClick={() => void settle(r, true)}>Approve</button>}
+                  <button className="btn ghost small" onClick={() => void settle(r, false)}>{r.space_id && !partners.has(r.space_id) ? 'Dismiss' : 'Done'}</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="card form-card">
         <h2>Invite to the roster ({invitable.length})</h2>
@@ -522,7 +555,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
 
       <div className="card form-card">
         <h2>Spaces in {REGIONS.find((r) => r.id === event.region_id)?.name ?? 'this region'}</h2>
-        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page. Tick Partner only once a space has agreed to promote the event; it then appears on the public page. Staff who have signed in can also say yes themselves from Home.</p>
+        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page. Tick Partner only once a space has agreed to promote the event; it then appears on the public page. Spaces can also ask from the event page (requests appear above), and signed-in staff can say yes themselves.</p>
         <div className="scroll-x">
           <table className="data">
             <thead><tr><th>Partner</th><th>Space</th><th>Home space of</th><th>Came through its link</th><th>Interested</th><th>Link</th></tr></thead>
