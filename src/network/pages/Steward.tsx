@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
 import { listFeedback, type Feedback } from '../feedback';
-import { listSummaries, type AssessmentSummary } from '../standardsData';
+import { listSummaries, summariesFor, type AssessmentSummary } from '../standardsData';
 import { levelLabel } from '../../standards/framework';
 import { REGIONS, SPACES, VOCAB, label, spaceById } from '../../data';
 import { listListingSubmissions, listingFromRecord, markListingMerged, type ListingAnswers, type ListingSubmission } from '../spaceData';
@@ -242,9 +242,15 @@ function SpacesTab() {
   }, [rows]);
   const list = [...spaces.values()].sort((a, b) => (a.kind === 'partner' ? 1 : 0) - (b.kind === 'partner' ? 1 : 0) || a.name.localeCompare(b.name));
   const unsynced = SPACES.filter((sp) => !spaces.has(sp.id)).length;
-  // Standards summaries a space chose to share. Only stewards may list them.
+  // Standards summaries a space chose to share: the network admin lists them;
+  // a regional steward reads its own region's spaces one by one.
   const [levels, setLevels] = useState<Map<string, AssessmentSummary>>(new Map());
-  useEffect(() => { if (s.stewardship) listSummaries().then(setLevels).catch(() => undefined); }, [s.stewardship]);
+  useEffect(() => {
+    const st = s.stewardship;
+    if (!st) return;
+    const mine = [...spaces.values()].filter((x) => x.kind !== 'partner' && !!x.region_id && st.region_ids.includes(x.region_id)).map((x) => x.id);
+    (st.network_admin ? listSummaries() : summariesFor(mine)).then(setLevels).catch(() => undefined);
+  }, [s.stewardship, spaces]);
 
   return (
     <>

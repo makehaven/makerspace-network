@@ -52,10 +52,16 @@ export async function getSummary(spaceId: string): Promise<AssessmentSummary | n
   return d.exists() ? (d.data() as AssessmentSummary) : null;
 }
 
-/** Stewards only (the rules refuse anyone else a list). */
+/** Network admin only (the rules refuse anyone else a list). */
 export async function listSummaries(): Promise<Map<string, AssessmentSummary>> {
   const s = await getDocs(collection(db, 'assessment_summaries'));
   return new Map(s.docs.map((d) => [d.id, d.data() as AssessmentSummary]));
+}
+
+/** A regional steward: the shared summaries of the spaces it stewards, one read each. */
+export async function summariesFor(spaceIds: string[]): Promise<Map<string, AssessmentSummary>> {
+  const got = await Promise.all(spaceIds.map(async (id) => [id, await getSummary(id).catch(() => null)] as const));
+  return new Map(got.filter((x): x is readonly [string, AssessmentSummary] => !!x[1]));
 }
 
 export async function shareSummary(spaceId: string, uid: string, s: Omit<AssessmentSummary, 'shared_by' | 'shared_at' | 'framework_version'>) {

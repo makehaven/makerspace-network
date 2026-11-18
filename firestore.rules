@@ -364,7 +364,10 @@ service cloud.firestore {
           && isIso(d().updated_at);
       }
       allow get: if signedIn() && caresFor(sid());
-      allow list: if isSteward() || isNetworkAdmin();
+      // A list cannot be scoped to a region (the document carries none), so
+      // only the network admin lists; a region's steward reads its spaces one
+      // by one through get(). No page lists this collection.
+      allow list: if isNetworkAdmin();
       allow create, update: if shape() && isOrganiserAt(sid()) && spaceExists(sid()) && !isPartnerOrg(sid());
       allow delete: if isNetworkAdmin();
     }
@@ -393,7 +396,8 @@ service cloud.firestore {
     match /assessment_summaries/{spaceId} {
       function d() { return request.resource.data; }
       allow get: if signedIn() && caresFor(spaceId);
-      allow list: if isSteward() || isNetworkAdmin();
+      // As for annual data: a regional steward reads its own spaces with get().
+      allow list: if isNetworkAdmin();
       allow create, update: if isOrganiserAt(spaceId) && spaceExists(spaceId) && !isPartnerOrg(spaceId)
         && d().keys().hasOnly(['framework_version', 'level', 'avg', 'evidence_share', 'applicable', 'scored', 'urgent',
                                'domains', 'health', 'shared_by', 'shared_at'])
