@@ -67,6 +67,15 @@
       "attestation": "The full price would be a barrier for me."
     },
     {
+      "id": "member",
+      "name": "Makerspace member",
+      "description": "Half price for members of Connecticut's makerspaces, with your space's code.",
+      "price_cents": 2500,
+      "limit": null,
+      "requires_code": true,
+      "attestation": null
+    },
+    {
       "id": "comp",
       "name": "Complimentary",
       "description": "For sponsors, facilitators and partners.",

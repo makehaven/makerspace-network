@@ -156,6 +156,10 @@ test('a steward makes codes for their own events, not another region\'s', async 
   await assertFails(setDoc(doc(user('ri'), 'event_codes', 'ev~NEW2'), code));
   await assertFails(setDoc(doc(user('ri'), 'event_codes', 'ev~NEW3'), { ...code, region_id: 'us-ri' }));
   await assertFails(setDoc(doc(user('ct'), 'event_codes', 'other~NEW'), code));
+  // A makerspace's member code names its space.
+  await assertSucceeds(setDoc(doc(user('ct'), 'event_codes', 'ev~SPARK'), { ...code, space_id: 'spark' }));
+  await assertFails(setDoc(doc(user('ct'), 'event_codes', 'ev~LONG'), { ...code, space_id: 'x'.repeat(81) }));
+  await assertFails(setDoc(doc(user('ct'), 'event_codes', 'ev~ODD'), { ...code, space_id: 7 }));
 });
 
 // ---------- makers ----------

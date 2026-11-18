@@ -807,7 +807,9 @@ service cloud.firestore {
       function d() { return request.resource.data; }
       allow read, delete: if convenes(resource.data.region_id);
       allow create, update: if convenes(d().region_id)
-        && d().keys().hasOnly(['event_id', 'region_id', 'tier_id', 'max_uses', 'note', 'created_at'])
+        && d().keys().hasOnly(['event_id', 'region_id', 'tier_id', 'max_uses', 'note', 'created_at', 'space_id'])
+        // A makerspace's member code names its space, which is credited with each sign-up.
+        && (!('space_id' in d()) || d().space_id == null || (d().space_id is string && d().space_id.size() <= 80))
         // A code can only be made for an event this steward actually convenes.
         && cid.split('~')[0] == d().event_id
         && get(path('events', d().event_id)).data.region_id == d().region_id

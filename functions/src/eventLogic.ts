@@ -92,7 +92,8 @@ export type TicketDecision =
   | { ok: false; code: 'closed' | 'no_such_tier' | 'needs_code' | 'bad_code' | 'code_used_up' | 'tier_sold_out' | 'attestation_required' }
   | { ok: true; tier: TicketTier; status: 'pending_payment' | 'confirmed' | 'waitlisted'; price_cents: number; code: string | null };
 
-export interface CodeDoc { tier_id: string; max_uses: number }
+/** A ticket code. `space_id` marks a makerspace's own member code; using it credits that space. */
+export interface CodeDoc { tier_id: string; max_uses: number; space_id?: string | null }
 
 /** Decides what happens to one request for one ticket. */
 export function decideTicket(

@@ -275,6 +275,19 @@ Sponsors tab. The site's CSP allows images from its own origin only.
 The short address `/bonanza` is an alias in `src/App.tsx`; any event also answers at
 `/events/<id>`. `?ref=<space-id>` credits a space, `?code=X#register` fills in a code.
 
+**Need-based tickets stay out of sight until asked for.** A tier with an
+`attestation` (the scholarship) is shown only after the buyer clicks "Is the $50
+price keeping you from coming?", so it doesn't sit beside general admission as an
+equal choice. It needs no application, as before.
+
+**Member codes (2026-11-18).** Event admin → Sponsors → *Member codes, one per
+makerspace* adds a hidden half-price `member` tier and one code per open makerspace
+in the event's region: the space id in capitals, e.g. `SPARK-MAKERSPACE`. A code
+can carry `space_id`, and registering with it credits that space when no `?ref=`
+link already did. Each space sends its members
+`<public_url>?ref=<space-id>&code=<CODE>#register`, which fills in both. Every
+half-price ticket is $25 the sponsors must cover, so cap the uses per code.
+
 ## Tests
 
 ```sh

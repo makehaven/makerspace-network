@@ -224,6 +224,15 @@ test('a code confirms a free seat without Stripe, and stops at its limit', async
   assert.equal((await signup('comp4@example.org', { tier_id: 'comp' })).body.code, 'needs_code');
 });
 
+test("a makerspace's member code credits that space", async () => {
+  await db.doc(`event_codes/${EV}~SPARK`).set({ tier_id: 'comp', max_uses: 5, note: 'Members of Spark', space_id: 'spark', created_at: T });
+  const r = await signup('member@example.org', { code: 'spark' });
+  assert.equal(r.body.outcome, 'confirmed');
+  const reg = await regByEmail('member@example.org');
+  assert.equal(reg.get('referred_by'), 'spark');
+  assert.equal(reg.get('code'), 'SPARK');
+});
+
 test('the emailed link: wrong token refused; right token edits opt-ins and records the decision', async () => {
   await signup('me@example.org', { consents: { followup: true } });
   const d = await regByEmail('me@example.org');

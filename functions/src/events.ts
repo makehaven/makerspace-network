@@ -249,7 +249,7 @@ export const eventRegister = endpoint([STRIPE_KEY], async (req, body) => {
       tier_id: d.tier.id, tier_name: d.tier.name, price_cents: d.price_cents, code: d.code, status: d.status,
       hold_expires_at: d.status === 'pending_payment' ? new Date(now + HOLD_MS).toISOString() : null,
       stripe_session_id: null, stripe_payment_intent: null, amount_paid_cents: 0, amount_refunded_cents: 0, paid_at: null,
-      answers, home_space_id: answers.home_space_id, referred_by: referredBy, consents,
+      answers, home_space_id: answers.home_space_id, referred_by: referredBy ?? codeDoc?.space_id ?? null, consents,
       terms_version: fresh.terms_version, terms_accepted_at: iso, payment_issue: null,
       attended: null, checked_in_at: null, offered_at: null, resend_requested_at: null,
       created_at: prior?.created_at ?? iso, updated_at: iso,
