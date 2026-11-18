@@ -37,7 +37,7 @@ function Frame({ eyebrow, title, lede, children }: { eyebrow: string; title: str
       </section>
       <div className="wrap" style={{ paddingTop: 20, paddingBottom: 60 }}>
         {s.status === 'loading' && <p>Loading…</p>}
-        {s.status === 'signed_out' && <div className="narrow"><SignIn why="Groups are for people verified at a makerspace or partner organisation." /></div>}
+        {s.status === 'signed_out' && <div className="narrow"><SignIn context="organisation" why="Groups are for people verified at a makerspace or partner organisation." /></div>}
         {s.status === 'signed_in' && !allowed && (
           <p className="notice narrow">Groups open up once you're verified. <PageLink page="join">Your profile</PageLink>.</p>
         )}
@@ -55,6 +55,7 @@ export function GroupsPage() {
   const [mine, setMine] = useState<Map<string, GroupMember>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const load = async () => {
+    setError(null);
     try {
       const gs = await listGroups();
       setGroups(gs);
@@ -67,8 +68,12 @@ export function GroupsPage() {
 
   return (
     <Frame eyebrow="Groups" title="Groups" lede="Mailing lists with an archive. Post by email or here; everyone in the group gets it, and replies by email come back to the group.">
-      {error && <p className="error">{error}</p>}
-      {groups && !live.length && <p className="muted">No groups yet.</p>}
+      {!groups && !error && <p role="status">Loading groups…</p>}
+      {error && <div className="notice" role="alert"><p>We couldn't load all your groups.</p><button className="btn" onClick={() => void load()}>Retry</button></div>}
+      {!error && groups && !live.length && <div className="notice info"><h2>No active groups yet</h2>
+        <p>{canCreate ? 'Create a group below to give your community a place to introduce themselves and share ideas.' : 'A regional steward can help set up a group. In the meantime, find your counterparts in the space and partner roster.'}</p>
+        <PageLink page="people">Find people at other spaces</PageLink>
+      </div>}
       <div className="group-list">
         {live.map((g) => {
           const member = mine.get(g.id);
@@ -152,10 +157,14 @@ export function GroupPage() {
   const [group, setGroup] = useState<Group | null | undefined>(undefined);
   const [me, setMe] = useState<GroupMember | null>(null);
   const [tab, setTab] = useState<'threads' | 'members' | 'settings'>('threads');
+  const [loadError, setLoadError] = useState(false);
   const load = async () => {
-    const g = await getGroup(gid).catch(() => null);
-    setGroup(g);
-    if (g && s.user) setMe((await myGroupMemberships(s.user.uid, [gid])).get(gid) ?? null);
+    setLoadError(false);
+    try {
+      const g = await getGroup(gid);
+      setGroup(g);
+      if (g && s.user) setMe((await myGroupMemberships(s.user.uid, [gid])).get(gid) ?? null);
+    } catch { setLoadError(true); }
   };
   useEffect(() => { if (s.user && (s.verified || s.stewardship)) void load(); }, [gid, s.user?.uid, s.verified]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -163,7 +172,9 @@ export function GroupPage() {
   const canRead = !!me || manager;
   return (
     <Frame eyebrow="Group" title={group?.name ?? 'Group'} lede={group?.description || undefined}>
-      {group === null && <p className="muted">No such group. <PageLink page="groups">All groups</PageLink>.</p>}
+      {group === undefined && !loadError && <p role="status">Loading group…</p>}
+      {loadError && <div className="notice" role="alert"><p>We couldn't load this group. Check your connection or access and try again.</p><button className="btn" onClick={() => void load()}>Retry</button> <PageLink page="groups">All groups</PageLink></div>}
+      {!loadError && group === null && <p className="muted">No such group. <PageLink page="groups">All groups</PageLink>.</p>}
       {group && (
         <>
           <div className="group-bar">
@@ -215,7 +226,11 @@ function ThreadList({ gid, group, manager, member }: { gid: string; group: Group
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const load = () => listThreads(gid).then(setThreads).catch((e) => setErr(String(e?.message ?? e)));
+  const load = async () => {
+    setErr(null);
+    try { setThreads(await listThreads(gid)); }
+    catch { setErr("We couldn't load the conversations. Please try again."); }
+  };
   useEffect(() => { void load(); }, [gid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -237,8 +252,11 @@ function ThreadList({ gid, group, manager, member }: { gid: string; group: Group
           </div>
         </form>
       ) : <div className="btn-row"><button className="btn" onClick={() => setComposing(true)}>New thread</button></div>)}
-      {err && !composing && <p className="error">{err}</p>}
-      {threads && !threads.length && <p className="muted">No threads yet.</p>}
+      {!threads && !err && <p role="status">Loading conversations…</p>}
+      {err && !composing && <div role="alert"><p className="error">{err}</p><button className="btn ghost" onClick={() => void load()}>Retry</button></div>}
+      {!err && threads && !threads.length && <p className="notice info">{mayPost(group, manager, member)
+        ? 'Start the first conversation: introduce yourself, share something your space is working on, or ask the group a question.'
+        : group.archived ? 'This archived group has no conversations.' : 'No announcements yet. New posts will appear here.'}</p>}
       {threads && threads.length > 0 && (
         <div className="scroll-x">
           <table className="data">
@@ -262,7 +280,7 @@ function ThreadList({ gid, group, manager, member }: { gid: string; group: Group
 
 function ThreadView({ gid, tid, group, manager, member }: { gid: string; tid: string; group: Group; manager: boolean; member: boolean }) {
   const s = useSession();
-  const [thread, setThread] = useState<GroupThread | null>(null);
+  const [thread, setThread] = useState<GroupThread | null | undefined>(undefined);
   const [posts, setPosts] = useState<WithId<GroupPost>[]>([]);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -275,7 +293,9 @@ function ThreadView({ gid, tid, group, manager, member }: { gid: string; tid: st
   // Held and rejected posts are for managers only.
   const shown = posts.filter((p) => manager || (p.status !== 'held' && p.status !== 'rejected'));
 
-  if (!thread) return err ? <p className="error">{err}</p> : <p>Loading…</p>;
+  if (!thread) return err ? <p className="error" role="alert">{err} <PageLink page="group" params={{ g: gid }}>Back to conversations</PageLink></p>
+    : thread === undefined ? <p role="status">Loading conversation…</p>
+    : <p>This conversation isn't available. <PageLink page="group" params={{ g: gid }}>Back to conversations</PageLink></p>;
   return (
     <>
       <p><PageLink page="group" params={{ g: gid }}>← All threads</PageLink></p>

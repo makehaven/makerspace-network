@@ -106,7 +106,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       },
       sendEmailLink: async (email: string) => {
         setError(null);
-        const url = `${window.location.origin}/?page=join`;
+        // Back to the page they asked from, so a sign-in never loses their place.
+        const url = window.location.href.split('#')[0];
         await sendSignInLinkToEmail(auth, email, { url, handleCodeInApp: true });
         try { localStorage.setItem(EMAIL_KEY, email); } catch { /* ignore */ }
       },

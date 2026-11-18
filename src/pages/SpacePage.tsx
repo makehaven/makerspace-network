@@ -1,6 +1,7 @@
-import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, REPO_URL } from '../data';
+import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, institutionalAccess } from '../data';
 import { href, navigate } from '../App';
 import Logo from '../components/Logo';
+import { openFeedback } from '../components/FeedbackButton';
 
 export default function SpacePage({ id }: { id: string }) {
   const s = spaceById(id);
@@ -8,6 +9,9 @@ export default function SpacePage({ id }: { id: string }) {
 
   const ops = s.operations ?? {};
   const addr = s.address ?? {};
+  // A closed space's domain lapses and gets taken over, so never link it.
+  const closed = s.status === 'closed';
+  const website = closed ? undefined : s.contact?.website;
   const { missing } = completeness(s);
   const caps = new Set(s.capabilities ?? []);
   const mapQuery = addr.latitude !== undefined
@@ -28,6 +32,12 @@ export default function SpacePage({ id }: { id: string }) {
             </p>
             <h1>{s.name}</h1>
             {s.summary && <p className="lede">{s.summary}</p>}
+            {institutionalAccess(s) === 'restricted' && (
+              <p className="notice access-note"><strong>Not open to the public.</strong> This space is for its own {s.kind === 'school_makerspace' || s.kind === 'university_makerspace' ? 'students and staff' : 'members or affiliates'}. For a workshop you can join, see the community makerspaces nearby.</p>
+            )}
+            {institutionalAccess(s) === 'unconfirmed' && (
+              <p className="notice access-note"><strong>{s.kind === 'school_makerspace' ? 'A school space.' : 'A campus space.'}</strong> These are usually for their own students and staff. We have not confirmed whether anyone else can use it, so ask before you visit.</p>
+            )}
           </div>
         </div>
       </section>
@@ -45,7 +55,14 @@ export default function SpacePage({ id }: { id: string }) {
                     <div className="cap-domain" key={d.id}>
                       <h4>{d.label}</h4>
                       <div className="tags">
-                        {inDomain.map((c) => <span className="tag on" key={c.id}>{c.label}</span>)}
+                        {inDomain.map((c) => {
+                          const lvl = s.capability_levels?.[c.id];
+                          return (
+                            <span className="tag on" key={c.id} title={lvl ? VOCAB.CapabilityLevel.get(lvl)?.description : undefined}>
+                              {c.label}{lvl && <span className="tag-level"> · {label('CapabilityLevel', lvl)}</span>}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -62,12 +79,15 @@ export default function SpacePage({ id }: { id: string }) {
               <h2>Practical detail</h2>
               <dl className="kv">
                 {ops.access_model && (<><dt>Getting in</dt><dd>{label('AccessModel', ops.access_model)}</dd></>)}
-                {ops.public_access !== undefined && (
+                {ops.public_access !== undefined ? (
                   <><dt>Non-members</dt><dd>{ops.public_access ? 'Can use the space by some route' : 'Members or affiliates only'}</dd></>
+                ) : institutionalAccess(s) === 'unconfirmed' && (
+                  <><dt>Non-members</dt><dd>Not confirmed</dd></>
                 )}
                 {(ops.membership_models?.length ?? 0) > 0 && (
-                  <><dt>Membership</dt><dd>{ops.membership_models!.map((m) => label('MembershipModel', m)).join(', ')}</dd></>
+                  <><dt>Ways in</dt><dd>{ops.membership_models!.map((m) => label('MembershipModel', m)).join(', ')}</dd></>
                 )}
+                {ops.eligibility && (<><dt>Who can use it</dt><dd>{label('Eligibility', ops.eligibility)}</dd></>)}
                 {ops.monthly_cost_usd && (
                   <><dt>Monthly</dt><dd>
                     ${ops.monthly_cost_usd.min}{ops.monthly_cost_usd.max ? `–$${ops.monthly_cost_usd.max}` : ''}
@@ -85,17 +105,14 @@ export default function SpacePage({ id }: { id: string }) {
             {missing.length > 0 && (
               <div className="notice section">
                 <h4>Still to confirm</h4>
-                <p style={{ margin: '4px 0 6px' }}>
-                  Written down as missing rather than guessed at:
-                </p>
                 <ul>{missing.map((m) => <li key={m}>{m}</li>)}</ul>
                 <p style={{ margin: '10px 0 0' }}>
                   If you run this space,{' '}
                   <a href={href('for-spaces')}
                      onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('for-spaces'); }}>
                     claim the listing
-                  </a>{' '}and the record becomes yours to correct — or{' '}
-                  <a href={`${REPO_URL}/blob/main/data/spaces/${s.id}.json`}>edit the file directly</a>.
+                  </a>{' '}to fill these in, or{' '}
+                  <button type="button" className="linkish" onClick={() => openFeedback(`Correction for ${s.name}: `)}>suggest a correction</button>.
                 </p>
               </div>
             )}
@@ -148,12 +165,17 @@ export default function SpacePage({ id }: { id: string }) {
                   </a>
                 </p>
               )}
-              {s.contact?.website && <p style={{ margin: '0 0 4px' }}><a href={s.contact.website}>{new URL(s.contact.website).hostname}</a></p>}
+              {website && <p style={{ margin: '0 0 4px' }}><a href={website}>{new URL(website).hostname}</a></p>}
+              {closed && s.contact?.website && (
+                <p style={{ margin: '0 0 4px', color: 'var(--ink-2)' }}>
+                  Former website: {new URL(s.contact.website).hostname} (not linked because the space has closed).
+                </p>
+              )}
               {s.contact?.email && <p style={{ margin: '0 0 4px' }}><a href={`mailto:${s.contact.email}`}>{s.contact.email}</a></p>}
               {s.contact?.phone && <p style={{ margin: 0 }}>{s.contact.phone}</p>}
-              {s.contact?.website && (
+              {website && (
                 <p style={{ marginTop: 12, marginBottom: 0 }}>
-                  <a className="btn" href={s.contact.website}>Visit site</a>
+                  <a className="btn" href={website}>Visit site</a>
                 </p>
               )}
             </div>
@@ -162,8 +184,8 @@ export default function SpacePage({ id }: { id: string }) {
               <div className="aside" style={{ marginBottom: 14 }}>
                 <h3>Live status</h3>
                 <p style={{ margin: 0 }}>
-                  This space publishes a <a href="https://spaceapi.io">SpaceAPI</a> endpoint —
-                  it is the authority for anything it carries.
+                  This space publishes its own live status through{' '}
+                  <a href="https://spaceapi.io">SpaceAPI</a>.
                 </p>
               </div>
             )}
@@ -182,9 +204,8 @@ export default function SpacePage({ id }: { id: string }) {
             <div className="card" style={{ marginTop: 14 }}>
               <h3>Part of {s.name}?</h3>
               <p className="muted" style={{ margin: '6px 0 10px' }}>
-                Join the network as someone connected to this space: get invited to the
-                meetings that concern it, find your counterparts at other spaces, and keep the
-                listing current.
+                Join the network to keep this listing current, meet people at other spaces,
+                and get invited to meetings that concern your space.
               </p>
               <a className="btn ghost" href={href('join', { space: s.id })}
                  onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join', { space: s.id }); }}>

@@ -1,6 +1,6 @@
 {
   "$comment": "Controlled vocabularies for the Makerspace Network directory. Versioned: adding a value is a minor bump, removing or renaming one is a major bump. okw and fablabs_io keys record the crosswalk to those standards; see docs/INTEROP.md.",
-  "version": "0.4.0",
+  "version": "0.8.0",
   "$comment_people": "Vocabularies for the people layer (phase 0b, docs/GOVERNANCE.md). NetworkRole maps onto Nexus SystemRole so a person in both systems has one obvious mapping.",
   "NetworkRole": [
     { "id": "network_admin", "label": "Network admin", "nexus": "platform_admin" },
@@ -36,6 +36,51 @@
     { "id": "email", "label": "Show my email to verified people" },
     { "id": "phone", "label": "Show my phone to verified people" },
     { "id": "relay", "label": "Relay messages, never show my address" }
+  ],
+  "$comment_events": "MakerRelationship is asked at event registration (docs/EVENTS.md). Unlike NetworkRole it grants nothing: it is what a person says about themselves, multiple answers allowed. Kept in step with RELATIONSHIPS in functions/src/eventLogic.ts by test/events.test.mjs.",
+  "MakerRelationship": [
+    { "id": "space_leader", "label": "I help run a makerspace" },
+    { "id": "space_member", "label": "I'm a makerspace member" },
+    { "id": "independent_maker", "label": "I make things on my own" },
+    { "id": "entrepreneur", "label": "I'm building a product or venture" },
+    { "id": "software_builder", "label": "I build software" },
+    { "id": "student_faculty", "label": "I'm a student or faculty" },
+    { "id": "partner", "label": "I support makers" },
+    { "id": "curious", "label": "I'm new and curious" }
+  ],
+  "$comment_makers": "Vocabularies for maker profiles (docs/GOVERNANCE.md, Makers). Self-described, and grant nothing. MakerOpenTo follows MakeHaven's member availability field; LookingFor draws on its inventor needs. Kept in step with functions/src by test/events.test.mjs. MakerDiscipline extends the capability domains with the arts and software, so a person's craft and a space's equipment can be matched by id where they overlap.",
+  "MakerDiscipline": [
+    { "id": "woodworking", "label": "Woodworking" },
+    { "id": "metalworking", "label": "Metalworking" },
+    { "id": "digital_fabrication", "label": "3D printing, laser and CNC" },
+    { "id": "electronics", "label": "Electronics and robotics" },
+    { "id": "software", "label": "Software" },
+    { "id": "textiles", "label": "Textiles and fibre" },
+    { "id": "ceramics", "label": "Ceramics and pottery" },
+    { "id": "jewelry", "label": "Jewellery and small metals" },
+    { "id": "art_design", "label": "Art and design" },
+    { "id": "print", "label": "Print" },
+    { "id": "craft", "label": "Other crafts" },
+    { "id": "media", "label": "Photo, video and audio" },
+    { "id": "repair", "label": "Repair" },
+    { "id": "science", "label": "Science" }
+  ],
+  "MakerOpenTo": [
+    { "id": "collaborating", "label": "Collaborating on projects" },
+    { "id": "volunteer_teaching", "label": "Teaching or mentoring, as a volunteer" },
+    { "id": "paid_teaching", "label": "Teaching or coaching, paid" },
+    { "id": "freelance", "label": "Freelance and commissions" },
+    { "id": "employment", "label": "Full-time work" }
+  ],
+  "LookingFor": [
+    { "id": "tool_access", "label": "Access to tools and space" },
+    { "id": "collaborators", "label": "People to make things with" },
+    { "id": "learning", "label": "Learning new skills" },
+    { "id": "customers", "label": "Customers or places to sell" },
+    { "id": "fabricators", "label": "Fabricators or suppliers" },
+    { "id": "cofounders_funding", "label": "Co-founders or funding" },
+    { "id": "teaching_opportunities", "label": "Places to teach" },
+    { "id": "community", "label": "A community of makers" }
   ],
   "PartnerType": [
     { "id": "government", "label": "Government agency or office", "nexus": "org_type:government_agency" },
@@ -359,6 +404,24 @@
       "domain": "science"
     }
   ],
+  "$comment_capability_levels": "How much of a capability a space has, from things a visitor could see, so answers agree between spaces. Optional, per capability, in capability_levels. No existing standard records degree: Open Know-Where lists individual equipment (our equipment[]) and fablabs.io records presence only, so exports carry the capability and drop the level.",
+  "CapabilityLevel": [
+    {
+      "id": "basic",
+      "label": "Basic",
+      "description": "Hand tools or one entry-level machine, for small jobs. For bike repair: a bag of tools."
+    },
+    {
+      "id": "equipped",
+      "label": "Equipped",
+      "description": "A dedicated station with the standard tools, for most projects. For bike repair: a repair stand and a full tool wall."
+    },
+    {
+      "id": "full_shop",
+      "label": "Full shop",
+      "description": "A room of its own, or several or industrial machines, for big or production work. For bike repair: several stands, a truing stand and wheel building."
+    }
+  ],
   "$comment_access": "The single most useful field the current Google Site lacks, and the one that changes what half of the safety standards mean. See STANDARDS_GAPS.md module F in tools/standards.",
   "AccessModel": [
     {
@@ -386,34 +449,75 @@
       "label": "Follows host institution hours (library, school, campus)"
     }
   ],
+  "$comment_membership": "How people get access to the space: pick any. 0.7.0 split the old list, which mixed three questions: how you get in (here), who may use it (Eligibility), and who pays (annual data). Deprecated values stay so older records and submissions still have labels; the listing form no longer offers them.",
   "MembershipModel": [
     {
-      "id": "monthly_membership",
-      "label": "Monthly membership"
-    },
-    {
-      "id": "annual_membership",
-      "label": "Annual membership"
+      "id": "membership",
+      "label": "Membership",
+      "$comment": "Any recurring membership. Monthly and annual prices are recorded in monthly_cost_usd, not here."
     },
     {
       "id": "day_pass",
       "label": "Day pass / drop-in"
     },
     {
+      "id": "classes",
+      "label": "Classes and workshops"
+    },
+    {
+      "id": "free_access",
+      "label": "Free",
+      "$comment": "Using the space costs nothing. Who may use it is the separate Eligibility vocabulary."
+    },
+    {
+      "id": "monthly_membership",
+      "label": "Monthly membership",
+      "deprecated": true,
+      "replaced_by": ["membership"]
+    },
+    {
+      "id": "annual_membership",
+      "label": "Annual membership",
+      "deprecated": true,
+      "replaced_by": ["membership"]
+    },
+    {
       "id": "class_only",
-      "label": "Class or workshop enrollment only"
+      "label": "Class or workshop enrollment only",
+      "deprecated": true,
+      "replaced_by": ["classes"],
+      "$comment": "\"Only\" cannot hold in a pick-any list."
     },
     {
       "id": "free_open",
-      "label": "Free and open to the public"
+      "label": "Free and open to the public",
+      "deprecated": true,
+      "replaced_by": ["free_access"],
+      "$comment": "Mixed cost with eligibility; becomes free_access plus Eligibility anyone."
     },
     {
       "id": "free_gated",
-      "label": "Free but restricted to an affiliated population"
+      "label": "Free but restricted to an affiliated population",
+      "deprecated": true,
+      "replaced_by": ["free_access"],
+      "$comment": "Mixed cost with eligibility; becomes free_access plus Eligibility affiliated_only."
     },
     {
       "id": "sponsored",
-      "label": "Sponsored / corporate funded"
+      "label": "Sponsored / corporate funded",
+      "deprecated": true,
+      "replaced_by": [],
+      "$comment": "Who pays, not how people get in. Funding belongs in the annual data."
+    }
+  ],
+  "Eligibility": [
+    {
+      "id": "anyone",
+      "label": "Anyone can use it or join"
+    },
+    {
+      "id": "affiliated_only",
+      "label": "Only an affiliated group, such as students, employees, residents or library card holders"
     }
   ],
   "TaxStatus": [
@@ -564,6 +668,12 @@
       "id": "news_media",
       "label": "News or broadcast media",
       "license": "varies — the individual article's own terms; cite the URL in the source entry"
+    },
+    {
+      "id": "us_census_geocoder",
+      "label": "US Census Bureau geocoder (coordinates for a street address)",
+      "url": "https://geocoding.geo.census.gov",
+      "license": "public domain (US federal government work)"
     }
   ]
 }

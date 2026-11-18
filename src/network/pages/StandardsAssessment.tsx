@@ -28,6 +28,9 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
   const [summary, setSummary] = useState<AssessmentSummary | null>(null);
   const dirty = useRef<Set<string>>(new Set());
   const timer = useRef<number | undefined>(undefined);
+  /** The save waiting on the timer, so leaving can send it instead of dropping it. */
+  const waiting = useRef<(() => Promise<void>) | null>(null);
+  const inflight = useRef(false);
 
   useEffect(() => {
     Promise.all([getAssessment(spaceId), getSpaceMetrics(spaceId, reportingYear()).catch(() => null), getSummary(spaceId).catch(() => null)])
@@ -47,7 +50,8 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
     if (!canEdit) return;
     setSaving('pending');
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(async () => {
+    const run = async () => {
+      waiting.current = null; inflight.current = true;
       setSaving('saving');
       const changed = new Set(dirty.current); dirty.current.clear();
       try {
@@ -57,9 +61,21 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
         for (const id of changed) dirty.current.add(id);
         setSaving('error'); setError(e instanceof Error ? e.message : String(e));
       }
-    }, 700);
+      inflight.current = false;
+    };
+    waiting.current = run;
+    timer.current = window.setTimeout(() => void run(), 700);
   };
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  // Leaving the page in the app sends what is waiting; closing the tab asks first.
+  useEffect(() => {
+    const sendNow = () => { window.clearTimeout(timer.current); void waiting.current?.(); };
+    const onLeave = (e: BeforeUnloadEvent) => {
+      if (!waiting.current && !inflight.current) return;
+      sendNow(); e.preventDefault(); e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onLeave);
+    return () => { window.removeEventListener('beforeunload', onLeave); sendNow(); };
+  }, []);
 
   if (error && !flags) return <p className="error">{error}</p>;
   if (!flags || !computed) return <p>Loading…</p>;
@@ -81,11 +97,14 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
         <div className="std-head">
           <div>
             <p className="eyebrow" style={{ margin: 0 }}>Where you stand</p>
-            <div className="std-level">{levelLabel(computed.level)}</div>
+            {/* Before anything is scored, every standard counts as 0; say "not started", not a failing grade. */}
+            <div className="std-level">{computed.scored === 0 ? 'Not started' : levelLabel(computed.level)}</div>
             <p className="muted" style={{ margin: 0 }}>
-              {computed.scored} of {computed.applicable.length} standards scored · average {computed.avg.toFixed(2)} ·
-              evidence on {Math.round(computed.evidenceShare * 100)}%
-              {computed.urgent > 0 && <> · <strong className="std-urgent">{computed.urgent} critical at 0</strong></>}
+              {computed.scored === 0
+                ? <>{computed.applicable.length} standards apply to you. Open a section below and pick the description closest to how things are now; stop whenever you like.</>
+                : <>{computed.scored} of {computed.applicable.length} standards scored · average {computed.avg.toFixed(2)} ·
+                  evidence on {Math.round(computed.evidenceShare * 100)}%
+                  {computed.urgent > 0 && <> · <strong className="std-urgent">{computed.urgent} critical not yet met</strong></>}</>}
             </p>
           </div>
           <SaveState state={saving} canEdit={canEdit} />
@@ -132,8 +151,8 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
           <details key={d.code} className="card form-card std-domain">
             <summary>
               <strong>{d.name}</strong>
-              <span className="muted"> {dom ? `${dom.scored} of ${dom.applicable} scored · average ${dom.avg.toFixed(1)}` : 'none apply'}</span>
-              {dom && dom.urgent > 0 && <span className="std-urgent"> · {dom.urgent} critical at 0</span>}
+              <span className="muted"> {!dom ? 'none apply' : dom.scored === 0 ? `${dom.applicable} to score` : `${dom.scored} of ${dom.applicable} scored · average ${dom.avg.toFixed(1)}`}</span>
+              {dom && dom.scored > 0 && dom.urgent > 0 && <span className="std-urgent"> · {dom.urgent} critical not yet met</span>}
             </summary>
             {[...list, ...notApplicable].map((st) => (
               <StandardRow key={st.id} st={st} a={answers[st.id] ?? {}} canEdit={canEdit} onChange={(p) => setAnswer(st.id, p)} />
@@ -145,15 +164,15 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
       <div className="card form-card">
         <h3 style={{ marginTop: 0 }}>Share a summary with the network</h3>
         <p className="muted">
-          Optional. Shares your level, your average in each domain and the health check — never a single
-          standard's score, your evidence or your notes. The steward sees it; the network only ever
-          publishes counts and ranges across spaces. You can withdraw it at any time.
+          Optional. Shares your level, your average in each area and the health check, but not
+          individual scores, evidence or notes. The steward sees it; the network only publishes totals
+          across spaces. You can withdraw it at any time.
         </p>
         <p><strong>{levelLabel(shareable.level)}</strong> · {shareable.domains.map((x) => `${x.name} ${x.avg.toFixed(1)}`).join(' · ')}</p>
         {summary && <p className="notice info">Shared on {summary.shared_at.slice(0, 10)} at {levelLabel(summary.level)}. Sharing again replaces it.</p>}
         {canEdit && computed.scored < computed.applicable.length * 0.8 && (
           <p className="muted">Score at least {Math.ceil(computed.applicable.length * 0.8)} of your {computed.applicable.length} standards first,
-            so the summary describes your space rather than how far you got.</p>
+            so the summary reflects your whole space.</p>
         )}
         {canEdit && (
           <div className="btn-row">

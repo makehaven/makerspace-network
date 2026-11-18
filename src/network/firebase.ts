@@ -4,8 +4,9 @@
 // signs in never loads the SDK.
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { writeAuthHint } from '../authHint';
 
 // Web app config is not a secret; it identifies the project, and the rules do
 // the protecting. Registered 2026-09-23 with `firebase apps:create WEB`.
@@ -31,3 +32,7 @@ if (import.meta.env.VITE_USE_EMULATORS === '1') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9199', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8180);
 }
+
+// Tell the header who is signed in (src/authHint.ts). Fires once Firebase has
+// restored any saved session, and again on every sign-in and sign-out.
+onAuthStateChanged(auth, (u) => writeAuthHint(u ? (u.displayName?.trim() || u.email || 'you') : null, u?.photoURL));

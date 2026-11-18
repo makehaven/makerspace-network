@@ -483,10 +483,17 @@
       </div>
       <div class="card">
         <h3>Staffing &amp; people</h3>
-        <label class="field"><span class="lbl">Paid staff — full-time #</span><input type="text" inputmode="numeric" data-m="staffFT"></label>
-        <label class="field"><span class="lbl">Paid staff — part-time #</span><input type="text" inputmode="numeric" data-m="staffPT"></label>
-        <label class="field"><span class="lbl">Contractors # (annual)</span><input type="text" inputmode="numeric" data-m="contractors"></label>
-        <label class="field"><span class="lbl">Contractor expense $</span><input type="text" inputmode="numeric" data-m="contractorExpense"></label>
+        <p class="hint" style="margin:0 0 8px">Count each person once, in the first of these that fits.</p>
+        <label class="field"><span class="lbl">Employees — full-time #</span><input type="text" inputmode="numeric" data-m="staffFT">
+          <span class="hint">On payroll, 30 or more hours a week.</span></label>
+        <label class="field"><span class="lbl">Employees — part-time #</span><input type="text" inputmode="numeric" data-m="staffPT">
+          <span class="hint">On payroll, under 30 hours a week.</span></label>
+        <label class="field"><span class="lbl">Instructors #</span><input type="text" inputmode="numeric" data-m="instructors">
+          <span class="hint">People paid to teach at least one class this year, however they were paid. Don't count employees already counted above.</span></label>
+        <label class="field"><span class="lbl">Other contractors #</span><input type="text" inputmode="numeric" data-m="contractors">
+          <span class="hint">Paid regularly for other work during the year: shop techs, cleaning, bookkeeping. Not instructors.</span></label>
+        <label class="field"><span class="lbl">Contractor expense $</span><input type="text" inputmode="numeric" data-m="contractorExpense">
+          <span class="hint">Everything paid to contractors, instructors included.</span></label>
         <label class="field"><span class="lbl">Titled regular volunteers #</span><input type="text" inputmode="numeric" data-m="volunteers"></label>
         <label class="field"><span class="lbl">Estimated volunteer hours (annual)</span><input type="text" inputmode="numeric" data-m="volunteerHours"></label>
       </div>
@@ -1967,7 +1974,7 @@ $("#btn-net-csv").addEventListener("click", () => {
   const yn = v => v === true ? "Yes" : v === false ? "No" : "";
   const M_COLS = [
     ["year", "Reporting year"], ["structure", "Structure"], ["weeklyHours", "Weekly open hours"], ["affilOther", "Other affiliations"],
-    ["staffFT", "Staff FT"], ["staffPT", "Staff PT"], ["contractors", "Contractors"], ["contractorExpense", "Contractor expense $"],
+    ["staffFT", "Employees FT"], ["staffPT", "Employees PT"], ["instructors", "Instructors"], ["contractors", "Other contractors"], ["contractorExpense", "Contractor expense $"],
     ["volunteers", "Volunteers"], ["volunteerHours", "Volunteer hours"],
     ["expenses", "Operating expenses $"], ["surplus", "Surplus/deficit $"],
     ["revEarned", "% earned"], ["revContributed", "% contributed"], ["revInstitutional", "% institutional"],

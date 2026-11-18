@@ -27,8 +27,9 @@
     "public_access": false,
     "tax_status": "university",
     "membership_models": [
-      "free_gated"
+      "free_access"
     ],
+    "eligibility": "affiliated_only",
     "minor_policy": "unknown",
     "hours_note": "Monday to Friday, 8 a.m. to 8 p.m.; requests outside those hours may be accommodated."
   },

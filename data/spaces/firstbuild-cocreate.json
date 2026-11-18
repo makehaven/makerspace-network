@@ -25,8 +25,12 @@
   "operations": {
     "tax_status": "for_profit",
     "membership_models": [
-      "free_open"
-    ]
+      "free_access"
+    ],
+    "eligibility": "anyone",
+    "public_access": true,
+    "access_model": "scheduled_open_hours",
+    "hours_note": "Tue & Thu 1pm–7:30pm; Wed & Fri noon–7:30pm; Sat 9am–4:30pm; closed Sun–Mon. Some metal shop tools need certification."
   },
   "capabilities": [
     "waterjet",
@@ -54,22 +58,28 @@
       "url": "https://www.businesswire.com/news/home/20231012485567/en/GE-Appliances-Celebrates-Opening-of-CoCREATE-in-Connecticut",
       "retrieved": "2026-08-29",
       "note": "GE Appliances announcement of the CoCREATE opening, 12 October 2023 — a combined microfactory, community makerspace and design centre in Stamford."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.stamfordcocreate.com/firstbuild/",
+      "retrieved": "2026-11-18",
+      "note": "Own page: 'Whether you are a maker, tinkerer, or just curious, stop in'; FirstBuild hours as recorded in hours_note; tools are reserved online, '(certification may be required)' for some metal shop tools; 47 John Street, Stamford 06902. Open to the public also stated by the CT steward (J.R. Logan), 2026-11-18."
     }
   ],
   "verification": {
     "status": "imported",
-    "verified_on": "2026-08-28",
+    "verified_on": "2026-11-18",
     "gaps": [
       "address and coordinates come from the superseded Google Site and its map; neither has been confirmed with the space",
       "email",
       "phone",
-      "access_model",
       "membership_models",
       "monthly_cost_usd",
       "minor_policy",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed",
       "cocreate.firstbuild.com now serves a certificate for wpengine.com; stamfordcocreate.com is used instead — confirm the canonical address",
-      "membership terms, hours and under-18 policy are not published at a fetchable URL"
+      "membership terms and under-18 policy are not published; hours are on stamfordcocreate.com/firstbuild",
+      "the access model is read from published opening hours; whether those hours are staffed is not stated"
     ]
   }
 }

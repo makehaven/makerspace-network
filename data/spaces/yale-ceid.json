@@ -6,12 +6,27 @@
   "region_ids": [
     "us-ct"
   ],
+  "summary": "Yale's Center for Engineering Innovation and Design, in the Becton Center: a design and fabrication space for Yale students, faculty and research staff.",
   "address": {
+    "street": "15 Prospect Street",
+    "locality": "New Haven",
     "county": "New Haven",
     "region": "CT",
+    "postal_code": "06511",
     "country": "US",
     "latitude": 41.3127715,
-    "longitude": -72.9250938
+    "longitude": -72.9250938,
+    "notes": "Becton Center 107, Yale University."
+  },
+  "contact": {
+    "website": "https://ceid.yale.edu",
+    "email": "ceid@yale.edu"
+  },
+  "operations": {
+    "access_model": "member_24_7",
+    "public_access": false,
+    "tax_status": "university",
+    "eligibility": "affiliated_only"
   },
   "sources": [
     {
@@ -19,24 +34,25 @@
       "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
       "retrieved": "2026-08-28",
       "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'Yale Center for Engineering Innovation and Design' pin and nothing else — the pin carried a name and a location, no other detail."
+    },
+    {
+      "system": "space_website",
+      "url": "https://ceid.yale.edu/membership",
+      "retrieved": "2026-11-18",
+      "note": "Own site: 15 Prospect Street, Becton Center 107, New Haven 06511; ceid@yale.edu. Membership page: 'Yale undergraduates, graduate and professional students, faculty, and research staff are all eligible'; members get '24/7, year-round swipe access' after a General Orientation."
     }
   ],
   "verification": {
     "status": "imported",
-    "verified_on": "2026-08-28",
+    "verified_on": "2026-11-18",
     "gaps": [
-      "this record is a map pin recovered from the superseded Google Site — the name and approximate location are all that is sourced",
-      "the space kind is inferred from the pin's name and is not confirmed",
-      "confirm the space still operates, and under this name",
-      "street address",
-      "website",
-      "email",
+      "whether anyone outside Yale can use it or attend events is not stated",
+      "membership cost is not stated",
       "phone",
-      "access_model",
       "membership_models",
-      "monthly_cost_usd",
       "minor_policy",
-      "capabilities"
+      "capabilities: the site does not list equipment on the pages read",
+      "the coordinates are from the old Google Site map pin, not checked against the address"
     ]
   }
 }

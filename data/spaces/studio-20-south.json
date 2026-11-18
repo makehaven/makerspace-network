@@ -17,6 +17,12 @@
       "url": "https://www.ctpublic.org/show/where-we-live/2024-11-19/connecticut-makerspaces-act-as-hubs-for-creativity-innovation-and-lifelong-learning",
       "retrieved": "2026-08-29",
       "note": "Connecticut Public, 19 November 2024: described as a digital maker studio at the West Hartford Library, coordinated by Samuel Ferri."
+    },
+    {
+      "system": "space_website",
+      "url": "https://westhartford.librarymarket.com/events/feed/ical?program_types%5B162%5D=162",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: West Hartford Libraries calendar, program type 'Studio 20 South'. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -35,5 +41,8 @@
       "minor_policy",
       "capabilities"
     ]
+  },
+  "endpoints": {
+    "ical": "https://westhartford.librarymarket.com/events/feed/ical?program_types%5B162%5D=162"
   }
 }

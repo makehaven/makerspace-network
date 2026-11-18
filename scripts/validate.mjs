@@ -14,6 +14,8 @@ const read = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'));
 const enums = read('data/schema/enums.json');
 const schema = read('data/schema/space.schema.json');
 const ids = (name) => new Set((enums[name] ?? []).map((e) => e.id));
+// Kept so older records still validate and still have labels; new data should not use them.
+const deprecated = (name) => new Set((enums[name] ?? []).filter((e) => e.deprecated).map((e) => e.id));
 
 // Which enum guards which field. The schema records this as $comment because
 // JSON Schema has no way to reference an external vocabulary by name.
@@ -24,6 +26,9 @@ const ENUM_FIELDS = [
   ['operations.access_model', 'AccessModel', (s) => [s.operations?.access_model]],
   ['operations.tax_status', 'TaxStatus', (s) => [s.operations?.tax_status]],
   ['operations.membership_models', 'MembershipModel', (s) => s.operations?.membership_models ?? []],
+  ['operations.eligibility', 'Eligibility', (s) => [s.operations?.eligibility]],
+  ['capability_levels{}', 'CapabilityLevel', (s) => Object.values(s.capability_levels ?? {})],
+  ['capability_levels keys', 'Capability', (s) => Object.keys(s.capability_levels ?? {})],
   ['operations.minor_policy', 'MinorPolicy', (s) => [s.operations?.minor_policy]],
   ['size_tier', 'SizeTier', (s) => [s.size_tier]],
   ['verification.status', 'VerificationStatus', (s) => [s.verification?.status]],
@@ -61,8 +66,13 @@ for (const file of readdirSync(join(root, 'data/spaces')).filter((f) => f.endsWi
     for (const v of get(s)) {
       if (v !== undefined && v !== null && !allowed.has(v)) {
         at(`${path}: "${v}" is not in the ${enumName} vocabulary`);
+      } else if (v != null && deprecated(enumName).has(v)) {
+        warnings.push(`${file}: ${path}: "${v}" is deprecated in ${enumName}; use ${(enums[enumName].find((e) => e.id === v).replaced_by ?? []).join(' or ') || 'nothing'} instead`);
       }
     }
+  }
+  for (const c of Object.keys(s.capability_levels ?? {})) {
+    if (!(s.capabilities ?? []).includes(c)) at(`capability_levels: "${c}" has a level but is not in capabilities`);
   }
 
   for (const r of s.region_ids ?? []) {
@@ -201,11 +211,41 @@ for (const file of readdirSync(join(root, 'data/standards')).filter((f) => /^fra
   stdCount += seen.size;
 }
 
+// ---------- event drafts ----------
+// Prices and tiers reach real card charges, so their shape is worth checking
+// here too, and a draft has to say what it has not settled.
+let eventCount = 0;
+const eventDir = join(root, 'data/events');
+for (const file of readdirSync(eventDir).filter((f) => f.endsWith('.json'))) {
+  const ev = read(`data/events/${file}`);
+  const at = (m) => errors.push(`data/events/${file}: ${m}`);
+  eventCount++;
+  if (ev.id !== file.replace(/\.json$/, '')) at(`id "${ev.id}" does not match the filename`);
+  if (ev.region_id && !regionIds.has(ev.region_id)) at(`unknown region ${ev.region_id}`);
+  if (ev.status !== 'draft') at('a repository event must be status "draft"; publishing happens from Event admin');
+  if (!Array.isArray(ev.sources) || !ev.sources.length) at('no sources');
+  if (!Array.isArray(ev.gaps)) at('no gaps array');
+  if (!Number.isInteger(ev.capacity) || ev.capacity < 1) at('capacity must be a positive integer');
+  for (const [list, cents] of [[ev.tiers, 'price_cents'], [ev.sponsor_tiers, 'amount_cents']]) {
+    const ids = new Set();
+    for (const t of list ?? []) {
+      if (ids.has(t.id)) at(`duplicate tier ${t.id}`);
+      ids.add(t.id);
+      if (!Number.isInteger(t[cents]) || t[cents] < 0) at(`tier ${t.id}: ${cents} must be whole cents`);
+      if (t[cents] > 0 && t[cents] < 50) at(`tier ${t.id}: below Stripe's 50-cent minimum`);
+    }
+  }
+  if ((ev.tiers ?? []).some((t) => t.price_cents === 0 && !t.requires_code)) warnings.push(`data/events/${file}: a free ticket with no code`);
+  if ((ev.statement_descriptor ?? '').length > 22) at('statement_descriptor over 22 characters');
+  // Stripe rejects these characters in a statement descriptor.
+  if (/[<>\\'"*]/.test(ev.statement_descriptor ?? '')) at('statement_descriptor has a character Stripe refuses');
+}
+
 for (const w of warnings) console.warn(`  warn  ${w}`);
 for (const e of errors) console.error(`  ERROR ${e}`);
 
 console.log(
   `\n${count} spaces · ${regionIds.size} regions · ${achCount} achievements · ` +
-    `${alignCount} alignment files · ${stdCount} standards · ${errors.length} errors · ${warnings.length} warnings`,
+    `${alignCount} alignment files · ${stdCount} standards · ${eventCount} events · ${errors.length} errors · ${warnings.length} warnings`,
 );
 process.exit(errors.length ? 1 : 0);

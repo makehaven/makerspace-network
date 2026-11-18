@@ -3,7 +3,7 @@
 // Data tab (tools/standards/app/index.html, `data-m` keys) so a share file and
 // a saved record describe the same thing in the same words.
 
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteField, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Space } from '../types';
 
@@ -14,9 +14,12 @@ const now = () => new Date().toISOString();
 export interface ListingAnswers {
   summary?: string;
   capabilities?: string[];
+  /** Capability id → CapabilityLevel id, for those the space rated. */
+  capability_levels?: Record<string, string>;
   access_model?: string;
   public_access?: boolean | null;
   membership_models?: string[];
+  eligibility?: string;
   monthly_cost_min?: number | null;
   monthly_cost_max?: number | null;
   day_pass_usd?: number | null;
@@ -35,15 +38,31 @@ export interface ListingSubmission {
   updated_at: string;
 }
 
+/** Enums 0.7.0 split the old ways-to-use list (data/schema/enums.json
+ *  $comment_membership). A submission saved before then is read in the new
+ *  terms, so the form never holds a value it no longer shows. */
+export function upgradeListing(l: ListingAnswers): ListingAnswers {
+  const old = l.membership_models ?? [];
+  const map: Record<string, string | null> = {
+    monthly_membership: 'membership', annual_membership: 'membership', class_only: 'classes',
+    free_open: 'free_access', free_gated: 'free_access', sponsored: null,
+  };
+  const models = [...new Set(old.map((m) => (m in map ? map[m] : m)).filter((m): m is string => !!m))];
+  const eligibility = l.eligibility || (old.includes('free_gated') ? 'affiliated_only' : old.includes('free_open') ? 'anyone' : '');
+  return { ...l, membership_models: models, eligibility, capability_levels: l.capability_levels ?? {} };
+}
+
 /** Start from what the directory already says, so people correct rather than retype. */
 export function listingFromRecord(s?: Space): ListingAnswers {
   const o = s?.operations ?? {};
   return {
     summary: s?.summary ?? '',
     capabilities: s?.capabilities ?? [],
+    capability_levels: s?.capability_levels ?? {},
     access_model: o.access_model ?? '',
     public_access: o.public_access ?? null,
     membership_models: o.membership_models ?? [],
+    eligibility: o.eligibility ?? '',
     monthly_cost_min: o.monthly_cost_usd?.min ?? null,
     monthly_cost_max: o.monthly_cost_usd?.max ?? null,
     day_pass_usd: o.day_pass_usd ?? null,
@@ -79,9 +98,11 @@ export async function markListingMerged(spaceId: string) {
 // ---------- annual network data ----------
 
 export type MetricKind = 'number' | 'percent' | 'money' | 'yesno' | 'text' | 'choice';
-/** `core` marks the ten asked first: the figures that say most about a space
+/** `core` marks the questions asked first, under "Start here" (the count may change): the figures that say most about a space
  *  and that nearly every space can answer without digging. */
-export interface MetricField { key: string; label: string; kind: MetricKind; hint?: string; choices?: string[]; core?: boolean }
+export interface MetricField { key: string; label: string; kind: MetricKind; hint?: string; choices?: string[]; core?: boolean;
+  /** May be below zero: a deficit. Every other figure is a count, an amount or a share. */
+  signed?: boolean }
 export interface MetricSection { title: string; fields: MetricField[] }
 
 export const METRIC_SECTIONS: MetricSection[] = [
@@ -97,16 +118,23 @@ export const METRIC_SECTIONS: MetricSection[] = [
     { key: 'affilOther', label: 'Other network affiliations', kind: 'text' },
   ] },
   { title: 'Staffing and people', fields: [
-    { key: 'staffFT', label: 'Paid staff — full-time', kind: 'number', core: true },
-    { key: 'staffPT', label: 'Paid staff — part-time', kind: 'number', core: true },
-    { key: 'contractors', label: 'Contractors (annual)', kind: 'number' },
-    { key: 'contractorExpense', label: 'Contractor expense', kind: 'money' },
+    // Count each person once, in the first of these that fits.
+    { key: 'staffFT', label: 'Employees — full-time', kind: 'number', core: true,
+      hint: 'On payroll, 30 or more hours a week.' },
+    { key: 'staffPT', label: 'Employees — part-time', kind: 'number', core: true,
+      hint: 'On payroll, under 30 hours a week.' },
+    { key: 'instructors', label: 'Instructors', kind: 'number', core: true,
+      hint: "People paid to teach at least one class this year, however they were paid. Don't count employees already counted above." },
+    { key: 'contractors', label: 'Other contractors', kind: 'number',
+      hint: 'Paid regularly for other work during the year: shop techs, cleaning, bookkeeping. Not instructors.' },
+    { key: 'contractorExpense', label: 'Contractor expense', kind: 'money',
+      hint: 'Everything paid to contractors, instructors included.' },
     { key: 'volunteers', label: 'Titled regular volunteers', kind: 'number', core: true },
     { key: 'volunteerHours', label: 'Estimated volunteer hours (annual)', kind: 'number' },
   ] },
   { title: 'Finances', fields: [
     { key: 'expenses', label: 'Total operating expenses', kind: 'money', core: true },
-    { key: 'surplus', label: 'Year surplus / deficit', kind: 'money' },
+    { key: 'surplus', label: 'Year surplus / deficit', kind: 'money', signed: true, hint: 'A deficit is a negative number, e.g. -4200.' },
     { key: 'revEarned', label: 'Earned income as a share of revenue (memberships, classes, services, rent)', kind: 'percent', core: true },
     { key: 'revContributed', label: 'Contributed income (grants, donations, sponsorships)', kind: 'percent' },
     { key: 'revInstitutional', label: 'Institutional support (university / library / town)', kind: 'percent' },
@@ -179,6 +207,23 @@ export async function saveSpaceMetrics(spaceId: string, year: number, uid: strin
                                        untracked: string[] = [], estimated: string[] = []) {
   const m: SpaceMetrics = { space_id: spaceId, year, metrics, capabilities, untracked, estimated, updated_by: uid, updated_at: now() };
   await setDoc(doc(db, 'space_metrics', metricsId(spaceId, year)), m);
+}
+
+/** Write only what changed, merged into what is there, so two colleagues (or
+ *  two tabs) answering different questions do not erase each other's figures.
+ *  A metric set to null is removed. The first save must carry the lists,
+ *  because the rules require them on the document. */
+export async function saveSpaceMetricsPatch(spaceId: string, year: number, uid: string, patch: {
+  metrics: Record<string, MetricValue | null>; capabilities?: string[]; untracked?: string[]; estimated?: string[];
+}) {
+  const metrics = Object.fromEntries(Object.entries(patch.metrics).map(([k, v]) => [k, v === null ? deleteField() : v]));
+  await setDoc(doc(db, 'space_metrics', metricsId(spaceId, year)), {
+    space_id: spaceId, year, metrics,
+    ...(patch.capabilities ? { capabilities: patch.capabilities } : {}),
+    ...(patch.untracked ? { untracked: patch.untracked } : {}),
+    ...(patch.estimated ? { estimated: patch.estimated } : {}),
+    updated_by: uid, updated_at: now(),
+  }, { merge: true });
 }
 
 // ---------- suggestions: what we already know ----------

@@ -53,6 +53,12 @@
       "url": "https://nesit.org/",
       "retrieved": "2026-08-29",
       "note": "Own site: Fridays 7–10pm are member nights open to the public. Equipment named includes 3D printers (Prusa i3 MK3), two 60W Epilog laser cutters, CNC, woodworking, metalworking, electronics benches and leatherworking."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.meetup.com/hackerspace/events/ical/",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: NESIT's Meetup group calendar ('NESIT Makerspace'); its own site's feed is empty. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -70,5 +76,8 @@
       "membership prices and member access hours are not published on their site",
       "NESIT announced an equipment refresh for 2026 — recheck the capability list after it lands"
     ]
+  },
+  "endpoints": {
+    "ical": "https://www.meetup.com/hackerspace/events/ical/"
   }
 }

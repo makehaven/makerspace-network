@@ -30,8 +30,7 @@
     "access_model": "staffed_hours_only",
     "public_access": true,
     "membership_models": [
-      "monthly_membership",
-      "annual_membership"
+      "membership"
     ],
     "minor_policy": "minors_in_programs"
   },
@@ -74,6 +73,12 @@
       "url": "https://makerspace.network/?page=space-data&space=makerspace-ct",
       "retrieved": "2026-10-07",
       "note": "Listing confirmed by the space's own staff on makerspace.network: summary, capabilities (adding jewelry), access during staffed hours, open to non-members, monthly and annual membership, minors in supervised programs, current hours, phone and email. Cost left blank."
+    },
+    {
+      "system": "space_website",
+      "url": "https://app.makerspacect.com/Classes/RSS",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: MakerspaceCT's Wild Apricot events RSS ('MakerspaceCT upcoming events'); each item's date is the class start. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -85,5 +90,8 @@
       "monthly_cost_usd — membership prices are behind app.makerspacect.com and the space left cost blank",
       "reported as both 28,000 sq ft (own site) and 20,000 sq ft (Hartford Business Journal); the space's own figure is used"
     ]
+  },
+  "endpoints": {
+    "rss": "https://app.makerspacect.com/Classes/RSS"
   }
 }

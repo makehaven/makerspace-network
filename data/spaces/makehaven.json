@@ -35,7 +35,7 @@
     "public_access": true,
     "tax_status": "nonprofit_501c3",
     "membership_models": [
-      "monthly_membership"
+      "membership"
     ],
     "minor_policy": "minors_with_adult",
     "monthly_cost_usd": {
@@ -87,6 +87,12 @@
       "url": "https://www.makehaven.org/join",
       "retrieved": "2026-08-29",
       "note": "Own site: $62/month standard, with an income-based sliding scale at $30, $40 or $50. Membership requires being 18 or older and able to sign a waiver."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.makehaven.org/civicrm/event/ical?reset=1&list=1",
+      "retrieved": "2026-11-18",
+      "note": "MakeHaven's public CiviCRM events feed, already read nightly by the Community Calendar (ct-makerspaces), which drops member-only events."
     }
   ],
   "verification": {
@@ -100,5 +106,8 @@
       "spaceapi endpoint not yet published",
       "members must be 18+; the recorded minor policy covers visitors accompanied by a member, not membership"
     ]
+  },
+  "endpoints": {
+    "ical": "https://www.makehaven.org/civicrm/event/ical?reset=1&list=1"
   }
 }

@@ -27,7 +27,7 @@
     "access_model": "member_extended_hours",
     "public_access": true,
     "membership_models": [
-      "monthly_membership"
+      "membership"
     ],
     "monthly_cost_usd": {
       "min": 30,
@@ -62,6 +62,12 @@
       "url": "https://www.sparkmakerspace.org/",
       "retrieved": "2026-08-29",
       "note": "Own site: 7 Union Street; sliding-scale membership $30–$65/month; facility access 6am–10pm daily; public meetups with a $5 suggested donation, open to ages 12 and up with under-18s accompanied by an adult."
+    },
+    {
+      "system": "space_website",
+      "url": "https://calendar.google.com/calendar/ical/sparkmakerspace.org_dhrku4nfnksqnh0g7lk47j73jg%40group.calendar.google.com/public/basic.ics",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: SPARK's public Google calendar ('Spark Events'); includes members-only sessions, which listings drop. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -72,5 +78,8 @@
       "email",
       "capabilities are inferred from prose on the superseded Google Site and are not confirmed"
     ]
+  },
+  "endpoints": {
+    "ical": "https://calendar.google.com/calendar/ical/sparkmakerspace.org_dhrku4nfnksqnh0g7lk47j73jg%40group.calendar.google.com/public/basic.ics"
   }
 }

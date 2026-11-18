@@ -175,6 +175,65 @@ is prompted to invite a second person at claim time.
 minor bump to `data/schema/enums.json`. Thresholds are a network decision, not a
 schema one; the field records the tier, the region record documents the rule.
 
+## Makers
+
+Added 2026-11-05, for Maker Bonanza. The roster is for the people who run spaces.
+Most makers do not run one, and many have no space at all: a garage, a studio, a
+kitchen table. They are who the network has to reach next, and they are a pool of
+collaborators and possible instructors the spaces have no other way to find.
+
+**A maker is someone who says they are.** There is no vouching and no home space
+required; a home space is an optional detail. Credibility comes from the profile:
+shown work and a real description, and having turned up. A fuller profile sits
+higher on the Makers page (`functions/src/makerLogic.ts`), and that is the only
+reward. Fields draw on what MakeHaven asks new members: its "introduce yourself"
+prompt, its availability options and its inventor needs.
+
+**Separate from the roster on purpose.** A maker profile (`makers/{uid}`) grants
+no role, does not make anyone `verified`, and opens neither the roster nor
+messaging. The roster's rules assume a small vouched group; a person may hold both.
+
+**Each maker chooses who sees them.**
+
+| Setting | Who sees it |
+|---|---|
+| `public` | Anyone, including search engines |
+| `community` (the default) | Signed-in people with a profile, and fellow attendees of an event, if the person listed themselves for it |
+| `hidden` | Only them |
+
+**What only the network can say about a person is not theirs to write:** whether
+they came to an event, whether a moderator looked, how many photos were approved.
+Rules refuse those fields from the owner, and Functions set them.
+
+**Moderation is one person's quick look, and is designed to stay that way.** Each
+photo waits until approved. A new profile also waits, unless it belongs to someone
+with a confirmed ticket at the same verified address, on the reasoning that someone
+who paid to come is unlikely to be spam. Text edits after approval are not re-held.
+A moderator can hide anyone, and buying a ticket does not undo that. Every profile
+carries a report link. The queue is Steward tools → Makers, with an email to the
+region's public address when something arrives. J.R. Logan moderates for now; any steward
+or network admin can.
+
+**Why photos are handled as they are.** The browser re-encodes each one, which
+strips the location a phone writes into a picture of work made at home. Storage
+accepts JPEG only, which also keeps out SVG and its scripts. A rejected photo's file
+is deleted, and deleting a profile deletes everything under it.
+
+**Contact is whatever the maker publishes.** A website, Instagram or an email they
+choose to show, so there is no relay to run. If harvesting becomes a problem, a relay
+is the next step, as it already is for `space_contact`.
+
+**Scope.** Open to anyone; Connecticut is who it is built for first. Like the roster,
+it is not bounded by region.
+
+Home (`?page=home`) is where signing in lands. It leads with what needs the person
+and shows only what applies, so nobody is asked to join a space first. A ticket
+appears there by verified address.
+
+Not built yet: an open makers mailing list (groups still require `verified`),
+prefilling a profile from a registration, and a demand summary by town for the
+state's inventory work, which must never name anyone.
+
 ## Ecosystem partners
 
 Added 2026-09-27. The groups this network grew out of were never only

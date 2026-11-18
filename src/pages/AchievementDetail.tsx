@@ -32,9 +32,8 @@ export default function AchievementDetail({ a }: { a: Achievement }) {
           <p style={{ margin: '0 0 6px' }}><code>{canonical}</code></p>
           <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--ink-2)' }}>
             Use this as the <code>targetUrl</code> in an Open Badges{' '}
-            <code>alignment</code>. It will not move — a published version is never
-            edited, because credentials are signed against it and must keep meaning
-            what they meant. Machine-readable:{' '}
+            <code>alignment</code>. Published versions are never edited, so this link
+            will always mean the same thing. Machine-readable:{' '}
             <a href={`/achievements/${a.id}/v${a.version}.json`}>v{a.version}.json</a>.
           </p>
         </div>
@@ -43,17 +42,16 @@ export default function AchievementDetail({ a }: { a: Achievement }) {
           <div className="notice" style={{ marginBottom: 24 }}>
             <h4>This is a {a.status}</h4>
             <p style={{ margin: '4px 0 0' }}>
-              A definition written by one space is not a standard. This becomes published
-              when two or more spaces have reviewed it against their own training — do not
-              sign credentials against a draft version.
+              This will be published once two or more spaces have checked it against their
+              own training. Do not issue credentials against a draft.
             </p>
           </div>
         )}
 
         <h2>Competencies</h2>
         <p style={{ color: 'var(--ink-2)' }}>
-          Every item must be true at <em>any</em> space. Anything that depends on one
-          shop's layout, rules, or equipment is in "stays local" below instead.
+          Each item applies at any space. Anything that depends on one shop's layout, rules
+          or equipment is under "Stays local" below.
         </p>
         <div className="scroll-x">
           <table className="data">
@@ -88,9 +86,7 @@ export default function AchievementDetail({ a }: { a: Achievement }) {
 
         <h2>Stays local, always</h2>
         <p style={{ color: 'var(--ink-2)' }}>
-          This knowledge does not transfer and must be delivered by the receiving space
-          regardless of what credential someone arrives with. A credential substitutes for
-          the competence assessment, never for the local orientation.
+          The receiving space always covers these, whatever badge someone arrives with.
         </p>
         <ul>{a.site_specific.map((e) => <li key={e}>{e}</li>)}</ul>
 
@@ -116,11 +112,10 @@ export default function AchievementDetail({ a }: { a: Achievement }) {
 
         <h2>Aligning a badge to this</h2>
         <p>
-          Keep your own badge name. Take the checklist to whoever runs the shop, ask where
-          each item is covered and how it is assessed, and record the answers — the{' '}
-          <a href={`${REPO_URL}/tree/main/data/alignments`}>alignment files</a> are the
-          working document. The <code>no</code> and <code>partial</code> rows become a short
-          list of things to add, which is usually much shorter than anyone expects.
+          Keep your own badge name. Go through the checklist with whoever runs the shop, note
+          where each item is covered and how it is checked, and record the answers in the{' '}
+          <a href={`${REPO_URL}/tree/main/data/alignments`}>alignment files</a>. Any item marked{' '}
+          <code>no</code> or <code>partial</code> goes on your list of things to add.
         </p>
       </div>
     </>

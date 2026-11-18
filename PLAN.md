@@ -1,6 +1,6 @@
 # Makerspace Network — Roadmap
 
-**Status as of 2026-10-08.** What actually exists and what comes next. Keep this
+**Status as of 2026-11-05.** What actually exists and what comes next. Keep this
 file accurate; it is the starting point for "what is real here."
 
 ## Thesis
@@ -21,10 +21,12 @@ meetings, but a person can see and reach a verified person in any state.
 | Area | Status |
 |---|---|
 | Space schema + vocabularies (`data/schema/`) | **Built** — OKW profile, 42 capabilities, 14 space kinds, provenance model |
-| CT directory records | **20 records**, 5 steward-verified, 15 imported — 10 with street addresses, 16 mappable, 13 with websites |
+| CT directory records | **22 records**, 6 steward-verified or space-confirmed, 16 imported — 13 with street addresses, 17 mappable, 16 with websites. Campus spaces included (Yale CEID, SCSU, SHU, UNH) |
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
 | Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |
+| Public visual design | **Updated 2026-11-14** — attributed MakeHaven photography, plain homepage and directory copy, factual photo captions, restrained typography, illustrated activity filters, compact space cards and an expandable map. Responsive WebP assets and locally hosted fonts; checked on desktop/mobile and in dark mode; all 11 browser checks pass |
+| Navigation and search usability | **Implemented 2026-11-14** — task-based navigation, public Events list (announced/open only), organiser roster/group entry points, audience-specific sign-in, URL-backed space/maker filters, and separate loading/error/empty states with retry. Five network browser checks plus the five checkout checks pass |
 | Region map (`data/geo/`, `src/components/RegionMap.tsx`) | **Built** — inline SVG county map, no tiles and no CSP exemption |
 | People layer (`docs/GOVERNANCE.md`, `docs/PEOPLE.md`) | **Live since 2026-10-07** — sign-in, claim, roster, steward page, partners, invitations, meetings, groups (on the site; email needs Postmark). First real use at the 2026-10-07 CT meeting |
 | Your space: listing, annual data | **Live** — staff answer the listing (a submission the steward merges) and the annual data standard, saved as they type |
@@ -34,6 +36,9 @@ meetings, but a person can see and reach a verified person in any state.
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
+| Events: tickets, sponsors, network follow-through (`docs/EVENTS.md`) | **Live Stripe configured 2026-11-14; sales closed.** Full sandbox checkout/refund/email tests passed; live checkout creation/expiry and local signature checks passed without charging. Bonanza times, terms and publication remain pending |
+| Events from other makerspaces | **Live 2026-11-18** — the Events tab lists classes and open events at Connecticut makerspaces and craft studios, by topic, from the Community Calendar's `ct-makerspaces` calendar (~/development/Community-Calendar: consenting sources only, links go to each organisation). Refreshed nightly at 04:15 by a systemd user timer on JR's workstation (scripts/nightly.sh there); a server schedule needs the Community Calendar project on Blaze plus an Anthropic key |
+| Makers: profiles for anyone who makes things (`docs/GOVERNANCE.md` §Makers) | **Functions deployed 2026-11-14.** Production photo upload / Storage setup still needs verification |
 | Reciprocity architecture (`docs/RECIPROCITY.md`) | **Designed, not started** — Open Badges 3.0, member-carried |
 | Network achievement framework | **Not started** — the scarce work in phase 3 |
 
@@ -131,6 +136,12 @@ Three things it has to do, in order of why anyone asked for it:
       folded; last year's answers and the listing offered as suggestions to
       accept; "we don't track this" and "estimate" recorded as answers; "Ask a
       colleague" emails a link to one section
+- [x] Clearer questions (2026-11-18, enums 0.7.0): staffing counts each person
+      once (employees full- and part-time, instructors, other contractors);
+      each capability can say how much (basic, equipped, full shop); and the
+      old ways-to-use list is split into how people get access, who may use
+      it, and (moved to annual data) who pays. Old values are deprecated, not
+      removed, and records were migrated
 - [x] Meetings: a steward turns a roster filter into a meeting with a frozen
       invitation list; invitees answer and add it to their calendar on the
       People page; the steward records attendance and sees how many spaces
@@ -163,6 +174,43 @@ Three things it has to do, in order of why anyone asked for it:
 Once this exists the Standards tool can save an assessment against a space
 instead of a browser, which removes the "export a file and email it" step that
 stalls pilot feedback. That is phase 1's remaining item, and it depends on this.
+
+### Phase 0c — Events: Maker Bonanza *(live payments configured; event still draft)*
+
+A statewide unconference on 2027-01-22, MakeHaven as fiduciary, Redwood Endeavors
+co-hosting. Sponsors confirmed by 2026-11-20, registration opens 2026-12-01. It is
+the network's first reach past the people who run spaces, to the makers
+themselves. Spec and setup: `docs/EVENTS.md`.
+
+- [x] Public event page, guest ticketing, waitlist, scholarship and comp tickets
+- [x] Stripe Checkout on MakeHaven's account; only a signed webhook settles
+- [x] Sponsor page: card or invoice; a person approves anything listed publicly
+- [x] Separate opt-ins, changeable from an emailed link; attendee list by consent
+- [x] Short checkout, optional contextual introduction, searchable space picker with logos, explained connections and private profile draft handoff; five browser workflow checks (2026-11-14)
+- [x] Referral links per space; counts on Your space, names only by opt-in
+- [x] Steward page: break-even, roster and check-in, codes, CSV, network follow-up
+- [x] **Infrastructure**: billing, Postmark, restricted Stripe test key and webhook, event Functions deployed 2026-11-14; test email delivered
+- [x] Complete test-card checkout, webhook settlement, confirmation and refund delivery; close the temporary test event (2026-11-14)
+- [x] Configure and deploy live Stripe key and webhook secret; verify active bindings, unpaid checkout creation/expiry and local signature checks (2026-11-14)
+- [ ] Publish Bonanza after settling times and terms
+- [ ] Settle the gaps in `data/events/maker-bonanza-2027.json`
+- [x] Self-service refund until the catering count, transfer after it
+
+### Phase 0d — Makers *(Functions deployed; production uploads unverified)*
+
+Everyone who makes things, with or without a space, and a pool of collaborators and
+instructors for the spaces. Spec: `docs/GOVERNANCE.md` §Makers.
+
+- [x] Self-described profile with photos of work; each person chooses who sees it
+- [x] Public Makers page, filter by craft and by what people are open to
+- [x] A person's look at each photo; attendance earned from check-in, not claimed
+- [x] Fellow attendees see shared profiles through their event link
+- [x] Home: what needs you, your tickets, your profile and your space; sign-in returns you to where you were
+- [x] My network asks someone with no space "Are you connected to a makerspace?": a member picks it (saved on a hidden maker profile), staff go to Join, and anyone can see the three nearest spaces by ZIP, public ones first (Census ZCTA points, data/geo/us-ct-zcta.json). A ZIP suggests; it never assigns (2026-11-18)
+- [ ] Switch on Storage for photos
+- [ ] An open makers mailing list; groups still require `verified`
+- [ ] Prefill a profile from a registration
+- [ ] Demand by town, aggregate only, for the state's inventory work
 
 ### Phase 1 — Standards of Excellence *(done; moved into the site)*
 
@@ -262,6 +310,29 @@ the network with `region_ids`, and get a working site.
    determine who is a recognised issuer. That turns a self-assessment tool into
    an access-control input, which raises the stakes on governance and appeals.
    Settle this before asking a non-MakeHaven space to trust it.
+
+8. **A member app: MakeHaven's or the network's.** Leaning network, discussed
+   2026-11-17, not yet scoped. The split:
+   - *Network app* — what a member carries between spaces: the OB 3.0
+     credential wallet (RECIPROCITY needs one), maker profile, events and
+     tickets, directory, people. Works for a member of any space, including
+     one with no software.
+   - *Space's own system* — billing, door access, tool reservations, storage,
+     the authorisation ledger. These stay in each space's system of record
+     (Drupal at MakeHaven); the app links out rather than owning them, or it
+     becomes a management system competing with Fabman, Nexudus and the rest.
+   - *Spaces connect by standards, not custom code* — OIDC sign-in ("Join
+     with your space's account"), OB 3.0 credentials in, SpaceAPI for live
+     state, deep links to the space's portal. MakeHaven implements all of
+     them first, so it is the richest experience without being a special case.
+   - Don't generalise from one integration: build MakeHaven's plainly and
+     pull out the contract when a second space connects.
+   - PWA on the existing React site before any native app; go native only for
+     something a PWA can't do (e.g. NFC at the door).
+
+   Open: what the app does day to day. If it is mostly MakeHaven operations,
+   that belongs in MakeHaven's stack and the network supplies sign-in and
+   credentials only.
 
 ## Outreach owed
 

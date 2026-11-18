@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { can } from '../capabilities';
 import { listFeedback, type Feedback } from '../feedback';
-import { listSummaries, type AssessmentSummary } from '../standardsData';
+import { listSummaries, summariesFor, type AssessmentSummary } from '../standardsData';
 import { levelLabel } from '../../standards/framework';
 import { REGIONS, SPACES, VOCAB, label, spaceById } from '../../data';
-import { listListingSubmissions, listingFromRecord, markListingMerged, type ListingAnswers, type ListingSubmission } from '../spaceData';
+import { listListingSubmissions, listingFromRecord, markListingMerged, upgradeListing, type ListingAnswers, type ListingSubmission } from '../spaceData';
 import {
   listMembershipsVisibleTo, listRoster, loadPeople, listSpaceIndex, setMembership, setSizeTier, syncSpaceIndex,
   listStewardships, findPersonByEmail, grantStewardship, addPartnerOrg, addGroupMembers, listGroups, mergeOrganisation,
 } from '../db';
 import { normalizeUrl, stateName, US_STATES, type Group, type Membership, type PartnerType, type Person, type SpaceIndex, type Stewardship, type SizeTier, type SpaceRole } from '../model';
+import { MakersReviewTab } from './MakerEdit';
 import { FUNCTIONS, PARTNER_TYPES, PageLink, SignIn, StatusPill, csvEsc, download, functionLabel, partnerTypeLabel, roleLabel, stewardRegionIds } from './shared';
 import { MeetingForm, MeetingsTab } from './Meetings';
 import { InvitationsTab } from './Invitations';
@@ -23,10 +24,10 @@ type Row = Membership & { id: string; person?: Person; space?: SpaceIndex; roste
 export default function Steward() {
   const s = useSession();
   const allowed = can(s, 'steward.view') || s.memberships.some((m) => m.status === 'active' && m.role === 'space_admin');
-  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'listings' | 'stewards' | 'feedback';
+  type Tab = 'people' | 'invitations' | 'meetings' | 'spaces' | 'listings' | 'stewards' | 'feedback' | 'makers';
   const [tab, setTab] = useState<Tab>(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    return (['people', 'invitations', 'meetings', 'spaces', 'listings', 'stewards', 'feedback'] as const).find((x) => x === t) ?? 'people';
+    return (['people', 'invitations', 'meetings', 'spaces', 'listings', 'stewards', 'feedback', 'makers'] as const).find((x) => x === t) ?? 'people';
   });
 
   return (
@@ -43,7 +44,7 @@ export default function Steward() {
       </section>
       <div className="wrap" style={{ paddingTop: 10, paddingBottom: 60 }}>
         {s.status === 'loading' && <p>Loading…</p>}
-        {s.status === 'signed_out' && <div className="narrow"><SignIn /></div>}
+        {s.status === 'signed_out' && <div className="narrow"><SignIn context="organisation" why="Sign in with the account you use to manage the network." /></div>}
         {s.status === 'signed_in' && !allowed && (
           <p className="notice narrow">This page is for regional stewards, network admins and space admins. <PageLink page="join">Your profile</PageLink>.</p>
         )}
@@ -57,6 +58,8 @@ export default function Steward() {
               {!!s.stewardship && <button className={tab === 'listings' ? 'on' : ''} onClick={() => setTab('listings')}>Listings</button>}
               {s.stewardship?.network_admin && <button className={tab === 'stewards' ? 'on' : ''} onClick={() => setTab('stewards')}>Stewards</button>}
               {!!s.stewardship && <button className={tab === 'feedback' ? 'on' : ''} onClick={() => setTab('feedback')}>Feedback</button>}
+              {!!s.stewardship && <button className={tab === 'makers' ? 'on' : ''} onClick={() => setTab('makers')}>Makers</button>}
+              {!!s.stewardship && <PageLink page="event-admin" params={{ event: 'maker-bonanza-2027' }}>Maker Bonanza</PageLink>}
             </div>
             {tab === 'people' && <PeopleTab />}
             {tab === 'invitations' && <InvitationsTab />}
@@ -65,6 +68,7 @@ export default function Steward() {
             {tab === 'listings' && <ListingsTab />}
             {tab === 'stewards' && <StewardsTab />}
             {tab === 'feedback' && <FeedbackTab />}
+            {tab === 'makers' && <MakersReviewTab />}
           </>
         )}
       </div>
@@ -238,9 +242,15 @@ function SpacesTab() {
   }, [rows]);
   const list = [...spaces.values()].sort((a, b) => (a.kind === 'partner' ? 1 : 0) - (b.kind === 'partner' ? 1 : 0) || a.name.localeCompare(b.name));
   const unsynced = SPACES.filter((sp) => !spaces.has(sp.id)).length;
-  // Standards summaries a space chose to share. Only stewards may list them.
+  // Standards summaries a space chose to share: the network admin lists them;
+  // a regional steward reads its own region's spaces one by one.
   const [levels, setLevels] = useState<Map<string, AssessmentSummary>>(new Map());
-  useEffect(() => { if (s.stewardship) listSummaries().then(setLevels).catch(() => undefined); }, [s.stewardship]);
+  useEffect(() => {
+    const st = s.stewardship;
+    if (!st) return;
+    const mine = [...spaces.values()].filter((x) => x.kind !== 'partner' && !!x.region_id && st.region_ids.includes(x.region_id)).map((x) => x.id);
+    (st.network_admin ? listSummaries() : summariesFor(mine)).then(setLevels).catch(() => undefined);
+  }, [s.stewardship, spaces]);
 
   return (
     <>
@@ -395,26 +405,33 @@ function ListingsTab() {
 }
 
 const LISTING_LABELS: Record<keyof ListingAnswers, string> = {
-  summary: 'Summary', capabilities: 'What people can make', access_model: 'Access', public_access: 'Open to non-members',
-  membership_models: 'Ways to use the space', monthly_cost_min: 'Monthly cost from', monthly_cost_max: 'Monthly cost up to',
+  summary: 'Summary', capabilities: 'What people can make', capability_levels: 'How much of each', access_model: 'Access', public_access: 'Open to non-members',
+  membership_models: 'How people get access', eligibility: 'Who can use it', monthly_cost_min: 'Monthly cost from', monthly_cost_max: 'Monthly cost up to',
   day_pass_usd: 'Day pass', minor_policy: 'Young people', hours_note: 'Hours', email: 'Email', phone: 'Phone', notes: 'Note to the steward',
 };
 const VOCAB_FOR: Partial<Record<keyof ListingAnswers, keyof typeof VOCAB>> = {
-  capabilities: 'Capability', access_model: 'AccessModel', membership_models: 'MembershipModel', minor_policy: 'MinorPolicy',
+  capabilities: 'Capability', access_model: 'AccessModel', membership_models: 'MembershipModel', eligibility: 'Eligibility', minor_policy: 'MinorPolicy',
 };
 
 function ListingDiff({ sub, onMerged }: { sub: ListingSubmission & { id: string }; onMerged: () => Promise<unknown> }) {
   const onFile = listingFromRecord(spaceById(sub.id));
+  const theirs = upgradeListing(sub.listing);
   const say = (k: keyof ListingAnswers, v: unknown): string => {
     if (v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)) return '—';
+    if (k === 'capability_levels') {
+      const e = Object.entries(v as Record<string, string>);
+      return e.length ? e.map(([c, l]) => `${label('Capability', c)}: ${label('CapabilityLevel', l)}`).join('; ') : '—';
+    }
     const voc = VOCAB_FOR[k];
     if (Array.isArray(v)) return v.map((x) => (voc ? label(voc, x) : x)).join(', ');
     if (typeof v === 'boolean') return v ? 'Yes' : 'No';
     return voc ? label(voc, String(v)) : String(v);
   };
-  const same = (a: unknown, b: unknown) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a ?? null) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b ?? null)
-    || (!a && !b);
-  const changes = (Object.keys(LISTING_LABELS) as (keyof ListingAnswers)[]).filter((k) => !same(onFile[k], sub.listing[k]));
+  const norm = (x: unknown) => Array.isArray(x) ? [...x].sort()
+    : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).sort(([p], [q]) => p.localeCompare(q))) : x ?? null;
+  const empty = (x: unknown) => !x || (typeof x === 'object' && !Object.keys(x).length);
+  const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b)) || (empty(a) && empty(b));
+  const changes = (Object.keys(LISTING_LABELS) as (keyof ListingAnswers)[]).filter((k) => !same(onFile[k], theirs[k]));
   return (
     <div className="card form-card" style={{ marginBottom: 12 }}>
       <div className="card-top">
@@ -428,7 +445,7 @@ function ListingDiff({ sub, onMerged }: { sub: ListingSubmission & { id: string 
             <thead><tr><th>Field</th><th>On file</th><th>They say</th></tr></thead>
             <tbody>
               {changes.map((k) => (
-                <tr key={k}><td>{LISTING_LABELS[k]}</td><td className="muted">{say(k, onFile[k])}</td><td><strong>{say(k, sub.listing[k])}</strong></td></tr>
+                <tr key={k}><td>{LISTING_LABELS[k]}</td><td className="muted">{say(k, onFile[k])}</td><td><strong>{say(k, theirs[k])}</strong></td></tr>
               ))}
             </tbody>
           </table>

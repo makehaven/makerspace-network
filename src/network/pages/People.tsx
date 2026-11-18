@@ -39,18 +39,17 @@ export default function People() {
     <>
       <section className="hero">
         <div className="wrap narrow">
-          <p className="eyebrow">People</p>
+          <p className="eyebrow">Space and partner roster</p>
           <h1>Who's at the other spaces</h1>
           <p className="lede">
-            Verified people at makerspaces across the network, in every state, and at the
-            agencies, funders and organisations that work with them. Find the person who does
-            what you do somewhere else, and reach them.
+            Verified people at makerspaces in the network, and at agencies, funders and other
+            organisations that work with them. Find the person who does your job at another space.
           </p>
         </div>
       </section>
       <div className="wrap" style={{ paddingTop: 26, paddingBottom: 60 }}>
         {s.status === 'loading' && <p>Loading…</p>}
-        {s.status === 'signed_out' && <div className="narrow"><SignIn why="This page is only visible to people verified at a makerspace." /></div>}
+        {s.status === 'signed_out' && <div className="narrow"><SignIn context="organisation" why="This page is only visible to people verified at a makerspace." /></div>}
         {s.status === 'signed_in' && !allowed && (
           <div className="notice narrow">
             {s.memberships.some((m) => m.status === 'pending')

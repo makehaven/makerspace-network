@@ -17,6 +17,7 @@ export interface Operations {
   public_access?: boolean;
   tax_status?: string;
   membership_models?: string[];
+  eligibility?: string;
   monthly_cost_usd?: { min?: number; max?: number; as_of?: string };
   day_pass_usd?: number;
   minor_policy?: string;
@@ -46,6 +47,8 @@ export interface Space {
   logo_url?: string; photo_url?: string;
   operations?: Operations;
   capabilities?: string[];
+  /** Capability id → CapabilityLevel id (basic, equipped, full_shop), where known. */
+  capability_levels?: Record<string, string>;
   equipment?: { capability: string; brand?: string; model?: string; count?: number; notes?: string }[];
   endpoints?: { spaceapi?: string; ical?: string; rss?: string };
   external_refs?: { system: string; id: string; url?: string }[];
@@ -61,10 +64,13 @@ export interface Region {
   summary?: string;
   steward?: { organization?: string; contact?: string; note?: string };
   counties?: string[];
+  /** An event to feature on the region's page. Static, so the directory still loads no Firebase. */
+  featured_event?: { id: string; title: string; date_label: string; blurb: string };
 }
 
 export interface EnumEntry {
-  id: string; label: string; domain?: string;
+  id: string; label: string; domain?: string; description?: string;
+  deprecated?: boolean; replaced_by?: string[];
   okw?: string; fablabs_io?: string; nexus?: string;
   url?: string; license?: string;
 }

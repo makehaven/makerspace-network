@@ -16,7 +16,7 @@ import {
 } from './model';
 
 const now = () => new Date().toISOString();
-type WithId<T> = T & { id: string };
+export type WithId<T> = T & { id: string };
 
 // ---------- reads ----------
 
@@ -340,16 +340,19 @@ export async function syncSpaceIndex(spaces: Space[], regions: Region[]) {
   for (const s of spaces) {
     const prev = existing.get(s.id);
     const regionId = s.region_ids?.[0] ?? null;
+    // A closed space's lapsed domain must not let its new owner claim the
+    // space by email domain (firestore.rules domainMatches), or be linked.
+    const website = s.status === 'closed' ? null : s.contact?.website ?? null;
     const entry: SpaceIndex = {
       name: s.name,
       kind: 'makerspace',
       partner_type: null,
-      domain: domainOfUrl(s.contact?.website),
+      domain: domainOfUrl(website),
       state: s.address?.region ?? regions.find((r) => r.id === regionId)?.region_code ?? null,
       region_id: regionId,
       size_tier: prev?.size_tier ?? s.size_tier ?? null,
       proposed: false,
-      website: s.contact?.website ?? null,
+      website,
       city: s.address?.locality ?? null,
       claimed: prev?.claimed ?? false,
       updated_at: t,
@@ -697,4 +700,38 @@ export async function replyToThread(gid: string, tid: string, thread: GroupThrea
 export async function moderatePost(actor: string, gid: string, tid: string, pid: string, status: 'queued' | 'rejected') {
   await updateDoc(doc(db, 'groups', gid, 'threads', tid, 'posts', pid), { status });
   await audit(actor, 'group_post_moderated', { group: gid, thread: tid, post: pid, status });
+}
+
+// ---------- events: what a space's staff see (full admin is in pages/EventAdmin) ----------
+
+/** Events currently worth telling a community about, with this space's counts.
+ *  The counts document is absent until someone connected to the space registers. */
+export async function eventsForSpace(spaceId: string) {
+  const open = await getDocs(query(collection(db, 'events'), where('status', 'in', ['announced', 'open'])));
+  return Promise.all(open.docs.map(async (d) => {
+    const stats = await getDoc(doc(db, 'event_space_stats', `${d.id}~${spaceId}`)).catch(() => null);
+    const data = stats?.exists() ? stats.data() : null;
+    return {
+      id: d.id,
+      title: d.get('title') as string,
+      date_label: d.get('date_label') as string,
+      public_url: d.get('public_url') as string,
+      // The live price, not the one copied into the kit when it was made.
+      member_price_cents: ((d.get('tiers') ?? []) as { id: string; price_cents: number }[]).find((t) => t.id === 'member')?.price_cents ?? null,
+      home: (data?.home ?? 0) as number,
+      referred: (data?.referred ?? 0) as number,
+      people: (data?.people ?? []) as { name: string; email: string }[],
+      partner: (await getDoc(doc(db, 'event_partners', `${d.id}~${spaceId}`)).catch(() => null))?.exists() ?? false,
+      // Organisers only; made by a Function a moment after the space becomes a partner.
+      kit: ((await getDoc(doc(db, 'event_partner_kits', `${d.id}~${spaceId}`)).catch(() => null))?.data() ?? null) as
+        { seat_code: string; member_code: string; member_uses: number; member_price_cents: number } | null,
+    };
+  }));
+}
+
+/** A space agreeing to promote an event to its members, or changing its mind. */
+export async function setEventPartner(eventId: string, spaceId: string, spaceName: string, uid: string, on: boolean) {
+  const ref = doc(db, 'event_partners', `${eventId}~${spaceId}`);
+  if (on) await setDoc(ref, { event_id: eventId, space_id: spaceId, space_name: spaceName, agreed_by: uid, created_at: new Date().toISOString() });
+  else await deleteDoc(ref);
 }

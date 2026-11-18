@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS, label, REPO_URL } from '../data';
+import { openFeedback } from '../components/FeedbackButton';
 
 export default function Achievements() {
   return (
@@ -8,9 +9,9 @@ export default function Achievements() {
           <p className="eyebrow">Draft framework</p>
           <h1>Badges that travel</h1>
           <p className="lede">
-            If you learned the table saw at one space, that should mean something at the next
-            one. Making it mean something takes a shared definition of what was actually
-            assessed — not a shared badge.
+            If you learned the table saw at one space, the next space should be able to see
+            what you were checked on. That takes a shared definition of the skills, not a
+            shared badge.
           </p>
         </div>
       </section>
@@ -18,13 +19,12 @@ export default function Achievements() {
       <div className="wrap narrow prose" style={{ paddingTop: 26 }}>
         <h2>The problem</h2>
         <p>
-          MakeHaven issues a <em>SawStop</em> badge, not a table saw badge. That is not sloppy —
-          the shop manager filmed the training on the machine that is actually in the room, and
-          a video hedging about where your saw's riving knife might be is a worse video.
-          Tool-specific training is better training. It is also non-portable.
+          MakeHaven issues a <em>SawStop</em> badge, because its training video was filmed on the
+          SawStop in its shop. Training on the actual machine is better training, but the badge
+          means less at a space with a different saw.
         </p>
 
-        <h2>A badge is two things wearing one name</h2>
+        <h2>What a badge covers</h2>
         <div className="scroll-x">
           <table className="data">
             <thead><tr><th></th><th>Transfers</th><th>Example</th></tr></thead>
@@ -41,13 +41,13 @@ export default function Achievements() {
           </table>
         </div>
         <p>
-          Only the first belongs in a credential. So the network publishes <em>achievements</em>;
-          a space keeps its own badges and <em>aligns</em> them. Nobody renames anything.
+          Only competence can be shared between spaces. The network publishes shared skill
+          definitions, called <em>achievements</em>. Each space keeps its own badges and maps
+          them to the achievements.
         </p>
         <p>
-          Which means a credential is not a key. It substitutes for the competence assessment,
-          never for the local orientation — the receiving space still walks you to the machine
-          and shows you the stop button, which they were always going to do.
+          A badge from another space can replace the skills check, but not the local
+          orientation. The receiving space still shows you the machine and its stop button.
         </p>
 
         <h2>Definitions</h2>
@@ -85,26 +85,26 @@ export default function Achievements() {
           </div>
         ))}
 
-        <h2>The asymmetry</h2>
+        <h2>When one machine teaches different habits</h2>
         <p>
-          Training on a SawStop <em>adds</em> knowledge — the brake cartridge, bypass mode, that
-          wet stock will fire it. That is a short addendum at another shop, not another badge.
+          Training on a SawStop <em>adds</em> things to know: the brake cartridge, bypass mode,
+          and that wet wood will fire the brake. Another shop can cover those in a short
+          addendum.
         </p>
         <p>
-          But it can also <em>subtract</em>. A video shot on a braked saw has little reason to
-          discuss operating without one, and habits formed with a safety net travel to shops
-          that have none. So the definition carries that as its own critical item — which turns
-          the conversation with a shop manager from "your badge is too specific" into "add ninety
-          seconds to the video." That is a request someone will say yes to.
+          It can also leave something out. A video filmed on a saw with a brake may not cover
+          working without one, and members who learned with the brake may carry those habits to
+          shops without it. So the definition lists this as a critical item. For most shops that
+          means adding a minute or two to the training video.
         </p>
 
         <div className="notice info">
-          <h4>These are drafts, and deliberately so</h4>
+          <h4>These are drafts</h4>
           <p style={{ margin: '4px 0 0' }}>
-            A definition written by one space is a draft, not a standard — the validator
-            enforces that. If you run a shop and this checklist is wrong, missing something, or
-            asks for something nobody actually tests,{' '}
-            <a href={`${REPO_URL}/blob/main/docs/ACHIEVEMENTS.md`}>that is the useful feedback</a>.
+            A definition stays a draft until more than one space has reviewed it. If you run a
+            shop and a checklist is wrong or missing something,{' '}
+            <button type="button" className="linkish" onClick={() => openFeedback('Feedback on the badge checklists: ')}>tell us</button>.
+            The full write-up is <a href={`${REPO_URL}/blob/main/docs/ACHIEVEMENTS.md`}>on GitHub</a>.
           </p>
         </div>
       </div>

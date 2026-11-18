@@ -34,6 +34,12 @@ network ran and which the spaces supplied them to. Any space that would rather
 not appear with its mark can have it removed on request; nothing else about the
 record depends on it.
 
+## Workshop photography
+
+The photographs in `public/photos/` are not covered by the directory-data or
+code licences. See that folder's README for sources and use context. They show
+MakeHaven and must not be attributed to other spaces.
+
 ## Attribution
 
 > Makerspace Network directory data, MakeHaven and contributors,

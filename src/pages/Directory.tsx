@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Region, Space } from '../types';
-import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, completeness } from '../data';
+import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, institutionalAccess } from '../data';
 import { href, navigate } from '../App';
 import RegionMap from '../components/RegionMap';
 import Logo from '../components/Logo';
+import WorkshopPhoto from '../components/WorkshopPhoto';
+import PhotoSlideshow from '../components/PhotoSlideshow';
+import MakingIcon, { MAKING_CATEGORIES } from '../components/MakingIcon';
+import { useUrlFilters, setQueryValues } from '../useUrlFilters';
 
 type Facet = 'county' | 'capability' | 'access' | 'flags';
 
 interface Filters {
   q: string;
+  domain: string;
   counties: Set<string>;
   capabilities: Set<string>;
   access: Set<string>;
@@ -18,8 +23,20 @@ interface Filters {
 }
 
 const empty: Filters = {
-  q: '', counties: new Set(), capabilities: new Set(), access: new Set(),
+  q: '', domain: '', counties: new Set(), capabilities: new Set(), access: new Set(),
   publicOnly: false, minorsOnly: false, lendingOnly: false,
+};
+
+const readFilters = (q: URLSearchParams): Filters => ({
+  q: q.get('q') ?? '', domain: q.get('domain') ?? '', counties: new Set(q.getAll('county')),
+  capabilities: new Set(q.getAll('capability')), access: new Set(q.getAll('access')),
+  publicOnly: q.get('public') === '1', minorsOnly: q.get('minors') === '1', lendingOnly: q.get('lending') === '1',
+});
+const writeFilters = (q: URLSearchParams, f: Filters) => {
+  for (const [key, values] of Object.entries({ q: [f.q], domain: [f.domain], county: [...f.counties], capability: [...f.capabilities],
+    access: [...f.access], public: [f.publicOnly ? '1' : ''], minors: [f.minorsOnly ? '1' : ''], lending: [f.lendingOnly ? '1' : ''] })) {
+    setQueryValues(q, key, values);
+  }
 };
 
 const MINORS_OK = new Set(['minors_with_adult', 'minors_in_programs', 'minors_members', 'primarily_youth']);
@@ -38,18 +55,22 @@ const LEADS_MIN_CAPABILITIES = 4;
 
 const leads = (s: Space) =>
   (s.capabilities?.length ?? 0) >= LEADS_MIN_CAPABILITIES &&
-  s.operations?.public_access !== false;
+  institutionalAccess(s) === null;
 
 /** Why a space is in the second tier, said plainly on its card. */
 const whyBelow = (s: Space): string => {
-  if (s.operations?.public_access === false) return 'Its own students and staff';
-  if ((s.capabilities?.length ?? 0) === 0) return 'Nothing on file yet';
-  return 'Small toolset on file';
+  const access = institutionalAccess(s);
+  const place = s.kind === 'school_makerspace' ? 'School space' : 'Campus space';
+  if (access === 'restricted') return s.kind === 'university_makerspace' || s.kind === 'school_makerspace' ? `${place}: its own students and staff only` : 'Its own members or affiliates only';
+  if (access === 'unconfirmed') return `${place}: probably its own students and staff`;
+  if ((s.capabilities?.length ?? 0) === 0) return 'Details not yet confirmed';
+  return 'Some tools confirmed';
 };
 
 /** `skip` lets a facet count itself against everything *except* its own
  *  selections, so the numbers beside each checkbox stay useful. */
 function matches(s: Space, f: Filters, skip?: Facet): boolean {
+  if (f.domain && !(s.capabilities ?? []).some((id) => CAPABILITIES.some((c) => c.id === id && c.domain === f.domain))) return false;
   if (f.q) {
     const hay = [s.name, s.summary, s.address?.locality, s.address?.county,
                  ...(s.capabilities ?? []).map((c) => label('Capability', c))]
@@ -95,14 +116,25 @@ function Check({ checked, onChange, children, count }:
   );
 }
 
-function Card({ s }: { s: Space }) {
+const SHORT_ACCESS: Record<string, string> = {
+  member_24_7: '24/7 member access', member_extended_hours: 'Extended member hours',
+  staffed_hours_only: 'Staffed hours only', scheduled_open_hours: 'Community hours',
+  appointment_only: 'By appointment', host_institution_hours: 'Library / campus hours',
+};
+const SHORT_CAPABILITY: Record<string, string> = {
+  three_d_printing_fdm: '3D printing · FDM', three_d_printing_resin: 'Resin printing',
+  laser_cutting: 'Laser cutting', cnc_router: 'CNC router', metalworking_machine: 'Machine shop',
+  woodworking_machine: 'Woodshop', woodworking_hand: 'Hand woodworking',
+  electronics_bench: 'Electronics & soldering', printmaking: 'Printmaking', welding_mig_tig: 'Welding',
+};
+function Card({ s, domain = '' }: { s: Space; domain?: string }) {
   const ops = s.operations ?? {};
-  const caps = s.capabilities ?? [];
+  const caps = [...(s.capabilities ?? [])].sort((a, b) => Number(CAPABILITIES.some((c) => c.id === b && c.domain === domain)) - Number(CAPABILITIES.some((c) => c.id === a && c.domain === domain)));
   const where = [s.address?.locality, s.address?.county && `${s.address.county} County`]
     .filter(Boolean).join(' · ');
 
   return (
-    <a className="card" href={href('space', { space: s.id })}
+    <a className="card space-list-card" href={href('space', { space: s.id })}
        onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('space', { space: s.id }); }}>
       <div className="card-head">
         <Logo space={s} />
@@ -112,33 +144,26 @@ function Card({ s }: { s: Space }) {
             {where && <span className="where">{where}</span>}
           </div>
 
-          {s.summary ? (
-            <p className="summary">{s.summary}</p>
-          ) : (
-            // The map-pin imports carry a name and a location and nothing else.
-            // Say so, rather than leaving a card that looks broken.
-            <p className="summary" style={{ color: 'var(--ink-3)' }}>
-              Known to be here, but nothing about it is confirmed yet.
-            </p>
-          )}
-
           <div className="facts">
-            <span className="fact"><span className="k">Type</span> {label('SpaceKind', s.kind)}</span>
-            {ops.access_model && <span className="fact"><span className="k">Access</span> {label('AccessModel', ops.access_model)}</span>}
+            {s.kind !== 'community_makerspace' && <span className="fact">{label('SpaceKind', s.kind)}</span>}
+            {ops.access_model && <span className="fact">{SHORT_ACCESS[ops.access_model] ?? label('AccessModel', ops.access_model)}</span>}
             {ops.monthly_cost_usd?.min !== undefined && (
               <span className="fact"><span className="k">From</span> ${ops.monthly_cost_usd.min}/mo</span>
             )}
             {ops.public_access === true && <span className="fact">Open to non-members</span>}
+            {institutionalAccess(s) === 'restricted' && <span className="fact restricted">Own students and staff only</span>}
+            {institutionalAccess(s) === 'unconfirmed' && <span className="fact restricted">Public access not confirmed</span>}
           </div>
 
           {caps.length > 0 && (
             <div className="tags">
-              {caps.slice(0, 6).map((c) => <span className="tag" key={c}>{label('Capability', c)}</span>)}
-              {caps.length > 6 && <span className="tag more">+{caps.length - 6} more</span>}
+              {caps.slice(0, 3).map((c) => <span className="tag" key={c}>{SHORT_CAPABILITY[c] ?? label('Capability', c)}</span>)}
+              {caps.length > 3 && <span className="tag more">+{caps.length - 3} more</span>}
             </div>
           )}
         </div>
       </div>
+      {s.id === 'makehaven' && <div className="space-card-photo"><WorkshopPhoto photo="woodworking" /><span>Inside MakeHaven</span></div>}
     </a>
   );
 }
@@ -161,7 +186,7 @@ function MiniCard({ s }: { s: Space }) {
 
 export default function Directory({ region }: { region: Region }) {
   const all = useMemo(() => spacesIn(region), [region]);
-  const [f, setF] = useState<Filters>(empty);
+  const [f, setF] = useUrlFilters(readFilters, writeFilters);
 
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((p) => ({ ...p, [k]: v }));
   const toggle = (k: 'counties' | 'capabilities' | 'access', v: string) =>
@@ -180,26 +205,17 @@ export default function Directory({ region }: { region: Region }) {
     [all],
   );
   const presentCaps = useMemo(() => new Set(all.flatMap((s) => s.capabilities ?? [])), [all]);
-  const active = f.q || f.counties.size || f.capabilities.size || f.access.size ||
+  const active = f.q || f.domain || f.counties.size || f.capabilities.size || f.access.size ||
                  f.publicOnly || f.minorsOnly || f.lendingOnly;
 
-  const thin = all.filter((s) => completeness(s).missing.length > 3).length;
 
   const narrow = useNarrow();
   const activeCount =
     f.counties.size + f.capabilities.size + f.access.size +
-    (f.q ? 1 : 0) + (f.publicOnly ? 1 : 0) + (f.minorsOnly ? 1 : 0) + (f.lendingOnly ? 1 : 0);
+    (f.q ? 1 : 0) + (f.domain ? 1 : 0) + (f.publicOnly ? 1 : 0) + (f.minorsOnly ? 1 : 0) + (f.lendingOnly ? 1 : 0);
 
   const rail = (
     <>
-            <div className="filter-group">
-              <input
-                className="search" type="search" placeholder="Search name, town, tool…"
-                value={f.q} onChange={(e) => set('q', e.target.value)}
-                aria-label="Search spaces"
-              />
-            </div>
-
             <div className="filter-group">
               <h4>Getting in</h4>
               {ACCESS_MODELS.filter((a) => all.some((s) => s.operations?.access_model === a.id)).map((a) => (
@@ -274,40 +290,45 @@ export default function Directory({ region }: { region: Region }) {
   const rest = results.filter((s) => !leads(s));
 
   return (
-    <>
-      <section className="hero">
-        <div className="wrap hero-split">
-          <div>
-            <p className="eyebrow">{region.name} · {all.length} spaces</p>
-            <h1>Find a place to make something</h1>
-            <p className="lede">{region.summary}</p>
-            <div className="btn-row">
-              <a className="btn" href={href('join')}
-                 onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join'); }}>
-                Run a space here? Join the network
-              </a>
-              <a className="btn ghost" href={href('standards')}
-                 onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('standards'); }}>
-                Standards self-assessment
-              </a>
-            </div>
-          </div>
-          <dl className="hero-stats">
-            <div><dt>{all.filter(leads).length}</dt><dd>open workshops</dd></div>
-            <div><dt>{all.length - all.filter(leads).length}</dt><dd>library &amp; campus spaces</dd></div>
-            <div><dt>{counties.length}</dt><dd>counties</dd></div>
-            <div><dt>{presentCaps.size}</dt><dd>kinds of making on file</dd></div>
-          </dl>
+    <div className="discovery">
+      <section className="workshop-hero directory-hero wrap">
+        <div className="workshop-intro">
+          <h1>{region.name} makerspaces</h1>
+          <p className="workshop-lede">{all.length} spaces. Search by town, name or tool.</p>
+          <label className="directory-search"><span>Find a space</span>
+            <input className="search" type="search" placeholder="Try a town, space or tool…"
+              value={f.q} onChange={(e) => set('q', e.target.value)} aria-label="Search spaces" />
+          </label>
+          <a className="text-link" href="#spaces">View all spaces</a>
         </div>
+        {region.id === 'us-ct' && <PhotoSlideshow slides={[
+          { photo: 'woodworking', caption: 'A woodworking class at MakeHaven, New Haven' },
+          { photo: 'quilting', caption: 'Longarm quilting at MakeHaven, New Haven' },
+          { photo: 'welding', caption: 'Welding at MakeHaven, New Haven' },
+          { photo: 'bags', caption: 'Handmade bags at MakeHaven, New Haven' },
+        ]} />}
       </section>
 
-      <div className="wrap" style={{ paddingTop: narrow ? 16 : 30 }}>
+      <div className="wrap directory-body" id="spaces">
+        <div className="making-categories" role="group" aria-label="Explore by activity">
+          {MAKING_CATEGORIES.filter((d) => CAPABILITIES.some((c) => c.domain === d.id && presentCaps.has(c.id))).map((d) =>
+            <button key={d.id} aria-pressed={f.domain === d.id} onClick={() => set('domain', f.domain === d.id ? '' : d.id)}>
+              <MakingIcon domain={d.id} /><span>{d.label}</span>
+            </button>)}
+        </div>
+        {region.featured_event && (
+          <div className="notice info event-banner">
+            <span><strong>{region.featured_event.title}, {region.featured_event.date_label}.</strong> {region.featured_event.blurb}</span>
+            <a className="btn small" href={href('event', { event: region.featured_event.id })}
+               onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('event', { event: region.featured_event!.id }); }}>Find out more</a>
+          </div>
+        )}
         <div className="cols">
-          {/* On a phone the rail is not a column beside anything — it would sit
-              on top of the results. Move it below the map instead, folded. */}
+          {/* Keep detailed filters compact on phones; search stays in the hero. */}
           {!narrow && <aside className="filters">{rail}</aside>}
 
           <div>
+            <details className="directory-map"><summary>Explore the map</summary>
             <RegionMap
               regionName={region.name}
               all={all}
@@ -317,11 +338,12 @@ export default function Directory({ region }: { region: Region }) {
               isPrimary={leads}
               filtered={Boolean(active)}
             />
+            </details>
 
             {narrow && filterPanel}
 
             <div className="result-head">
-              <span className="result-count">
+              <span className="result-count" role="status">
                 {active
                   ? `${results.length} of ${all.length} spaces`
                   : `${headline.length} open workshops` +
@@ -334,30 +356,26 @@ export default function Directory({ region }: { region: Region }) {
               <div className="notice info">
                 <h4>Nothing matches that combination</h4>
                 <p>
-                  It may also be that the space exists and we do not have the field recorded yet —
-                  filters only match what has been confirmed.
+                  Try fewer filters. Results only include details we can confirm.
                 </p>
               </div>
             ) : active ? (
               // Someone who has filtered deliberately wants one list, not a
               // ranking of it.
               <div className="cards">
-                {results.map((s) => <Card key={s.id} s={s} />)}
+                {results.map((s) => <Card key={s.id} s={s} domain={f.domain} />)}
               </div>
             ) : (
               <>
                 <div className="cards">
-                  {headline.map((s) => <Card key={s.id} s={s} />)}
+                  {headline.map((s) => <Card key={s.id} s={s} domain={f.domain} />)}
                 </div>
 
                 {rest.length > 0 && (
                   <section>
                     <h2 className="tier-head">Also in {region.name}</h2>
                     <p className="tier-note">
-                      Library and campus workshops, and places we know exist but have not
-                      documented yet. Listed separately because they are open only to their
-                      own patrons, or because there is not yet enough on file to say what you
-                      could make there.
+                      More workshops, including campus spaces and listings with fewer confirmed details.
                     </p>
                     <div className="cards compact">
                       {rest.map((s) => <MiniCard key={s.id} s={s} />)}
@@ -367,24 +385,10 @@ export default function Directory({ region }: { region: Region }) {
               </>
             )}
 
-            {thin > 0 && !active && (
-              <div className="notice" style={{ marginTop: 30 }}>
-                <h4>Help fill these in</h4>
-                <p>
-                  {thin} of the {all.length} records are missing things a visitor wants —
-                  opening hours, cost, whether children are welcome. Every record says what it
-                  does not know rather than quietly leaving it blank, and filling those gaps is
-                  also what moves a space up this page. If you run one,{' '}
-                  <a href={href('for-spaces')}
-                     onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('for-spaces'); }}>
-                    claim your listing
-                  </a>.
-                </p>
-              </div>
-            )}
+            <p className="directory-owner"><a href={href('for-spaces')}>Run a space? Update your listing <span aria-hidden="true">→</span></a></p>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -19,6 +19,12 @@
       "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
       "retrieved": "2026-08-28",
       "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'Simsbury Public Library' pin and nothing else — the pin carried a name and a location, no other detail."
+    },
+    {
+      "system": "space_website",
+      "url": "https://simsbury.librarycalendar.com/events/feed/ical?program_types%5B46%5D=46",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: Simsbury Public Library calendar, program type 'Innovators' Workshop'. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -38,5 +44,8 @@
       "minor_policy",
       "capabilities"
     ]
+  },
+  "endpoints": {
+    "ical": "https://simsbury.librarycalendar.com/events/feed/ical?program_types%5B46%5D=46"
   }
 }
