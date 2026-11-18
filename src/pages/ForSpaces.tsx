@@ -10,7 +10,7 @@ export default function ForSpaces() {
     <>
       <section className="hero">
         <div className="wrap narrow">
-          <p className="eyebrow">For makerspaces</p>
+          <p className="eyebrow">For organisers</p>
           <h1>This is your listing, not ours</h1>
           <p className="lede">
             Every space in the directory is described from public sources, with the gaps
@@ -22,6 +22,16 @@ export default function ForSpaces() {
       </section>
 
       <div className="wrap narrow prose" style={{ paddingTop: 34 }}>
+        <section className="notice info">
+          <h2>Connect with other organisers</h2>
+          <p>Find your counterparts at other spaces and partner organisations, or join a group conversation. These areas are for verified network members.</p>
+          <div className="btn-row">
+            <a className="btn" href={href('people')}>Space and partner roster</a>
+            <a className="btn ghost" href={href('groups')}>Discussion groups</a>
+            <a className="btn ghost" href={href('home')}>My network</a>
+          </div>
+          <p>Looking for someone to make things with? <a href={href('makers')}>Meet makers in the public directory</a>.</p>
+        </section>
         <h2>Claim your listing</h2>
         <p>
           Sign in with an address at your space's own domain and pick your listing. If the
@@ -107,7 +117,7 @@ export default function ForSpaces() {
                 <td><a href={href('standards')}
                        onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('standards'); }}>Standards of Excellence</a></td>
                 <td>An 84-standard self-assessment, asking whether a space is <em>well run</em>
-                    rather than what equipment it owns. On your Home page, private to your staff;
+                    rather than what equipment it owns. In My network, private to your staff;
                     the network sees only a summary, and only if you share it.</td>
                 <td><span className="pill ok">Live</span></td>
               </tr>

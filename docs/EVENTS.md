@@ -1,7 +1,34 @@
 # Events
 
-**Status: built and tested in the emulator 2026-11-05. Not deployed.** Maker
-Bonanza (Friday, January 22, 2027) is the first event. The draft is in
+**Launch check, 2026-11-14:** frontend and all nine event / three maker Functions
+are deployed. Bonanza remains a private draft; real ticket sales are closed.
+Billing and deployment APIs are enabled. Stripe now uses the restricted **live**
+key and live webhook signing secret (Secret Manager version 2 for each). All four
+payment Functions were redeployed and verified ACTIVE with those versions. A live
+$50 card-only Checkout Session was created and immediately expired, unpaid. Both
+website hosts accept a locally signed live-mode configuration-check payload,
+ignore a test-mode payload and reject an invalid signature. These checks verify
+configuration, not a completed live payment or end-to-end Stripe delivery; no real
+charge was made.
+
+Postmark server **Makerspace Network** (21265663), stream `outbound`, is configured.
+The domain's DKIM and Return-Path are verified. Mail is sent from
+`network@makerspace.network`; Bonanza attendee replies go to `jrlogan@makehaven.org`.
+The requested test message was accepted by Google's mail server for that inbox.
+
+The organiser completed a $50 test-card checkout on `bonanza-checkout-test`.
+Stripe confirmed test mode and payment, the signed webhook settled registration,
+and Postmark reported the confirmation delivered. The organiser then used the
+self-service refund: Stripe reported `succeeded` for all 5,000 cents, registration
+became `refunded`, the place was released (zero registered), and Postmark reported
+the refund notice delivered. The temporary test event is now **closed**; its
+records are retained. The actual Bonanza draft's times and reviewed terms remain
+required before launch. Postmark credentials and sender are unchanged.
+
+All 33 logic, 34 rules, and 38 emulator workflow tests passed during setup; the
+logic tests and typechecks also passed after the API version / reply-address
+changes. The production frontend build passed. Maker Bonanza (Friday, January 22,
+2027) is the first event. The source draft is in
 `data/events/maker-bonanza-2027.json`, and its `gaps` list is what still needs a
 person's decision.
 
@@ -51,6 +78,40 @@ reading as MakeHaven's.
   Function's own URL could forge. Someone determined could hold seats with fake
   addresses for 31 minutes at a time. If that happens: close the tier, or turn on
   App Check.
+
+## Registration experience (2026-11-14)
+
+Checkout asks only for identity, ticket, terms/age acknowledgement and optional
+food/access needs. Sharing consents default to off. After confirmation, an optional
+three-step introduction asks about goals and roles, then relevant organiser-only
+questions, then a separate maker introduction and sharing choices. Every step
+saves through the existing authenticated-by-ticket manage endpoint; failures keep
+answers on screen. Returning attendees see a summary and can edit their introduction.
+
+The makerspace picker searches actual directory names and towns, shows existing
+logos and locations, and supports unlisted spaces or no space. Connections explain
+same-town listings (respecting a supplied state), shared space/event interests,
+and selected event threads. Attendee suggestions use only the existing opted-in
+attendee endpoint. There are no inferred skills or automatic introductions.
+
+The profile handoff carries only a registration ID. After sign-in, Firestore's
+existing owner-read rules plus a matching verified email protect the import.
+An explicit button copies only name, town/state, home space and the short maker
+introduction into the editor, preserving filled profile fields. A new imported
+draft starts hidden and is not saved automatically. Private challenges, dietary
+needs and access needs are never copied into a profile.
+
+The original Connecticut logo is restored on regional navigation and Connecticut
+events; its source is recorded in `public/brand/README.md`. Calendar downloads use
+the same iCalendar generator as confirmation emails and appear only when both
+start and end times are known. Refund and transfer controls remain available.
+
+Run `npm run test:events:browser` for the isolated browser workflow tests. It uses
+synthetic data and intercepted API responses, so it sends no mail or payments.
+Use `CHROME_BIN` for a local Chrome binary, or install Playwright Chromium with
+`npx playwright install chromium`. Tests cover validation, staged saving and
+failure recovery, mobile/keyboard search, sharing, connection filters, refunds,
+calendar contents and the profile import privacy boundary.
 
 ## How it works
 
@@ -124,20 +185,52 @@ have to. The Overview tab keeps this live once the budget is typed in.
 ## Connecting Stripe
 
 The money goes straight into MakeHaven's account, as MakeHaven is the fiduciary.
-Everything is in test mode until the live key goes in.
+Production uses live credentials as of 2026-11-14. Keep the setup-test event closed;
+never use the Stripe test card in live mode. The steps below describe both modes.
 
 1. **Restricted key** (Developers → API keys → Create restricted key), starting with
-   write on *Checkout Sessions* and *Refunds*. This has not been tried against real Stripe: if the
-   test purchase is refused, Stripe's error names the permission to add. Do not use
+   write on *Checkout Sessions* and *Charges and refunds*. Checkout creation,
+   expiry, completed test-card payment and full self-service refund have passed
+   against the real sandbox API with this restricted key. If a request is refused,
+   Stripe's error names the permission to add. Do not use
    the account's secret key: this project should hold no more power over MakeHaven's
    account than it needs.
 2. **Webhook endpoint**: `https://makerspace.network/api/events/stripe-webhook`,
    events `checkout.session.completed`, `checkout.session.expired`, `charge.refunded`.
+   In Workbench, select **Your account** and **Snapshot** payloads: this handler
+   reads the full `data.object`, not thin event notifications. Create the test
+   endpoint with API version **2026-10-28.endive**, as configured in the Dashboard.
+   Outbound Checkout/refund requests use **2025-09-30.clover**: a real sandbox
+   check found that Endive rejects `payment_method_types`, while Clover supports
+   our card-only checkout. Request and webhook versions are independently set;
+   the webhook handler reads the snapshot fields listed in `events.ts`. The full sandbox
+   payment/webhook/refund test passed on 2026-11-14. MakeHaven's account-wide default
+   API version is unchanged. Create the test
+   endpoint in the same sandbox as the test key, then a separate live endpoint
+   before accepting real payments. See [Stripe's webhook guide](https://docs.stripe.com/webhooks).
 3. **Secrets**:
    ```sh
    firebase functions:secrets:set STRIPE_KEY_MAKEHAVEN
    firebase functions:secrets:set STRIPE_WEBHOOK_SECRET_MAKEHAVEN
    ```
+
+   For a guided setup with explicit project/account selection, run this in your
+   own terminal from the repository root:
+   ```sh
+   bash scripts/configure-event-secrets.sh test
+   ```
+   It prompts for the restricted Stripe test key (`rk_test_...`), that endpoint's
+   signing secret (`whsec_...`), a Postmark server API token, and a verified sender
+   email. Blank inputs skip a setting. Inputs are hidden and piped directly to
+   Firebase Secret Manager; no credential file is written. It does not deploy
+   functions or publish the event. After the purchase/refund/email test, run with
+   `live` for the live restricted key and live webhook secret, skipping unchanged
+   Postmark settings, then redeploy the payment functions.
+
+   Use a dedicated Postmark server for Makerspace Network, with its transactional
+   `outbound` stream. Its From address must be verified in Postmark. Group mailing
+   list DNS and inbound mail are not required for event confirmations. See
+   [Postmark's setup guide](https://postmarkapp.com/developer/get-started).
 
 MakeHaven's Stripe account also serves the material store and lending library. Our
 webhook ignores any payment without `mn_kind` metadata. As read from their code on
@@ -155,10 +248,13 @@ where that hangs. It is not worth building for one account.
 1. Blaze plan on `makerspace-net`, and Postmark as in `docs/GROUPS.md`. The event
    mailers need `POSTMARK_SERVER_TOKEN` and `POSTMARK_FROM_EMAIL` to deploy.
 2. Stripe, as above, with test keys first.
-3. Deploy the event and maker Functions by name, which avoids needing the group mail
-   secrets yet, using `--account jrlogan@makehaven.org`:
+3. Deploy the event and maker Functions by name, using `--account jrlogan@makehaven.org`.
+   The installed CLI checks codebase-wide secret declarations before filtering
+   functions; if it also requests the group reply/inbound secrets, provision those
+   as independent random values per `docs/GROUPS.md`. Selecting functions by name
+   still keeps group mailers undeployed:
    ```sh
-   firebase deploy --only functions:eventRegister,functions:eventManage,functions:eventMine,functions:eventInterest,functions:eventSponsor,functions:eventStripeWebhook,functions:eventRegistrationChanged,functions:eventSponsorChanged,functions:eventChanged,functions:makerCreated,functions:makerDeleted,functions:makerWorkChanged
+   firebase deploy --project makerspace-net --account jrlogan@makehaven.org --only functions:eventRegister,functions:eventManage,functions:eventMine,functions:eventInterest,functions:eventSponsor,functions:eventStripeWebhook,functions:eventRegistrationChanged,functions:eventSponsorChanged,functions:eventChanged,functions:makerCreated,functions:makerDeleted,functions:makerWorkChanged
    ```
    Photo uploads also need Storage switched on once: Firebase console → Storage →
    Get started. Then `firebase deploy --only storage`.

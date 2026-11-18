@@ -143,7 +143,7 @@ export default function Home() {
     <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 50 }}>
       {s.status === 'loading' && <p>Loading…</p>}
       {s.status === 'signed_out' && <>
-        <h1 style={{ fontSize: '1.9rem' }}>Sign in</h1>
+        <h1 style={{ fontSize: '1.9rem' }}>My network</h1>
         <p className="muted">For makers and the people who run makerspaces: your tickets, your profile and your space, in one place.</p>
         <SignIn />
       </>}

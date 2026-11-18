@@ -9,6 +9,8 @@ import { SPACES } from '../../data';
 import { PageLink, SignIn } from './shared';
 import { US_STATES } from '../model';
 import { DISCIPLINES, LOOKING_FOR, OPEN_TO, blankMaker, type MakerDoc, type Visibility, type WorkDoc } from '../../makers/model';
+import { eventProfileDraft } from '../../makers/eventDraft';
+import { EMPTY_ANSWERS, type Answers } from '../../events/model';
 import { profileScore, profileSteps, safeWebUrl } from '../../../functions/src/makerLogic';
 
 // Loaded only when someone touches a photo. These pages share a bundle with the
@@ -69,6 +71,8 @@ export default function MakerEdit() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [site, setSite] = useState('');
+  const [eventDraft, setEventDraft] = useState<{ name: string; answers: Answers } | null>(null);
+  const [draftNotice, setDraftNotice] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadWork = async (u: string) => {
@@ -90,6 +94,20 @@ export default function MakerEdit() {
     })().catch((e) => setError(String(e)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
+
+  // Read through the existing owner-only rules after email verification. The
+  // link carries a registration ID, never an email address or bearer token.
+  useEffect(() => {
+    const registration = new URLSearchParams(window.location.search).get('registration');
+    if (!registration || !uid || !s.user?.emailVerified) return;
+    let live = true;
+    (async () => {
+      const d = await getDoc(doc(db, 'event_registrations', registration));
+      if (!d.exists() || d.get('email_lower') !== s.user?.email?.toLowerCase()) throw new Error();
+      if (live) setEventDraft({ name: d.get('name') as string, answers: { ...EMPTY_ANSWERS, ...d.get('answers') } });
+    })().catch(() => { if (live) setDraftNotice('Sign in with the email on your event ticket to use its introduction. You can also start a profile here from scratch.'); });
+    return () => { live = false; };
+  }, [uid, s.user?.emailVerified, s.user?.email]);
 
   const set = (patch: Partial<MakerDoc>) => { setM((x) => (x ? { ...x, ...patch } : x)); setSaved(false); };
 
@@ -152,11 +170,23 @@ export default function MakerEdit() {
       <p className="muted">You're a maker if you say you are. Show what you make so people can find you, to collaborate, to learn from you or to hire you.</p>
 
       {s.status === 'loading' && <p>Loading…</p>}
-      {s.status === 'signed_out' && <SignIn why="No password. Use whichever email you registered for an event with, and your attendance will show on your profile." />}
+      {s.status === 'signed_out' && <SignIn context={new URLSearchParams(window.location.search).has('registration') ? 'event' : 'maker'} />}
       {needsVerify && <p className="notice">Your email address needs verifying before you can make a profile. Sign out and use the emailed link.</p>}
 
       {s.status === 'signed_in' && m && !needsVerify && (
         <>
+          {draftNotice && <p className="notice" role="status">{draftNotice}</p>}
+          {eventDraft && <section className="card form-card">
+            <h2>Start with your event introduction</h2>
+            <p>{eventDraft.name} · {eventDraft.answers.town || 'Town not yet added'}</p>
+            <p>{eventDraft.answers.makes || 'You can add a short introduction below.'}</p>
+            <p className="muted">Only your name, town, makerspace and maker introduction are used. Private organiser answers stay with the event. Existing profile fields are kept.</p>
+            <button className="btn" onClick={() => {
+              set(eventProfileDraft(m, exists, eventDraft));
+              setEventDraft(null); setDraftNotice('Introduction added to this draft. Review it below and choose visibility before saving.');
+            }}>Use these details in my draft</button>
+            <button className="linkish" style={{ marginLeft: 16 }} onClick={() => setEventDraft(null)}>Start without these</button>
+          </section>}
           {exists && m.review === 'pending' && <p className="notice info">Thanks. A person takes a quick look at new profiles before others can see them. Anyone with an event ticket skips this.</p>}
           {m.review === 'hidden' && <p className="notice">A moderator has hidden this profile. Reply to any email from us, or write to info@makehaven.org, to talk about it.</p>}
           {facts && (

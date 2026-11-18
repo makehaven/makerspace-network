@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../network/firebase';
+import { useUrlFilters, setQueryValues } from '../useUrlFilters';
 import { SPACES } from '../data';
 import { href } from '../App';
 import { profileScore } from '../../functions/src/makerLogic';
@@ -17,22 +18,39 @@ export default function MakerPages({ id }: { id?: string }) {
   return id ? <MakerProfile id={id} /> : <MakerDirectory />;
 }
 
-function MakerDirectory() {
-  const [makers, setMakers] = useState<(MakerDoc & { id: string })[] | null>(null);
-  const [discipline, setDiscipline] = useState('');
-  const [openTo, setOpenTo] = useState('');
-  const [text, setText] = useState('');
+const readFilters = (q: URLSearchParams) => ({ discipline: q.get('discipline') ?? '', openTo: q.get('openTo') ?? '', text: q.get('q') ?? '' });
+const writeFilters = (q: URLSearchParams, f: ReturnType<typeof readFilters>) => {
+  setQueryValues(q, 'discipline', [f.discipline]); setQueryValues(q, 'openTo', [f.openTo]); setQueryValues(q, 'q', [f.text]);
+};
+type ListedMaker = MakerDoc & { id: string };
+async function loadMakers(): Promise<ListedMaker[]> {
+  await auth.authStateReady();
+  const pub = await getDocs(query(collection(db, 'makers'), where('visibility', '==', 'public'), where('review', '==', 'approved')));
+  // Community profiles require a maker profile of your own. Permission denied
+  // is expected for other visitors; network failures must remain visible.
+  const comm = auth.currentUser ? await getDocs(query(collection(db, 'makers'), where('visibility', '==', 'community'), where('review', '==', 'approved'))).catch((error: { code?: string }) => {
+    if (error.code === 'permission-denied') return null;
+    throw error;
+  }) : null;
+  return [...pub.docs, ...(comm?.docs ?? [])].map((d) => ({ id: d.id, ...(d.data() as MakerDoc) }));
+}
+
+export function MakerDirectory({ load = loadMakers }: { load?: () => Promise<ListedMaker[]> }) {
+  const [makers, setMakers] = useState<ListedMaker[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [filters, setFilters] = useUrlFilters(readFilters, writeFilters);
+  const { discipline, openTo, text } = filters;
+  const clearFilters = () => setFilters({ discipline: '', openTo: '', text: '' });
+  const filtered = !!(discipline || openTo || text);
 
   useEffect(() => {
-    document.title = 'Makers — Makerspace Network';
-    (async () => {
-      await auth.authStateReady();
-      const pub = await getDocs(query(collection(db, 'makers'), where('visibility', '==', 'public'), where('review', '==', 'approved')));
-      // Shared-with-the-community profiles only for someone who has a profile themselves; the rules refuse anyone else.
-      const comm = await getDocs(query(collection(db, 'makers'), where('visibility', '==', 'community'), where('review', '==', 'approved'))).catch(() => null);
-      setMakers([...pub.docs, ...(comm?.docs ?? [])].map((d) => ({ id: d.id, ...(d.data() as MakerDoc) })));
-    })().catch(() => setMakers([]));
-  }, []);
+    let active = true;
+    document.title = 'Meet makers — Makerspace Network';
+    setFailed(false); setMakers(null);
+    load().then((rows) => { if (active) setMakers(rows); }).catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [attempt, load]);
 
   const shown = useMemo(() => (makers ?? [])
     .filter((m) => !discipline || m.disciplines.includes(discipline))
@@ -54,18 +72,29 @@ function MakerDirectory() {
       <div className="wrap" style={{ paddingTop: 24, paddingBottom: 50 }}>
         <div className="maker-filters">
           <label className="field"><span>Works in</span>
-            <select value={discipline} onChange={(e) => setDiscipline(e.target.value)}>
+            <select value={discipline} onChange={(e) => setFilters({ ...filters, discipline: e.target.value })}>
               <option value="">Anything</option>{DISCIPLINES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
             </select></label>
           <label className="field"><span>Open to</span>
-            <select value={openTo} onChange={(e) => setOpenTo(e.target.value)}>
+            <select value={openTo} onChange={(e) => setFilters({ ...filters, openTo: e.target.value })}>
               <option value="">Anything</option>{OPEN_TO.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
             </select></label>
-          <label className="field"><span>Search</span><input value={text} onChange={(e) => setText(e.target.value)} placeholder="Name, town, what they make" /></label>
+          <label className="field"><span>Search makers</span><input type="search" value={text} onChange={(e) => setFilters({ ...filters, text: e.target.value })} placeholder="Name, town, what they make" /></label>
         </div>
-        {makers === null && <p style={{ marginTop: 20 }}>Loading…</p>}
-        {makers !== null && !makers.length && <p className="notice info" style={{ marginTop: 20 }}>Nobody here yet. <a href={editLink()}>Be the first</a>.</p>}
-        {makers !== null && makers.length > 0 && !shown.length && <p style={{ marginTop: 20 }}>Nobody matches that. Try fewer filters.</p>}
+        {filtered && <button className="clear" onClick={clearFilters}>Clear filters</button>}
+        {makers === null && !failed && <p role="status" style={{ marginTop: 20 }}>Loading makers…</p>}
+        {failed && <div className="notice" role="alert" style={{ marginTop: 20 }}>
+          <h2>We couldn't load the makers</h2>
+          <p>Your search is still here. Check your connection and try again.</p>
+          <button className="btn" onClick={() => setAttempt((n) => n + 1)}>Retry</button>
+        </div>}
+        {makers !== null && !makers.length && <div className="notice info" style={{ marginTop: 20 }}>
+          <h2>The maker directory is just getting started</h2>
+          <p>There are no profiles to show yet. Introduce yourself so other makers can find you.</p>
+          <a className="btn" href={editLink()}>Create your maker profile</a>
+        </div>}
+        {makers !== null && makers.length > 0 && <p role="status" style={{ marginTop: 20 }}>{shown.length} {shown.length === 1 ? 'maker' : 'makers'}{filtered ? ' match your search' : ' to meet'}.</p>}
+        {makers !== null && makers.length > 0 && !shown.length && <p>Try a different town, a broader search, or clear your filters.</p>}
         <div className="maker-grid">
           {shown.map((m) => (
             <a key={m.id} className="card maker-card" href={href('maker', { maker: m.id })}>

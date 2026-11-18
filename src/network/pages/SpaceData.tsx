@@ -33,7 +33,7 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
   }, [s.status, fresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (s.status === 'loading' || (s.status === 'signed_in' && !fresh)) return <div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>;
-  if (s.status === 'signed_out') return <div className="wrap narrow" style={{ paddingTop: 30 }}><SignIn /></div>;
+  if (s.status === 'signed_out') return <div className="wrap narrow" style={{ paddingTop: 30 }}><SignIn context="organisation" /></div>;
 
   const space = spaceId ? spaceById(spaceId) : undefined;
   const mine = s.memberships.find((m) => m.space_id === spaceId && m.status === 'active' && STAFF_ROLES.includes(m.role));

@@ -3,13 +3,16 @@
 // Sign-in is asked for only afterwards, and only if someone wants to join the
 // network; a maker should not need a login to buy a ticket.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../network/firebase';
 import { SPACES } from '../data';
+import SpacePicker from './SpacePicker';
+import { Connections, FoodAndAccess, Introduction } from './Introduction';
+import { meetingIcs } from '../../functions/src/ics';
 import { href } from '../App';
 import {
-  type EventPartner, EMPTY_ANSWERS, LOOKING_FOR_WORDS, NO_CONSENTS, RELATIONSHIP_WORDS, api, money,
+  type EventPartner, EMPTY_ANSWERS, NO_CONSENTS, api, money,
   type Answers, type ConsentKey, type Consents, type EventDoc, type EventStats, type MyRegistration,
 } from './model';
 
@@ -80,11 +83,19 @@ export default function EventPage({ id }: { id: string }) {
   );
 }
 
+function EventBrand({ region }: { region: string | null }) {
+  return region === 'us-ct' ? <a className="event-brand" href={href('directory', { region: 'us-ct' })}>
+    <img src="/brand/connecticut-makerspace-network.png" alt="" width="88" height="88" />
+    <span>Connecticut<br /><strong>Makerspace Network</strong></span>
+  </a> : null;
+}
+
 function Hero({ event, stats }: { event: EventDoc; stats: EventStats | null }) {
   const low = stats && event.status === 'open' && stats.spots_left > 0 && stats.spots_left <= Math.max(10, event.capacity * 0.15);
   return (
     <section className="hero">
       <div className="wrap narrow">
+        <EventBrand region={event.region_id} />
         <p className="eyebrow">{event.date_label}</p>
         <h1>{event.title}</h1>
         <p className="lede">{event.tagline}</p>
@@ -128,100 +139,6 @@ function Check({ checked, onChange, children }: { checked: boolean; onChange: (v
   return <label className="check"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} /><span>{children}</span></label>;
 }
 
-function SpacePicker({ value, other, onChange }: { value: string | null; other: string; onChange: (id: string | null, other: string) => void }) {
-  const [mode, setMode] = useState(value ? 'listed' : other ? 'other' : 'none');
-  const spaces = useMemo(() => [...SPACES].filter((s) => s.status !== 'closed').sort((a, b) => a.name.localeCompare(b.name)), []);
-  const selected = mode === 'other' ? '__other' : mode === 'none' ? '' : value ?? '';
-  return (
-    <>
-      <label className="field">
-        <span>Your home makerspace, if you have one</span>
-        <select value={selected} onChange={(e) => {
-          const v = e.target.value;
-          if (v === '__other') { setMode('other'); onChange(null, other); }
-          else if (v === '') { setMode('none'); onChange(null, ''); }
-          else { setMode('listed'); onChange(v, ''); }
-        }}>
-          <option value="">I don't have one</option>
-          {spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          <option value="__other">Somewhere not on this list</option>
-        </select>
-      </label>
-      {mode === 'other' && (
-        <label className="field"><span>What's it called, and where?</span>
-          <input maxLength={120} value={other} onChange={(e) => onChange(null, e.target.value)} /></label>
-      )}
-    </>
-  );
-}
-
-function AboutYou({ event, a, set }: { event: EventDoc; a: Answers; set: (patch: Partial<Answers>) => void }) {
-  const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  return (
-    <>
-      <fieldset className="event-fieldset">
-        <legend>Which of these sound like you?</legend>
-        <div className="checks">
-          {RELATIONSHIP_WORDS.map(([id, words]) => (
-            <Check key={id} checked={a.relationship.includes(id)} onChange={() => set({ relationship: toggle(a.relationship, id) })}>{words}</Check>
-          ))}
-        </div>
-      </fieldset>
-      <SpacePicker value={a.home_space_id} other={a.home_space_other} onChange={(home_space_id, home_space_other) => set({ home_space_id, home_space_other })} />
-      {!a.home_space_id && !a.home_space_other && (
-        <Check checked={a.looking_for_space} onChange={(v) => set({ looking_for_space: v })}>I'd like to find a makerspace near me</Check>
-      )}
-      <fieldset className="event-fieldset">
-        <legend>What would help you most right now?</legend>
-        <div className="checks">
-          {LOOKING_FOR_WORDS.map(([id, words]) => (
-            <Check key={id} checked={a.looking_for.includes(id)} onChange={() => set({ looking_for: toggle(a.looking_for, id) })}>{words}</Check>
-          ))}
-        </div>
-      </fieldset>
-      <div className="two">
-        <label className="field"><span>Your town and state</span><input required maxLength={80} value={a.town} onChange={(e) => set({ town: e.target.value })} /></label>
-        <label className="field"><span>Your organisation or business, if you have one</span><input maxLength={160} value={a.organization} onChange={(e) => set({ organization: e.target.value })} /></label>
-      </div>
-      {/* The two questions the first Bonanza's facilitators built the day around. */}
-      <label className="field"><span>What are you excited about in what you make or do right now?</span>
-        <textarea required rows={2} maxLength={800} value={a.excited} onChange={(e) => set({ excited: e.target.value })} /></label>
-      <label className="field"><span>What's challenging you right now?</span>
-        <textarea required rows={2} maxLength={800} value={a.challenged} onChange={(e) => set({ challenged: e.target.value })} /></label>
-      <fieldset className="event-fieldset">
-        <legend>Have you been to an unconference before?</legend>
-        <div className="btn-row">
-          <label className="check"><input type="radio" name="unconference" checked={a.unconference_before === true} onChange={() => set({ unconference_before: true })} /><span>Yes</span></label>
-          <label className="check"><input type="radio" name="unconference" checked={a.unconference_before === false} onChange={() => set({ unconference_before: false })} /><span>No</span></label>
-        </div>
-      </fieldset>
-      <details className="fold">
-        <summary>Help shape the day <span className="muted">(optional)</span></summary>
-        <label className="field"><span>What do you make, or want to?</span>
-          <textarea rows={2} maxLength={500} value={a.makes} onChange={(e) => set({ makes: e.target.value })} /></label>
-        <label className="field"><span>An unconference runs on what people bring. Is there a session you could lead or a question you'd want to put to the room?</span>
-          <textarea rows={2} maxLength={500} value={a.offer_session} onChange={(e) => set({ offer_session: e.target.value })} /></label>
-        <fieldset className="event-fieldset">
-          <legend>What are you most interested in?</legend>
-          <div className="checks">
-            {event.tracks.map((t) => <Check key={t.id} checked={a.tracks.includes(t.id)} onChange={() => set({ tracks: toggle(a.tracks, t.id) })}>{t.label}</Check>)}
-          </div>
-        </fieldset>
-      </details>
-      <details className="fold">
-        <summary>Food and access <span className="muted">(optional)</span></summary>
-        <label className="field"><span>Anything we should know for lunch?</span>
-          <input maxLength={200} value={a.dietary} onChange={(e) => set({ dietary: e.target.value })} /></label>
-        <label className="field"><span>Anything that would make the day more accessible for you?</span>
-          <input maxLength={300} value={a.access_needs} onChange={(e) => set({ access_needs: e.target.value })} /></label>
-        {event.asks_over_21 && (
-          <Check checked={a.over_21 === true} onChange={(v) => set({ over_21: v })}>I'm 21 or older (for the evening social)</Check>
-        )}
-      </details>
-    </>
-  );
-}
-
 /** Each box off until ticked, each about one specific thing. This is the
  *  promise the brief makes about follow-up and peer networking, and it is also
  *  how the network grows: every line below is someone choosing to be connected. */
@@ -232,7 +149,7 @@ function OptIns({ a, c, set }: { a: Answers; c: Consents; set: (k: ConsentKey, v
       <legend>Staying in touch: your call on each</legend>
       <div className="checks single">
         <Check checked={c.attendee_list} onChange={(v) => { set('attendee_list', v); if (!v) set('peer_contact', false); }}>
-          Show my name, space and what I make to other people coming to this event
+          Show my name, space, maker introduction, event interests and session offer to other people coming to this event
         </Check>
         {c.attendee_list && (
           <Check checked={c.peer_contact} onChange={(v) => set('peer_contact', v)}>…and my email address, so they can reach me afterwards</Check>
@@ -252,7 +169,7 @@ function OptIns({ a, c, set }: { a: Answers; c: Consents; set: (k: ConsentKey, v
 
 // ---------- registering ----------
 
-function Register({ id, event, stats }: { id: string; event: EventDoc; stats: EventStats | null }) {
+export function Register({ id, event, stats }: { id: string; event: EventDoc; stats: EventStats | null }) {
   const params = q();
   const ref = params.get('ref');
   const initialCode = params.get('code') ?? '';
@@ -266,12 +183,12 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
   const [name, setName] = useState(auth.currentUser?.displayName ?? '');
   const [email, setEmail] = useState(auth.currentUser?.email ?? '');
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
-  const [consents, setConsents] = useState<Consents>(NO_CONSENTS);
   const [terms, setTerms] = useState(false);
   const [ageOk, setAgeOk] = useState(false);
   const [trap, setTrap] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '' });
   const [done, setDone] = useState<'already' | 'waitlisted' | null>(null);
 
   const tier = event.tiers.find((t) => t.id === tierId);
@@ -287,13 +204,14 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
   return (
     <section id="register" className="card form-card event-form">
       <h2>{full ? 'Join the waitlist' : 'Get a ticket'}</h2>
+      <p className="muted">A few details to reserve your place. You can introduce yourself to the network after registration.</p>
       {full && <p className="muted">The event is full. You won't be charged unless a place opens and you take it.</p>}
       <form onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true); setError(null);
         try {
           const out = await api<{ outcome: string; checkout_url?: string; manage_url?: string }>('register', {
-            event_id: id, tier_id: tierId, code: showCode ? code : '', attested, name, email, answers, consents, ref,
+            event_id: id, tier_id: tierId, code: showCode ? code : '', attested, name, email, answers, consents: NO_CONSENTS, ref,
             terms, age_ok: ageOk, website: trap,
           });
           if (out.outcome === 'checkout' && out.checkout_url) { go(out.checkout_url); return; }
@@ -319,25 +237,24 @@ function Register({ id, event, stats }: { id: string; event: EventDoc; stats: Ev
         </div>
         {tier?.attestation && !showCode && <Check checked={attested} onChange={setAttested}>{tier.attestation}</Check>}
         {showCode
-          ? <label className="field"><span>Code</span><input maxLength={40} value={code} onChange={(e) => setCode(e.target.value)} /></label>
+          ? <label className="field"><span>Invitation or discount code</span><input maxLength={40} value={code} onChange={(e) => setCode(e.target.value)} /></label>
           : <p><button type="button" className="linkish" onClick={() => setShowCode(true)}>I have a code</button></p>}
 
-        <div className="two">
-          <label className="field"><span>Your name</span><input required maxLength={120} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <label className="field"><span>Email</span><input required type="email" maxLength={200} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+        <div>
+          <label className="field"><span>Full name</span><input required maxLength={120} autoComplete="name" placeholder="First and last name" value={name} aria-invalid={!!fieldErrors.name} aria-describedby="registration-name-error" onInvalid={(e) => { const message = e.currentTarget.validationMessage; setFieldErrors((x) => ({ ...x, name: message })); }} onChange={(e) => { setName(e.target.value); setFieldErrors((x) => ({ ...x, name: '' })); }} /><small id="registration-name-error" className="error">{fieldErrors.name}</small></label>
+          <label className="field"><span>Email address</span><input required type="email" maxLength={200} autoComplete="email" placeholder="you@example.com" value={email} aria-invalid={!!fieldErrors.email} aria-describedby="registration-email-error" onInvalid={(e) => { const message = e.currentTarget.validationMessage; setFieldErrors((x) => ({ ...x, email: message })); }} onChange={(e) => { setEmail(e.target.value); setFieldErrors((x) => ({ ...x, email: '' })); }} /><small id="registration-email-error" className="error">{fieldErrors.email}</small></label>
         </div>
         <label className="sr-only" aria-hidden="true">Leave this empty<input tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} /></label>
 
-        <AboutYou event={event} a={answers} set={(p) => setAnswers((x) => ({ ...x, ...p }))} />
-        <OptIns a={answers} c={consents} set={(k, v) => setConsents((x) => ({ ...x, [k]: v }))} />
+        <FoodAndAccess event={event} answers={answers} set={(p) => setAnswers((x) => ({ ...x, ...p }))} />
 
         <details className="fold"><summary>Event terms</summary><p className="event-terms">{event.terms}</p></details>
         {!!event.min_age && <Check checked={ageOk} onChange={setAgeOk}>I'm {event.min_age} or older</Check>}
         <Check checked={terms} onChange={setTerms}>I agree to the event terms</Check>
 
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
         <button className="btn" disabled={busy || !terms || (!!event.min_age && !ageOk) || (!tierId && !showCode) || (!!tier?.attestation && !showCode && !attested)}>
-          {busy ? 'One moment…' : full ? 'Join the waitlist' : !showCode && tier?.price_cents ? `Continue to pay ${money(tier.price_cents)}` : 'Register'}
+          {busy ? 'One moment…' : full ? 'Join the waitlist' : !showCode && tier?.price_cents ? `Continue to payment · ${money(tier.price_cents)}` : 'Register'}
         </button>
         {!full && !!tier?.price_cents && <p className="muted" style={{ marginTop: 8 }}>Card payment is handled by Stripe. {event.hosts.find((h) => h.role === 'fiduciary')?.name ?? 'The host'} receives the payment and it appears under that name on your statement.</p>}
       </form>
@@ -497,14 +414,15 @@ const STATUS_WORDS: Record<string, string> = {
   expired: 'This registration lapsed before payment finished.', refunded: 'This ticket has been refunded.',
 };
 
-function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regId: string; token: string }) {
+export function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regId: string; token: string }) {
   const [me, setMe] = useState<MyRegistration | null>(null);
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
   const [consents, setConsents] = useState<Consents>(NO_CONSENTS);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [sharedOnly, setSharedOnly] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [people, setPeople] = useState<{ name: string; space: string | null; makes: string; offer_session: string; email: string | null; profile: { id: string; headline: string; bio: string; cover_url: string | null; website: string | null } | null }[] | null>(null);
+  const [people, setPeople] = useState<{ name: string; space: string | null; makes: string; offer_session: string; tracks: string[]; email: string | null; profile: { id: string; headline: string; bio: string; cover_url: string | null; website: string | null } | null }[] | null>(null);
   const [transferring, setTransferring] = useState(false);
   const [toName, setToName] = useState('');
   const [toEmail, setToEmail] = useState('');
@@ -539,19 +457,38 @@ function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regI
   const pay = () => act(async () => { const r = await call('pay'); if (r.checkout_url) go(r.checkout_url); });
   const space = me.answers.home_space_id ? SPACES.find((s) => s.id === me.answers.home_space_id) : null;
   const shareUrl = `${event.public_url}${space ? `?ref=${space.id}` : ''}`;
-  const isLeader = me.answers.relationship.includes('space_leader');
+  const saveIntroduction = async () => {
+    const r = await call('update', { answers, consents }); take(r); setSaved(true);
+  };
+  const sameInterest = (p: NonNullable<typeof people>[number]) =>
+    !!(space && p.space === space.name) || p.tracks?.some((t) => me.answers.tracks.includes(t));
+  const shownPeople = people?.filter((p) => !sharedOnly || sameInterest(p));
+  const calendar = () => {
+    if (!event.starts_at || !event.ends_at) return;
+    const text = meetingIcs({ id, title: event.title, agenda: event.tagline, location: event.location,
+      starts_at: event.starts_at, duration_min: (Date.parse(event.ends_at) - Date.parse(event.starts_at)) / 60000,
+      status: 'scheduled', updated_at: event.updated_at, url: event.public_url, link_text: 'Event details' });
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/calendar;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `${id}.ics`; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   return (
     <>
       <section className="hero">
         <div className="wrap narrow">
+          <EventBrand region={event.region_id} />
           <p className="eyebrow">{event.date_label} · {event.location}</p>
           <h1>{event.title}</h1>
           <p className="lede">
             {justPaid && me.status === 'pending_payment' ? 'Thanks, your payment is on its way to us. This usually takes a few seconds…' : STATUS_WORDS[me.status] ?? me.status}
           </p>
-          <p className="muted" style={{ marginTop: 10 }}>{me.name} · {me.tier_name}{me.amount_paid_cents ? ` · ${money(me.amount_paid_cents)} paid` : ''}</p>
+          <p className="muted" style={{ marginTop: 10 }}>{me.name} · {me.tier_name}{me.amount_paid_cents ? ` · ${money(me.amount_paid_cents)} ${me.status === 'refunded' ? 'refunded' : 'paid'}` : ''}</p>
+          {me.status === 'confirmed' && <p className="muted">Your ticket is confirmed. Your email has the link to return here.</p>}
           <div className="btn-row" style={{ marginTop: 14 }}>
+            {me.status === 'confirmed' && event.starts_at && event.ends_at && <button className="btn" onClick={calendar}>Add to calendar</button>}
+            <a className="btn ghost" href="#ticket-details" onClick={() => { const details = document.getElementById('ticket-details'); if (details instanceof HTMLDetailsElement) details.open = true; }}>Edit registration</a>
+            {me.status === 'confirmed' && <a className="btn ghost" href="#ticket-actions">Refund or transfer</a>}
             {me.can_pay && !(justPaid && me.status === 'pending_payment') && <button className="btn" disabled={busy} onClick={() => void pay()}>Pay {money(me.price_cents)} by card</button>}
             {me.can_accept_free && <button className="btn" disabled={busy} onClick={() => void act(async () => take(await call('accept_free')))}>Take the place</button>}
           </div>
@@ -560,45 +497,41 @@ function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regI
       <div className="wrap narrow event-body">
         {error && <p className="error">{error}</p>}
 
-        {me.status === 'confirmed' && (
-          <section className="card form-card">
-            <h2>What next</h2>
-            <ul className="next-steps">
-              {isLeader && (
-                <li><strong>Running a space?</strong> Claim its listing so the network has it right, and so you can see who's coming from your community. <a href="https://makerspace.network/?page=join">Join and claim it</a>.</li>
-              )}
-              {me.answers.looking_for_space && (
-                <li><strong>Looking for a makerspace?</strong> <a href={href('directory')}>See what's near you</a>; many offer tours.</li>
-              )}
-              <li><strong>Show what you make.</strong> A short profile and a photo or two of your work helps people find you, to collaborate or to learn from you. <a href="https://makerspace.network/?page=maker-edit">Make your maker profile</a>.</li>
-              <li><strong>Know someone who should be there?</strong> Send them <a href={shareUrl}>{shareUrl.replace('https://', '')}</a>.</li>
-            </ul>
-          </section>
-        )}
+        {me.status === 'confirmed' && <Introduction event={event} answers={answers} consents={consents}
+          set={(patch) => { setAnswers((a) => ({ ...a, ...patch })); setSaved(false); }} save={saveIntroduction}
+          sharing={<OptIns a={answers} c={consents} set={(k, v) => { setConsents((c) => ({ ...c, [k]: v })); setSaved(false); }} />}>
+          <Connections a={me.answers} event={event} regId={regId} />
+        </Introduction>}
 
-        <section className="card form-card event-form">
-          <h2>Your answers and opt-ins</h2>
-          <form onSubmit={(e) => { e.preventDefault(); void act(async () => { take(await call('update', { answers, consents })); setSaved(true); }); }}>
-            <AboutYou event={event} a={answers} set={(p) => { setAnswers((x) => ({ ...x, ...p })); setSaved(false); }} />
+        <details id="ticket-details" className="card form-card event-form">
+          <summary>Edit registration and sharing choices</summary>
+          <p>{me.name} · {me.email}</p>
+          <form onSubmit={(e) => { e.preventDefault(); void act(saveIntroduction); }}>
+            <FoodAndAccess event={event} answers={answers} set={(p) => { setAnswers((x) => ({ ...x, ...p })); setSaved(false); }} />
             <OptIns a={answers} c={consents} set={(k, v) => { setConsents((x) => ({ ...x, [k]: v })); setSaved(false); }} />
-            <button className="btn ghost" disabled={busy || saved}>{saved ? 'Saved' : 'Save'}</button>
+            <button className="btn ghost" disabled={busy || saved}>{saved ? 'Saved' : 'Save changes'}</button>
+            {saved && <p role="status">Changes saved.</p>}
           </form>
-        </section>
+        </details>
 
         {me.status === 'confirmed' && (
-          <section className="card form-card">
+          <section id="event-attendees" className="card form-card">
             <h2>Who else is coming</h2>
-            <p className="muted">People who chose to be listed. Turn on the first opt-in above to appear here yourself.</p>
+            <p className="muted">People who chose to be listed. You can choose to join the list in your sharing choices.</p>
             {people === null
               ? <button className="btn ghost" disabled={busy} onClick={() => void act(async () => { const r = await api<{ attendees: NonNullable<typeof people> }>('manage', { r: regId, t: token, action: 'attendees' }); setPeople(r.attendees); })}>Show the list</button>
-              : people.length === 0 ? <p>No one yet.</p> : (
+              : people.length === 0 ? <p>No one has chosen to be listed yet. Come back closer to the event.</p> : (
+                <>
+                <Check checked={sharedOnly} onChange={setSharedOnly}>Show people with a shared space or event interest</Check>
+                {shownPeople?.length === 0 && <p>No shared space or interest match yet. Turn off the filter to explore everyone who chose to be listed.</p>}
                 <ul className="attendee-list">
-                  {people.map((p) => (
+                  {shownPeople?.map((p) => (
                     <li key={`${p.name}-${p.email ?? ''}`}>
                       <strong>{p.name}</strong>{p.space && <span className="muted"> · {p.space}</span>}
                       {p.email && <> · <a href={`mailto:${p.email}`}>{p.email}</a></>}
                       {p.profile?.cover_url && <img className="attendee-work" src={p.profile.cover_url} alt={`Work by ${p.name}`} />}
                       {p.profile?.headline && <div>{p.profile.headline}</div>}
+                      {sameInterest(p) && <p className="muted">{space && p.space === space.name ? `Also from ${space.name}` : `Shared interest: ${event.tracks.filter((t) => me.answers.tracks.includes(t.id) && p.tracks?.includes(t.id)).map((t) => t.label).join(', ')}`}</p>}
                       {p.makes && <div>{p.makes}</div>}
                       {p.profile?.bio && <div className="muted">{p.profile.bio}</div>}
                       {p.profile?.website && <div><a href={p.profile.website} rel="noopener nofollow">{p.profile.website.replace(/^https?:\/\//, '')}</a></div>}
@@ -606,6 +539,7 @@ function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regI
                     </li>
                   ))}
                 </ul>
+                </>
               )}
           </section>
         )}
@@ -614,7 +548,7 @@ function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regI
           <p><button className="linkish" disabled={busy} onClick={() => void act(async () => take(await call('cancel')))}>Cancel this registration</button></p>
         )}
         {me.status === 'confirmed' && (
-          <section className="card form-card">
+          <section id="ticket-actions" className="card form-card">
             <h2>Can't make it?</h2>
             {me.can_refund && <>
               <p>You can refund your ticket yourself until {new Date(me.refund_until!).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}, when the catering count is set.</p>
@@ -640,6 +574,7 @@ function Manage({ id, event, regId, token }: { id: string; event: EventDoc; regI
               )}
           </section>
         )}
+        {me.status === 'confirmed' && <details className="card form-card"><summary>Invite someone to join you</summary><p>Share the public event page:</p><a className="event-share" href={shareUrl}>{shareUrl.replace('https://', '')}</a></details>}
         <p><a href={href('event', { event: id })}>Event page</a></p>
       </div>
     </>

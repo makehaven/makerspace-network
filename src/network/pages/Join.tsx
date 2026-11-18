@@ -30,8 +30,8 @@ export default function Join({ spaceId }: { spaceId?: string }) {
     <>
       <section className="hero">
         <div className="wrap narrow">
-          <p className="eyebrow">People</p>
-          <h1>{s.person ? 'Your space' : 'Join the network'}</h1>
+          <p className="eyebrow">For organisers</p>
+          <h1>{s.person ? 'Your space' : 'Connect your space or organisation'}</h1>
           <p className="lede">
             Sign up as someone connected to a makerspace, or to an organisation that works with
             them — an agency, funder, support organisation, school or network. You'll be reachable
@@ -41,7 +41,7 @@ export default function Join({ spaceId }: { spaceId?: string }) {
         </div>
       </section>
       <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 60 }}>
-        {s.status === 'signed_out' && <SignIn why={inviteId ? 'You have been invited. Sign in with the email address the invitation was sent to.' : undefined} />}
+        {s.status === 'signed_out' && <SignIn context={inviteId ? 'invitation' : 'organisation'} why={inviteId ? 'You have been invited. Sign in with the email address the invitation was sent to.' : undefined} />}
         {s.status === 'signed_in' && <BootstrapAdmin />}
         {s.status === 'signed_in' && <PendingInvitations key={accepted} focusId={inviteId} onAccepted={() => setAccepted((n) => n + 1)} onLoaded={setInvited} />}
         {s.status === 'signed_in' && invited > 0 && !s.person && !joining && (
@@ -175,7 +175,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
           <p>
             You're now {outcome.role === 'space_admin' ? 'the admin of' : 'listed at'} <strong>{spaceName}</strong>
             {outcome.claimed && ' and have claimed its listing'}. You can see and reach verified people
-            across the network on the <PageLink page="people">People</PageLink> page.
+            across the network on the <PageLink page="people">space and partner roster</PageLink> page.
           </p>
         ) : outcome.role === 'partner' ? (
           <p>
@@ -471,7 +471,7 @@ function Profile({ onJoinAnother }: { onJoinAnother: () => void }) {
 
       <div className="btn-row">
         <button className="btn ghost" onClick={onJoinAnother}>Join another space or organisation</button>
-        {(s.verified || s.stewardship) && <PageLink page="people" className="btn">People across the network</PageLink>}
+        {(s.verified || s.stewardship) && <PageLink page="people" className="btn">Space and partner roster</PageLink>}
         {can(s, 'steward.view') && <PageLink page="steward" className="btn ghost">Steward tools</PageLink>}
       </div>
     </>

@@ -36,6 +36,7 @@ export interface EventDoc {
   statement_descriptor: string;
   payment_host: string;
   notify_email: string;
+  reply_to_email?: string;
   public_url: string;
   updated_at: string;
 }

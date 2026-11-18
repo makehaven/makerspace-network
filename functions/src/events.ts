@@ -124,6 +124,9 @@ async function stripe<T>(path: string, params: Record<string, string>, idempoten
     method: 'POST',
     headers: {
       Authorization: `Bearer ${STRIPE_KEY.value()}`, 'Content-Type': 'application/x-www-form-urlencoded',
+      // Clover supports our explicit card-only Checkout. Endive removes payment_method_types.
+      // Pin per request so the shared MakeHaven account's default is unaffected.
+      'Stripe-Version': '2025-09-30.clover',
       ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     },
     body: new URLSearchParams(params).toString(),
@@ -681,12 +684,13 @@ async function refreshStats(eventId: string) {
 
 // ---------- email ----------
 
-export async function sendMail(to: string, subject: string, text: string, ics?: string) {
+export async function sendMail(to: string, subject: string, text: string, ics?: string, replyTo?: string) {
   const res = await fetch('https://api.postmarkapp.com/email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_SERVER_TOKEN.value() },
     body: JSON.stringify({
       From: POSTMARK_FROM_EMAIL.value(), To: to, Subject: subject, TextBody: text, MessageStream: 'outbound',
+      ...(replyTo ? { ReplyTo: replyTo } : {}),
       ...(ics ? { Attachments: [{ Name: 'event.ics', Content: Buffer.from(ics).toString('base64'), ContentType: 'text/calendar; method=PUBLISH' }] } : {}),
     }),
   });
@@ -755,7 +759,7 @@ export const eventRegistrationChanged = onDocumentWritten(
       status: 'scheduled', updated_at: nowIso(), url: `${SITE}/?page=event&event=${eventId}`, link_text: 'Event page',
     }) : undefined;
     try {
-      await sendMail(after.email, mail.subject, mail.text, ics);
+      await sendMail(after.email, mail.subject, mail.text, ics, ev.reply_to_email || ev.notify_email);
     } catch (err) {
       // Not worth undoing a registration for. It shows on the admin page, and
       // the person saw their link on the confirmation screen anyway.

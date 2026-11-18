@@ -1,0 +1,1 @@
+Archivo (500–900) and Inter (400–700) variable WOFF2 fonts, downloaded from Google Fonts on 2026-11-14. Original fonts are unmodified, with all supplied language subsets preserved. See the adjacent SIL Open Font License files. fonts.css retains the supplied Unicode ranges. Hosted locally to avoid an external stylesheet blocking page rendering.

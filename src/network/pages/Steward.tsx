@@ -44,7 +44,7 @@ export default function Steward() {
       </section>
       <div className="wrap" style={{ paddingTop: 10, paddingBottom: 60 }}>
         {s.status === 'loading' && <p>Loading…</p>}
-        {s.status === 'signed_out' && <div className="narrow"><SignIn /></div>}
+        {s.status === 'signed_out' && <div className="narrow"><SignIn context="organisation" why="Sign in with the account you use to manage the network." /></div>}
         {s.status === 'signed_in' && !allowed && (
           <p className="notice narrow">This page is for regional stewards, network admins and space admins. <PageLink page="join">Your profile</PageLink>.</p>
         )}

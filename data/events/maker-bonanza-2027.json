@@ -126,8 +126,13 @@
   "statement_descriptor": "MAKER BONANZA",
   "payment_host": "makehaven",
   "notify_email": "sponsorship@makehaven.org",
+  "reply_to_email": "jrlogan@makehaven.org",
   "public_url": "https://connecticut.makerspace.network/bonanza",
   "sources": [
+    {
+      "what": "Attendee reply inbox",
+      "where": "J.R. Logan, 2026-11-14: jrlogan@makehaven.org"
+    },
     {
       "what": "Date, venue, tracks, audience, capacity, hospitality, co-hosts, $50/$25 pricing assumption",
       "where": "Maker Bonanza: Event Brief (Google Doc, modified 2026-10-27)"

@@ -25,6 +25,8 @@ meetings, but a person can see and reach a verified person in any state.
 | Validator (`scripts/validate.mjs`) | **Built** — dependency-free, enum + gap checking, passes clean |
 | Interop survey (`docs/INTEROP.md`) | **Built** |
 | Website (`src/`, Vite + React + TS) | **Built and deployed** — Firebase Hosting, project `makerspace-net`. See `docs/DEPLOY.md` |
+| Public visual design | **Updated 2026-11-14** — attributed MakeHaven photography, plain homepage and directory copy, factual photo captions, restrained typography, illustrated activity filters, compact space cards and an expandable map. Responsive WebP assets and locally hosted fonts; checked on desktop/mobile and in dark mode; all 11 browser checks pass |
+| Navigation and search usability | **Implemented 2026-11-14** — task-based navigation, public Events list (announced/open only), organiser roster/group entry points, audience-specific sign-in, URL-backed space/maker filters, and separate loading/error/empty states with retry. Five network browser checks plus the five checkout checks pass |
 | Region map (`data/geo/`, `src/components/RegionMap.tsx`) | **Built** — inline SVG county map, no tiles and no CSP exemption |
 | People layer (`docs/GOVERNANCE.md`, `docs/PEOPLE.md`) | **Live since 2026-10-07** — sign-in, claim, roster, steward page, partners, invitations, meetings, groups (on the site; email needs Postmark). First real use at the 2026-10-07 CT meeting |
 | Your space: listing, annual data | **Live** — staff answer the listing (a submission the steward merges) and the annual data standard, saved as they type |
@@ -34,8 +36,8 @@ meetings, but a person can see and reach a verified person in any state.
 | fablabs.io importer | **Run once by hand**, not scripted |
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
-| Events: tickets, sponsors, network follow-through (`docs/EVENTS.md`) | **Built and tested in the emulator 2026-11-05, not deployed.** Maker Bonanza (2027-01-22) is the first; needs Blaze, Postmark, a MakeHaven Stripe key |
-| Makers: profiles for anyone who makes things (`docs/GOVERNANCE.md` §Makers) | **Built and tested in the emulator 2026-11-05, not deployed** |
+| Events: tickets, sponsors, network follow-through (`docs/EVENTS.md`) | **Live Stripe configured 2026-11-14; sales closed.** Full sandbox checkout/refund/email tests passed; live checkout creation/expiry and local signature checks passed without charging. Bonanza times, terms and publication remain pending |
+| Makers: profiles for anyone who makes things (`docs/GOVERNANCE.md` §Makers) | **Functions deployed 2026-11-14.** Production photo upload / Storage setup still needs verification |
 | Reciprocity architecture (`docs/RECIPROCITY.md`) | **Designed, not started** — Open Badges 3.0, member-carried |
 | Network achievement framework | **Not started** — the scarce work in phase 3 |
 
@@ -166,7 +168,7 @@ Once this exists the Standards tool can save an assessment against a space
 instead of a browser, which removes the "export a file and email it" step that
 stalls pilot feedback. That is phase 1's remaining item, and it depends on this.
 
-### Phase 0c — Events: Maker Bonanza *(built, not deployed)*
+### Phase 0c — Events: Maker Bonanza *(live payments configured; event still draft)*
 
 A statewide unconference on 2027-01-22, MakeHaven as fiduciary, Redwood Endeavors
 co-hosting. Sponsors confirmed by 2026-11-20, registration opens 2026-12-01. It is
@@ -177,13 +179,17 @@ themselves. Spec and setup: `docs/EVENTS.md`.
 - [x] Stripe Checkout on MakeHaven's account; only a signed webhook settles
 - [x] Sponsor page: card or invoice; a person approves anything listed publicly
 - [x] Separate opt-ins, changeable from an emailed link; attendee list by consent
+- [x] Short checkout, optional contextual introduction, searchable space picker with logos, explained connections and private profile draft handoff; five browser workflow checks (2026-11-14)
 - [x] Referral links per space; counts on Your space, names only by opt-in
 - [x] Steward page: break-even, roster and check-in, codes, CSV, network follow-up
-- [ ] **Switch it on**: Blaze, Postmark, Stripe key and webhook, deploy functions
+- [x] **Infrastructure**: billing, Postmark, restricted Stripe test key and webhook, event Functions deployed 2026-11-14; test email delivered
+- [x] Complete test-card checkout, webhook settlement, confirmation and refund delivery; close the temporary test event (2026-11-14)
+- [x] Configure and deploy live Stripe key and webhook secret; verify active bindings, unpaid checkout creation/expiry and local signature checks (2026-11-14)
+- [ ] Publish Bonanza after settling times and terms
 - [ ] Settle the gaps in `data/events/maker-bonanza-2027.json`
 - [x] Self-service refund until the catering count, transfer after it
 
-### Phase 0d — Makers *(built, not deployed)*
+### Phase 0d — Makers *(Functions deployed; production uploads unverified)*
 
 Everyone who makes things, with or without a space, and a pool of collaborators and
 instructors for the spaces. Spec: `docs/GOVERNANCE.md` §Makers.
@@ -296,6 +302,29 @@ the network with `region_ids`, and get a working site.
    determine who is a recognised issuer. That turns a self-assessment tool into
    an access-control input, which raises the stakes on governance and appeals.
    Settle this before asking a non-MakeHaven space to trust it.
+
+8. **A member app: MakeHaven's or the network's.** Leaning network, discussed
+   2026-11-17, not yet scoped. The split:
+   - *Network app* — what a member carries between spaces: the OB 3.0
+     credential wallet (RECIPROCITY needs one), maker profile, events and
+     tickets, directory, people. Works for a member of any space, including
+     one with no software.
+   - *Space's own system* — billing, door access, tool reservations, storage,
+     the authorisation ledger. These stay in each space's system of record
+     (Drupal at MakeHaven); the app links out rather than owning them, or it
+     becomes a management system competing with Fabman, Nexudus and the rest.
+   - *Spaces connect by standards, not custom code* — OIDC sign-in ("Join
+     with your space's account"), OB 3.0 credentials in, SpaceAPI for live
+     state, deep links to the space's portal. MakeHaven implements all of
+     them first, so it is the richest experience without being a special case.
+   - Don't generalise from one integration: build MakeHaven's plainly and
+     pull out the contract when a second space connects.
+   - PWA on the existing React site before any native app; go native only for
+     something a PWA can't do (e.g. NFC at the door).
+
+   Open: what the app does day to day. If it is mostly MakeHaven operations,
+   that belongs in MakeHaven's stack and the network supplies sign-in and
+   credentials only.
 
 ## Outreach owed
 

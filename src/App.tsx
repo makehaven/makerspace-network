@@ -17,6 +17,7 @@ const NetworkPages = lazy(() => import('./network/NetworkPages'));
 const NETWORK_PAGES = new Set(['join', 'people', 'steward', 'groups', 'group', 'space-data', 'event-admin', 'maker-edit', 'home']);
 // An event's public page needs Firestore but no sign-in, so unlike the pages
 // above it stays on the regional host instead of being handed to the apex.
+const EventsPage = lazy(() => import('./events/EventsPage'));
 const EventPage = lazy(() => import('./events/EventPage'));
 // Likewise makers: browsing them needs no sign-in, on any host.
 const MakerPages = lazy(() => import('./makers/MakerPages'));
@@ -87,7 +88,12 @@ export const href = (page: string, params: Record<string, string> = {}) => {
 function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
   const here = parse().page;
   // Everything about you and your space belongs to Home.
-  const current = here === page || (page === 'home' && ['join', 'space-data', 'maker-edit'].includes(here));
+  const current = here === page
+    || (page === 'home' && ['join', 'space-data', 'maker-edit'].includes(here))
+    || (page === 'makers' && here === 'maker')
+    || (page === 'directory' && here === 'space')
+    || (page === 'events' && here === 'event')
+    || (page === 'for-spaces' && ['people', 'groups', 'group', 'steward', 'event-admin'].includes(here));
   return (
     <a
       href={href(page, params)}
@@ -125,16 +131,15 @@ export default function App() {
       <header className="site-header">
         <div className="wrap">
           <a className="brand" href={href('directory')} onClick={(e) => { e.preventDefault(); navigate('directory'); }}>
-            Makerspace<span className="net">.network</span>
+            {region?.id === 'us-ct' && <img className="regional-mark" src="/brand/connecticut-makerspace-network.png" alt="Connecticut" width="42" height="42" />}
+            <span>Makerspace<span className="net">.network</span></span>
           </a>
-          <nav className="nav">
-            <Link page="directory">{region ? 'Spaces' : 'Regions'}</Link>
-            <Link page="for-spaces">For makerspaces</Link>
-            <Link page="home">Home</Link>
-            <Link page="makers">Makers</Link>
-            <Link page="people">People</Link>
-            <Link page="groups">Groups</Link>
-            <Link page="about">About</Link>
+          <nav className="nav" aria-label="Main navigation">
+            <Link page="directory">Find a space</Link>
+            <Link page="makers">Meet makers</Link>
+            <Link page="events">Events</Link>
+            <Link page="for-spaces">For organisers</Link>
+            <Link page="home">My network</Link>
           </nav>
         </div>
       </header>
@@ -157,6 +162,9 @@ export default function App() {
           <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
             <MakerPages id={route.page === 'maker' ? route.maker : undefined} />
           </Suspense>
+        )}
+        {route.page === 'events' && (
+          <Suspense fallback={<div className="wrap" role="status"><p>Loading events…</p></div>}><EventsPage /></Suspense>
         )}
         {route.page === 'event' && route.event && (
           <Suspense fallback={<div className="wrap" style={{ paddingTop: 40 }}><p>Loading…</p></div>}>
@@ -185,7 +193,7 @@ export default function App() {
             <p style={{ margin: 0 }}>
               Code MIT · data <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
               <br />
-              <a href={REPO_URL}>Corrections and additions welcome</a>
+              <a href={href('about')}>About the network</a> · <a href={REPO_URL}>Corrections and additions welcome</a>
             </p>
           </div>
         </div>

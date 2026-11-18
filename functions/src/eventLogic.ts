@@ -54,6 +54,8 @@ export interface EventDoc {
   /** The organisation whose Stripe account takes the money. Only 'makehaven' is configured today. */
   payment_host: string;
   notify_email: string;
+  /** Monitored inbox for attendee replies; falls back to the organiser notification address. */
+  reply_to_email?: string;
 }
 
 export type RegStatus = 'pending_payment' | 'confirmed' | 'waitlisted' | 'offered' | 'cancelled' | 'expired' | 'refunded';

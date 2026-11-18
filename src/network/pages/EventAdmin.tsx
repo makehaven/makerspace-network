@@ -79,7 +79,7 @@ export default function EventAdmin() {
       <p className="eyebrow"><PageLink page="steward">Steward tools</PageLink> · Event</p>
       <h1 style={{ fontSize: '1.9rem' }}>{event?.title ?? id}</h1>
       {s.status === 'loading' && <p>Loading…</p>}
-      {s.status === 'signed_out' && <div className="narrow"><SignIn /></div>}
+      {s.status === 'signed_out' && <div className="narrow"><SignIn why="Sign in with the account you use to manage events." /></div>}
       {s.status === 'signed_in' && !steward && <p className="notice narrow">This page is for regional stewards and network admins.</p>}
       {error && <p className="error">{error}</p>}
       {steward && event === null && <CreateFromSeed id={id} onDone={load} />}
