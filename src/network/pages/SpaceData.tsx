@@ -12,9 +12,10 @@ import { getListingSubmission, listingFromRecord, submitListing, type ListingAns
 import { PageLink, SignIn } from './shared';
 import StandardsAssessment from './StandardsAssessment';
 import AnnualData from './AnnualData';
+import NumberInput from './NumberInput';
 
 const options = (vocab: keyof typeof VOCAB) => [...VOCAB[vocab].values()].filter((v) => v.id !== 'unknown');
-const num = (v: string): number | null => (v.trim() === '' || Number.isNaN(Number(v)) ? null : Number(v));
+const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export default function SpaceData({ spaceId }: { spaceId?: string }) {
   const s = useSession();
@@ -23,6 +24,10 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
     const t = new URLSearchParams(window.location.search).get('tab');
     return t === 'annual' || t === 'standards' ? t : 'listing';
   });
+  // A tab once opened stays mounted (hidden), so switching away never throws
+  // away a listing that hasn't been sent or a save that is about to happen.
+  const [seen, setSeen] = useState<Set<Tab>>(() => new Set([tab]));
+  const show = (t: Tab) => { setTab(t); setSeen((x) => (x.has(t) ? x : new Set([...x, t]))); };
 
   // Arriving straight from the join form ("Answer now"), the session still
   // holds the memberships from before the join. Reload them once on arrival.
@@ -39,6 +44,10 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
   const mine = s.memberships.find((m) => m.space_id === spaceId && m.status === 'active' && STAFF_ROLES.includes(m.role));
   const steward = !!s.stewardship && (s.stewardship.network_admin
     || (!!space?.region_ids?.[0] && s.stewardship.region_ids.includes(space.region_ids[0])));
+  const here = s.memberships.find((m) => m.space_id === spaceId);
+  // Where a colleague sent by "Ask a colleague" should come back to after joining.
+  const q = new URLSearchParams(window.location.search);
+  const back: Record<string, string> = { ...(spaceId ? { space: spaceId } : {}), ...(q.get('tab') ? { tab: q.get('tab')! } : {}), ...(q.get('section') ? { section: q.get('section')! } : {}) };
 
   return (
     <>
@@ -58,20 +67,32 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
       <div className="wrap narrow" style={{ paddingTop: 24, paddingBottom: 60 }}>
         {!space && <p className="notice">That space isn't in the directory.</p>}
         {space && !mine && !steward && (
-          <p className="notice">Only your space's admins and editors can answer these. <PageLink page="join">Back to your profile</PageLink></p>
+          <div className="notice">
+            <p style={{ margin: 0 }}>Only {space.name}'s admins and editors can answer these.</p>
+            {!here ? (
+              <p style={{ margin: '8px 0 0' }}>
+                If you work there, join {space.name} first — with an email address at the space's own domain you can
+                answer straight away. <PageLink className="btn small" page="join" params={back}>Join {space.name}</PageLink>
+              </p>
+            ) : here.status === 'pending' ? (
+              <p style={{ margin: '8px 0 0' }}>You've asked to join and are waiting for {space.name}'s admin or the regional steward to confirm you. <PageLink page="join">Your profile</PageLink></p>
+            ) : (
+              <p style={{ margin: '8px 0 0' }}>You're listed there as a contact. Ask {space.name}'s admin or the regional steward to make you an editor. <PageLink page="join">Your profile</PageLink></p>
+            )}
+          </div>
         )}
         {space && (mine || steward) && (
           <>
-            <div className="tabs" >
-              <button className={tab === 'listing' ? 'on' : ''} onClick={() => setTab('listing')}>Public listing</button>
-              <button className={tab === 'annual' ? 'on' : ''} onClick={() => setTab('annual')}>Annual data — members, sq ft, finances</button>
-              <button className={tab === 'standards' ? 'on' : ''} onClick={() => setTab('standards')}>Standards self-assessment</button>
+            <div className="tabs" role="tablist">
+              <button role="tab" aria-selected={tab === 'listing'} className={tab === 'listing' ? 'on' : ''} onClick={() => show('listing')}>Public listing</button>
+              <button role="tab" aria-selected={tab === 'annual'} className={tab === 'annual' ? 'on' : ''} onClick={() => show('annual')}>Annual data — members, sq ft, finances</button>
+              <button role="tab" aria-selected={tab === 'standards'} className={tab === 'standards' ? 'on' : ''} onClick={() => show('standards')}>Standards self-assessment</button>
             </div>
-            {tab === 'listing' && <ListingForm spaceId={space.id} canEdit={!!mine} />}
-            {tab === 'annual' && <AnnualData spaceId={space.id} canEdit={!!mine} />}
-            {tab === 'standards' && (mine
+            {seen.has('listing') && <div role="tabpanel" hidden={tab !== 'listing'}><ListingForm spaceId={space.id} canEdit={!!mine} /></div>}
+            {seen.has('annual') && <div role="tabpanel" hidden={tab !== 'annual'}><AnnualData spaceId={space.id} canEdit={!!mine} /></div>}
+            {seen.has('standards') && <div role="tabpanel" hidden={tab !== 'standards'}>{mine
               ? <StandardsAssessment spaceId={space.id} canEdit />
-              : <p className="notice">A space's self-assessment is private to its own staff — stewards see only the summary a space chooses to share.</p>)}
+              : <p className="notice">A space's self-assessment is private to its own staff — stewards see only the summary a space chooses to share.</p>}</div>}
           </>
         )}
       </div>
@@ -87,16 +108,26 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
   const [meta, setMeta] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The listing is sent as a whole, not saved as you type, so say when there
+  // is something unsent and ask before the page is left with it.
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     getListingSubmission(spaceId).then((sub) => {
       setF(sub?.listing ?? listingFromRecord(spaceById(spaceId)));
-      if (sub) setMeta(`Last submitted by ${sub.submitted_name} on ${sub.updated_at.slice(0, 10)}${sub.status === 'merged' ? ' — merged into the directory' : ' — waiting for the steward to merge'}.`);
+      if (sub) setMeta(`Last submitted by ${sub.submitted_name} on ${day(sub.updated_at)}${sub.status === 'merged' ? ' — merged into the directory' : ' — waiting for the steward to merge'}.`);
     }).catch((e) => setMsg(e instanceof Error ? e.message : String(e)));
   }, [spaceId]);
 
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', onLeave);
+    return () => window.removeEventListener('beforeunload', onLeave);
+  }, [dirty]);
+
   if (!f) return <p>{msg ?? 'Loading…'}</p>;
-  const set = (patch: Partial<ListingAnswers>) => { setF({ ...f, ...patch }); setMsg(null); };
+  const set = (patch: Partial<ListingAnswers>) => { setF({ ...f, ...patch }); setMsg(null); setDirty(true); };
   const toggle = (key: 'capabilities' | 'membership_models', id: string, on: boolean) =>
     set({ [key]: on ? [...(f[key] ?? []), id] : (f[key] ?? []).filter((x) => x !== id) });
 
@@ -106,6 +137,7 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
       try {
         await submitListing(spaceId, s.user!.uid, s.person?.name ?? s.user!.email ?? '', f);
         setMsg('Sent. The steward will merge it into your listing, with your space recorded as the source.');
+        setDirty(false);
         setMeta(`Last submitted by you just now — waiting for the steward to merge.`);
       } catch (x) { setMsg(x instanceof Error ? x.message : String(x)); }
       setBusy(false);
@@ -161,11 +193,11 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
       </div>
       <div className="inline-fields">
         <label className="field"><span>Monthly cost from ($)</span>
-          <input inputMode="numeric" value={f.monthly_cost_min ?? ''} onChange={(e) => set({ monthly_cost_min: num(e.target.value) })} /></label>
+          <NumberInput value={f.monthly_cost_min} onChange={(v) => set({ monthly_cost_min: v })} /></label>
         <label className="field"><span>Monthly cost up to ($)</span>
-          <input inputMode="numeric" value={f.monthly_cost_max ?? ''} onChange={(e) => set({ monthly_cost_max: num(e.target.value) })} /></label>
+          <NumberInput value={f.monthly_cost_max} onChange={(v) => set({ monthly_cost_max: v })} /></label>
         <label className="field"><span>Day pass ($)</span>
-          <input inputMode="numeric" value={f.day_pass_usd ?? ''} onChange={(e) => set({ day_pass_usd: num(e.target.value) })} /></label>
+          <NumberInput value={f.day_pass_usd} onChange={(v) => set({ day_pass_usd: v })} /></label>
       </div>
       <label className="field"><span>Young people</span>
         <select value={f.minor_policy ?? ''} onChange={(e) => set({ minor_policy: e.target.value })}>
@@ -182,7 +214,8 @@ function ListingForm({ spaceId, canEdit }: { spaceId: string; canEdit: boolean }
         <textarea rows={3} maxLength={2000} value={f.notes ?? ''} onChange={(e) => set({ notes: e.target.value })} /></label>
 
       {msg && <p className="muted">{msg}</p>}
-      {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Sending…' : 'Send listing'}</button></div>}
+      {canEdit && <div className="btn-row"><button className="btn" disabled={busy}>{busy ? 'Sending…' : 'Send listing'}</button>
+        {dirty && !busy && <span className="std-save" role="status">Not sent yet — this part isn't saved until you send it.</span>}</div>}
       </fieldset>
     </form>
   );
