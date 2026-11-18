@@ -130,8 +130,8 @@
       "note": "Venue sponsor"
     }
   ],
-  "terms_version": "2026-11-draft-2",
-  "terms": "DRAFT, not yet reviewed.\n\nTickets. Tickets are sold by MakeHaven, a partner makerspace, which handles the event's money. You can refund your own paid ticket from the link in your email until the end of January 4, 2027, when the catering count is set. After that there are no refunds, but you can transfer your ticket to someone else from the same link.\n\nYour information. Your name, email and registration answers are seen by the organisers, MakeHaven and Redwood Endeavors, and are used to run this event and to send you logistics about it. We share them with Redwood Endeavors for this event, and Redwood Endeavors may follow up with you about it. Anything beyond that is your choice, using the opt-ins on this form, which you can change at any time from the link in your email. Sponsors do not receive attendee contact details.\n\nPhotos. Photos from the event will be posted to social media and may be used to promote MakeHaven, Makerspace Network and future events. You may ask not to be photographed during the event, and you may ask in writing for material featuring your likeness to be removed.\n\nParticipation. You must be 18 or older. Sessions are discussion, light crafting and teaching; no heavy machinery is used. Any assistance is given on a best-effort basis with no guarantee on any work. MakeHaven can take no responsibility for damage to property or person. You are responsible for your own safety and actions, and you agree to follow all safety instructions and signage.\n\nConduct. Treat people with respect. Harassment, discrimination and threatening behaviour are not welcome, and organisers may ask anyone to leave, without a refund. Raise any concern with an organiser on the day, or by replying to your confirmation email.",
+  "terms_version": "2026-11-18",
+  "terms": "Organisers. Maker Bonanza is led by Redwood Endeavors, Inc., a 501(c)(3) non-profit organization.\n\nTickets. Tickets are sold by MakeHaven, a partner makerspace, which handles the event's money. You can refund your own paid ticket from the link in your email until the end of January 4, 2027, when the catering count is set. After that there are no refunds, but you can transfer your ticket to someone else from the same link.\n\nYour information. Your name, email and registration answers are seen by the organisers, MakeHaven and Redwood Endeavors, and are used to run this event and to send you logistics about it. We share them with Redwood Endeavors for this event, and Redwood Endeavors may follow up with you about it. Anything beyond that is your choice, using the opt-ins on this form, which you can change at any time from the link in your email. Sponsors do not receive attendee contact details.\n\nPhotos. Photos from the event will be posted to social media and may be used to promote MakeHaven, Makerspace Network and future events. You may ask not to be photographed during the event, and you may ask in writing for material featuring your likeness to be removed.\n\nParticipation. You must be 18 or older. Sessions are discussion, light crafting and teaching; no heavy machinery is used. Any assistance is given on a best-effort basis with no guarantee on any work. MakeHaven can take no responsibility for damage to property or person. You are responsible for your own safety and actions, and you agree to follow all safety instructions and signage.\n\nConduct. Treat people with respect. Harassment, discrimination and threatening behaviour are not welcome, and organisers may ask anyone to leave, without a refund. Raise any concern with an organiser on the day, or by replying to your confirmation email.",
   "statement_descriptor": "MAKER BONANZA",
   "payment_host": "makehaven",
   "notify_email": "sponsorship@makehaven.org",
@@ -185,10 +185,16 @@
     {
       "what": "Prices: general $60, partner members $40 (no cap; about 50 expected), scholarship $25 released in batches of 10",
       "where": "J.R. Logan, 2026-11-18, after a break-even review against the brief's $8,150 budget and the board's $5,000 loss limit"
+    },
+    {
+      "what": "Terms reviewed and approved as written",
+      "where": "J.R. Logan, 2026-11-18"
+    },
+    {
+      "what": "Redwood Endeavors, Inc. is a 501(c)(3) non-profit organization",
+      "where": "J.R. Logan, 2026-11-18"
     }
   ],
-  "gaps": [
-    "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here."
-  ],
+  "gaps": [],
   "refund_until": "2027-01-05T05:00:00.000Z"
 }
