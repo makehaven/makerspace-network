@@ -3,7 +3,7 @@
 // Data tab (tools/standards/app/index.html, `data-m` keys) so a share file and
 // a saved record describe the same thing in the same words.
 
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteField, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Space } from '../types';
 
@@ -81,7 +81,9 @@ export async function markListingMerged(spaceId: string) {
 export type MetricKind = 'number' | 'percent' | 'money' | 'yesno' | 'text' | 'choice';
 /** `core` marks the ten asked first: the figures that say most about a space
  *  and that nearly every space can answer without digging. */
-export interface MetricField { key: string; label: string; kind: MetricKind; hint?: string; choices?: string[]; core?: boolean }
+export interface MetricField { key: string; label: string; kind: MetricKind; hint?: string; choices?: string[]; core?: boolean;
+  /** May be below zero: a deficit. Every other figure is a count, an amount or a share. */
+  signed?: boolean }
 export interface MetricSection { title: string; fields: MetricField[] }
 
 export const METRIC_SECTIONS: MetricSection[] = [
@@ -106,7 +108,7 @@ export const METRIC_SECTIONS: MetricSection[] = [
   ] },
   { title: 'Finances', fields: [
     { key: 'expenses', label: 'Total operating expenses', kind: 'money', core: true },
-    { key: 'surplus', label: 'Year surplus / deficit', kind: 'money' },
+    { key: 'surplus', label: 'Year surplus / deficit', kind: 'money', signed: true, hint: 'A deficit is a negative number, e.g. -4200.' },
     { key: 'revEarned', label: 'Earned income as a share of revenue (memberships, classes, services, rent)', kind: 'percent', core: true },
     { key: 'revContributed', label: 'Contributed income (grants, donations, sponsorships)', kind: 'percent' },
     { key: 'revInstitutional', label: 'Institutional support (university / library / town)', kind: 'percent' },
@@ -179,6 +181,23 @@ export async function saveSpaceMetrics(spaceId: string, year: number, uid: strin
                                        untracked: string[] = [], estimated: string[] = []) {
   const m: SpaceMetrics = { space_id: spaceId, year, metrics, capabilities, untracked, estimated, updated_by: uid, updated_at: now() };
   await setDoc(doc(db, 'space_metrics', metricsId(spaceId, year)), m);
+}
+
+/** Write only what changed, merged into what is there, so two colleagues (or
+ *  two tabs) answering different questions do not erase each other's figures.
+ *  A metric set to null is removed. The first save must carry the lists,
+ *  because the rules require them on the document. */
+export async function saveSpaceMetricsPatch(spaceId: string, year: number, uid: string, patch: {
+  metrics: Record<string, MetricValue | null>; capabilities?: string[]; untracked?: string[]; estimated?: string[];
+}) {
+  const metrics = Object.fromEntries(Object.entries(patch.metrics).map(([k, v]) => [k, v === null ? deleteField() : v]));
+  await setDoc(doc(db, 'space_metrics', metricsId(spaceId, year)), {
+    space_id: spaceId, year, metrics,
+    ...(patch.capabilities ? { capabilities: patch.capabilities } : {}),
+    ...(patch.untracked ? { untracked: patch.untracked } : {}),
+    ...(patch.estimated ? { estimated: patch.estimated } : {}),
+    updated_by: uid, updated_at: now(),
+  }, { merge: true });
 }
 
 // ---------- suggestions: what we already know ----------
