@@ -10,8 +10,8 @@
   "status": "draft",
   "region_id": "us-ct",
   "date_label": "Friday, January 22, 2027",
-  "starts_at": null,
-  "ends_at": null,
+  "starts_at": "2027-01-22T14:00:00.000Z",
+  "ends_at": "2027-01-22T23:00:00.000Z",
   "location": "ClimateHaven and MakeHaven, 770 Chapel Street, New Haven",
   "hosts": [
     {
@@ -126,7 +126,7 @@
       "name": "ClimateHaven",
       "tier_id": null,
       "url": "https://www.climatehaven.tech",
-      "logo": null,
+      "logo": "/sponsors/climatehaven.png",
       "note": "Venue sponsor"
     }
   ],
@@ -173,10 +173,17 @@
     {
       "what": "Bonanza leads, ClimateHaven sponsors by donating the space, MakeHaven is a partner alongside other makerspaces that agree to promote it",
       "where": "J.R. Logan, 2026-11-05"
+    },
+    {
+      "what": "Times, 9am to 6pm Eastern (may be adjusted)",
+      "where": "J.R. Logan, 2026-11-18"
+    },
+    {
+      "what": "ClimateHaven logo",
+      "where": "climatehaven.tech social image, 2026-11-18; see public/sponsors/README.md"
     }
   ],
   "gaps": [
-    "Start and end times are not set, so emails carry no calendar file until starts_at and ends_at are filled in.",
     "The terms adapt MakeHaven's event waiver and add a short code of conduct, but no one has reviewed them. MakeHaven's waiver also links a full waiver, which is not reproduced here."
   ],
   "refund_until": "2027-01-05T05:00:00.000Z"
