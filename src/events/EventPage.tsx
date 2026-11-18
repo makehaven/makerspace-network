@@ -72,7 +72,9 @@ export default function EventPage({ id }: { id: string }) {
       <div className="wrap narrow event-body">
         {event.status === 'draft' && <p className="notice"><strong>Draft preview.</strong> Only stewards can see this page. The forms below show what people will see, but they will not submit until the event is announced or open.</p>}
         {event.status === 'cancelled' && <p className="notice">This event has been cancelled.</p>}
-        {view === 'sponsor' ? <SponsorSection id={id} event={event} stats={stats} /> : <>
+        {view === 'sponsor' ? <SponsorSection id={id} event={event} stats={stats} />
+          : view === 'partner' ? <Sponsors id={id} event={event} partners={partners} invite />
+          : <>
           <About event={event} stats={stats} />
           <Sponsors id={id} event={event} partners={partners} />
           {(event.status === 'open' || event.status === 'draft') && <Register id={id} event={event} stats={stats} />}
@@ -107,7 +109,6 @@ function Hero({ event, stats }: { event: EventDoc; stats: EventStats | null }) {
         <div className="btn-row" style={{ marginTop: 16 }}>
           {(event.status === 'open' || event.status === 'draft') && <a className="btn" href="#register">Get a ticket</a>}
           {event.status === 'announced' && <a className="btn" href="#interest">Tell me when tickets open</a>}
-          {event.status !== 'cancelled' && event.status !== 'closed' && <a className="btn ghost" href="#partner">Run a makerspace? Be a partner</a>}
           {low && <span className="pill flag">{stats!.spots_left} places left</span>}
         </div>
       </div>
@@ -311,15 +312,13 @@ function Interest({ id }: { id: string }) {
 
 // ---------- sponsors ----------
 
-export function Sponsors({ id, event, partners }: { id: string; event: EventDoc; partners: EventPartner[] }) {
+/** Partners and sponsors. On the event page the partner offer is one quiet link;
+ *  with `invite` (the ?view=partner page emailed to makerspaces) it is the page. */
+export function Sponsors({ id, event, partners, invite = false }: { id: string; event: EventDoc; partners: EventPartner[]; invite?: boolean }) {
   const show = event.status !== 'cancelled';
   const [list, setList] = useState(partners);
   useEffect(() => setList(partners), [partners]);
-  return (
-    <section className="event-community" id="partners">
-      <h2>Partner makerspaces</h2>
-      <p className="muted">Makerspaces telling their members about {event.title}.</p>
-      {list.length > 0 && (
+  const wall = list.length > 0 && (
         <ul className="logo-wall">
           {list.map((p) => {
             const space = SPACES.find((s) => s.id === p.space_id);
@@ -334,8 +333,22 @@ export function Sponsors({ id, event, partners }: { id: string; event: EventDoc;
             );
           })}
         </ul>
-      )}
-      {show && <PartnerAsk id={id} event={event} partners={list} onAdded={(p) => setList((l) => [...l, p].sort((a, b) => a.space_name.localeCompare(b.space_name)))} />}
+  );
+  const ask = <PartnerAsk id={id} event={event} partners={list} startOpen={invite}
+    onAdded={(p) => setList((l) => [...l, p].sort((a, b) => a.space_name.localeCompare(b.space_name)))} />;
+
+  if (invite) return (
+    <section className="event-community" id="partners">
+      <p><a href={href('event', { event: id })}>← {event.title}</a></p>
+      {show ? ask : <p className="notice">This event is not taking partners.</p>}
+      {wall && <><h2>Partners so far</h2>{wall}</>}
+    </section>
+  );
+
+  return (
+    <section className="event-community" id="partners">
+      {wall && <><h2>Partner makerspaces</h2><p className="muted">Makerspaces telling their members about {event.title}.</p>{wall}</>}
+      {show && <p className="muted"><a href={href('event', { event: id, view: 'partner' })}>Run a makerspace? Partner with us</a></p>}
 
       {event.sponsors.length > 0 && <>
         <h2>Sponsors</h2>
@@ -360,10 +373,10 @@ export function Sponsors({ id, event, partners }: { id: string; event: EventDoc;
 /** "Be a partner": the ask a makerspace hears at a meeting, made into one button.
  *  An organiser already signed in here lists their own space at once; anyone else
  *  sends a request a steward approves, because anyone can type a space's name. */
-function PartnerAsk({ id, event, partners, onAdded }: {
-  id: string; event: EventDoc; partners: EventPartner[]; onAdded: (p: EventPartner) => void;
+function PartnerAsk({ id, event, partners, onAdded, startOpen = false }: {
+  id: string; event: EventDoc; partners: EventPartner[]; onAdded: (p: EventPartner) => void; startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [mine, setMine] = useState<{ space_id: string; name: string }[]>([]);
   const [name, setName] = useState(auth.currentUser?.displayName ?? '');
   const [email, setEmail] = useState(auth.currentUser?.email ?? '');
@@ -397,7 +410,8 @@ function PartnerAsk({ id, event, partners, onAdded }: {
 
   return (
     <div className="card partner-ask" id="partner">
-      <h3>Run a makerspace? Be a partner.</h3>
+      <h2>Partner with {event.title}</h2>
+      <p>For makerspaces{event.date_label ? `: ${event.date_label}` : ''}{event.location ? `, ${event.location}` : ''}.</p>
       <div className="partner-deal">
         <div>
           <h4>You agree to</h4>
@@ -409,7 +423,7 @@ function PartnerAsk({ id, event, partners, onAdded }: {
         <div>
           <h4>You get</h4>
           <ul>
-            <li><strong>Your logo on this page</strong>, linked to your listing.</li>
+            <li><strong>Your logo on the event page</strong>, linked to your listing.</li>
             <li><strong>One free ticket</strong> for someone from your space.</li>
             <li><strong>Half price for your members</strong>, with your own code{memberPrice ? ` (${money(memberPrice)} instead of ${money(generalPrice)})` : ''}.</li>
           </ul>
@@ -452,7 +466,7 @@ function PartnerAsk({ id, event, partners, onAdded }: {
       </>}
 
       {sent && (listed.has(sent.space ?? '') && mine.some((m) => m.space_id === sent.space)
-        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is listed above. Your free ticket and members' code are on their way by email, and on your Home page.</p>{shareLink(sent.space!)}</>
+        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is now listed on the event page. Your free ticket and members' code are on their way by email, and on your Home page.</p>{shareLink(sent.space!)}</>
         : <>
             <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day, and email you your free ticket and members' code.</p>
             {sent.space && shareLink(sent.space)}

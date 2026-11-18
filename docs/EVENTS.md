@@ -286,7 +286,8 @@ something every space gets. A partner **agrees to** share the event with its
 community and send at least one person. It **gets** its logo on the page, one free
 seat, and a half-price code for its members.
 
-- A space asks with *Become a partner makerspace* on the event page. Anyone can
+- A space asks on the partner page, `<public_url>?view=partner`, which the steward
+  emails to makerspaces; the event page itself has only a small link to it. Anyone can
   type a space's name, so the request (`event_partner_requests`, written only by
   `eventInterest`) waits for a steward, who is emailed and approves it on the
   Network tab. An organiser signed in on the event's host lists their own space at

@@ -175,14 +175,17 @@ test('the scholarship and member tickets stay out of sight until asked for', asy
   expect(submitted.attested).toBe(true);
 });
 
-test('a makerspace can ask to be a partner in one step, and partners and sponsors show logos', async ({ page }) => {
+test('partners and sponsors show logos; the partner offer lives on its own page, in one step', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   let sent: any;
   await page.route('**/api/events/interest', async (r) => { sent = r.request().postDataJSON(); await r.fulfill({ json: { outcome: 'requested' } }); });
   await page.goto(`${fixture}?mode=partners`);
   await expect(page.locator('.logo-wall li', { hasText: 'MakeHaven' }).locator('img')).toBeVisible();
   await expect(page.locator('.logo-wall.sponsors img')).toBeVisible();
-  await page.getByRole('button', { name: 'Become a partner makerspace' }).click();
+  // On the event page the offer is one quiet link to its own page.
+  await expect(page.getByRole('button', { name: "We're in" })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Run a makerspace? Partner with us' })).toHaveAttribute('href', /view=partner/);
+  await page.goto(`${fixture}?mode=invite`);
   await expect(page.getByRole('button', { name: 'No makerspace yet' })).toHaveCount(0);
   await page.getByLabel('Your name').fill('Pat Organiser');
   await page.getByLabel('Email').fill('pat@example.test');
