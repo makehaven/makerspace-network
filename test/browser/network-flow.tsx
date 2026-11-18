@@ -16,6 +16,12 @@ const loadMakers = async () => {
   if (q.get('mode') === 'retry' && ++attempts === 1) throw new Error('Offline');
   return q.get('mode') === 'empty' ? [] : [{ ...blankMaker('Test Maker', '2026-11-14T00:00:00Z'), id: 'fixture', town: 'New Haven' }];
 };
+const day = (n: number, h = 18) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 11) + `${String(h).padStart(2, '0')}:00:00.000Z`;
+const loadCommunity = async () => q.get('mode') === 'calfail' ? Promise.reject(new Error('down')) : [
+  { id: 'a', title: 'Intro to Woodturning', orgName: 'Guilford Art Center', start: day(2), timeKnown: true, categories: ['woodworking'], audience: 'adult' as const, moreDates: [{ id: 'a2', start: day(9) }], link: 'https://example.test/go/a' },
+  { id: 'b', title: 'Kids Clay Camp', orgName: 'Creative Arts Workshop', start: day(5), timeKnown: true, categories: ['ceramics'], audience: 'youth' as const, moreDates: [], link: 'https://example.test/go/b' },
+  { id: 'c', title: 'Spoon Carving', orgName: 'Eli Whitney Museum & Workshop', start: day(80), timeKnown: true, categories: ['woodworking'], audience: 'adult' as const, moreDates: [], link: 'https://example.test/go/c' },
+];
 const loadEvents = async () => q.get('mode') === 'empty' ? [] : [{ ...seed, id: 'fixture-event', status: 'announced' } as EventDoc];
 // A submission saved before enums 0.7.0, so the form has to read it in the new terms.
 const oldSubmission = async () => ({
@@ -26,6 +32,6 @@ const sent = async (f: unknown) => { (window as unknown as { __sent: unknown }).
 const view = q.get('view');
 const saveSpace = async (id: string) => { (window as unknown as { __space: string }).__space = id; };
 createRoot(document.getElementById('root')!).render(view === 'connect' ? <main className="wrap narrow"><ConnectSpaceView save={saveSpace} /></main>
-  : view === 'events' ? <EventsPage load={loadEvents} />
+  : view === 'events' ? <EventsPage load={loadEvents} loadCommunity={loadCommunity} />
   : view === 'listing' ? <main className="wrap narrow"><ListingEditor spaceId="fixture" canEdit load={oldSubmission} submit={sent} /></main>
   : <MakerDirectory load={loadMakers} />);

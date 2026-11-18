@@ -126,6 +126,7 @@ a:hover { color: var(--accent-2); }
   display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
   background: var(--accent); color: var(--accent-ink); font-size: 0.8rem; font-weight: 700; line-height: 1;
 }
+img.avatar { object-fit: cover; padding: 0; }
 
 /* Let navigation wrap below the brand on smaller screens. */
 @media (max-width: 960px) {
@@ -627,6 +628,17 @@ details.form-card > summary { cursor: pointer; }
 .connect-space .near-list small { color: var(--ink-3); }
 .home-space { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
 .home-space .logo { width: 38px; height: 38px; }
+.community-events { margin-top: 40px; }
+.community-events .topic-filter { margin: 14px 0 8px; }
+.community-events .topic-filter .tag { cursor: pointer; font: inherit; font-size: 0.85rem; }
+.community-list { list-style: none; padding: 0; margin: 8px 0 18px; }
+.community-list li { display: grid; grid-template-columns: 9.5rem 1fr; gap: 4px 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+.community-list .when { color: var(--ink-2); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.community-list .what { display: flex; flex-direction: column; min-width: 0; }
+.community-list .what a { font-weight: 600; }
+.community-list small { color: var(--ink-3); }
+.small-print { font-size: 0.88rem; }
+@media (max-width: 560px) { .community-list li { grid-template-columns: 1fr; } }
 .next-steps { padding-left: 18px; margin: 0; }
 .next-steps li { margin-bottom: 8px; }
 .attendee-list { list-style: none; padding: 0; margin: 10px 0 0; }

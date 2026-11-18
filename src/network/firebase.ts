@@ -35,4 +35,4 @@ if (import.meta.env.VITE_USE_EMULATORS === '1') {
 
 // Tell the header who is signed in (src/authHint.ts). Fires once Firebase has
 // restored any saved session, and again on every sign-in and sign-out.
-onAuthStateChanged(auth, (u) => writeAuthHint(u ? (u.displayName?.trim() || u.email || 'you') : null));
+onAuthStateChanged(auth, (u) => writeAuthHint(u ? (u.displayName?.trim() || u.email || 'you') : null, u?.photoURL));

@@ -11,7 +11,7 @@ import ForSpaces from './pages/ForSpaces';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
 import FeedbackButton from './components/FeedbackButton';
-import { useAuthHint } from './authHint';
+import { useHint } from './authHint';
 
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
@@ -116,11 +116,14 @@ function Link({ page, params, children, className, label }: { page: string; para
 
 /** Sign in, or who you are: the header's one answer to "am I signed in?". */
 function AccountLink() {
-  const who = useAuthHint();
+  const { who, photo } = useHint();
+  const [broken, setBroken] = useState(false);
   if (!who) return <Link page="home" className="nav-signin">Sign in</Link>;
   return (
     <Link page="home" className="nav-account" label={`My network, signed in as ${who}`}>
-      <span className="avatar" aria-hidden="true">{who.trim().charAt(0).toUpperCase()}</span>
+      {photo && !broken
+        ? <img className="avatar" src={photo} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} />
+        : <span className="avatar" aria-hidden="true">{who.trim().charAt(0).toUpperCase()}</span>}
       My network
     </Link>
   );

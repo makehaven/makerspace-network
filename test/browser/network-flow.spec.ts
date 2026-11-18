@@ -67,8 +67,30 @@ test('events show registration state and a helpful empty state', async ({ page }
   await expect(page.getByText('Registration not open yet', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Explore Maker Bonanza' })).toHaveAttribute('href', /event=fixture-event/);
   await page.goto('/test/browser/network-flow.html?view=events&mode=empty');
-  await expect(page.getByRole('heading', { name: 'No upcoming events announced yet' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Find a space', exact: true })).toBeVisible();
+  await expect(page.getByText('No network gatherings announced right now.')).toBeVisible();
+});
+
+test("other makerspaces' events list by date, filter by topic, and keep later ones folded", async ({ page }) => {
+  await page.goto('/test/browser/network-flow.html?view=events');
+  // The network's own event stays first.
+  await expect(page.getByRole('link', { name: 'Explore Maker Bonanza' })).toBeVisible();
+  const list = page.locator('.community-list li');
+  await expect(list).toHaveCount(2);
+  await expect(list.first()).toContainText('Intro to Woodturning');
+  await expect(list.first()).toContainText('+1 more date');
+  await expect(list.nth(1)).toContainText('for kids');
+  await expect(list.first().getByRole('link', { name: 'Intro to Woodturning' })).toHaveAttribute('href', 'https://example.test/go/a');
+  await page.getByRole('button', { name: 'Ceramics & pottery (1)' }).click();
+  await expect(list).toHaveCount(1);
+  await expect(list.first()).toContainText('Kids Clay Camp');
+  await page.getByRole('button', { name: 'Woodworking (2)' }).click();
+  await expect(list).toHaveCount(1);
+  await page.getByRole('button', { name: 'Show 1 later event' }).click();
+  await expect(list).toHaveCount(2);
+  // If the calendar is down, the page still works without that section.
+  await page.goto('/test/browser/network-flow.html?view=events&mode=calfail');
+  await expect(page.getByRole('link', { name: 'Explore Maker Bonanza' })).toBeVisible();
+  await expect(page.locator('.community-events')).toHaveCount(0);
 });
 
 
@@ -120,6 +142,22 @@ test('the header says who is signed in, on any page, without loading Firebase', 
   await context.clearCookies();
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+});
+
+test('a Google photo replaces the initial; any other address is ignored', async ({ page, context }) => {
+  // Serve a stand-in for Google's photo host so nothing leaves the machine.
+  await page.route('https://lh3.googleusercontent.com/**', (r) => r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"/>' }));
+  await context.addCookies([
+    { name: 'mn_who', value: encodeURIComponent('Jo Rivera'), domain: '127.0.0.1', path: '/' },
+    { name: 'mn_pic', value: encodeURIComponent('https://lh3.googleusercontent.com/a/ABC123=s96-c'), domain: '127.0.0.1', path: '/' },
+  ]);
+  await page.goto('/');
+  const account = page.getByRole('link', { name: 'My network, signed in as Jo Rivera' });
+  await expect(account.locator('img.avatar')).toHaveAttribute('src', 'https://lh3.googleusercontent.com/a/ABC123=s96-c');
+  await context.addCookies([{ name: 'mn_pic', value: encodeURIComponent('https://evil.example/x.png'), domain: '127.0.0.1', path: '/' }]);
+  await page.reload();
+  await expect(account.locator('img')).toHaveCount(0);
+  await expect(account.locator('.avatar')).toHaveText('J');
 });
 
 test('the listing reads old access answers in the new terms and records how much of each capability', async ({ page }) => {
