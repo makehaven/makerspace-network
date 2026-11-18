@@ -79,7 +79,7 @@ export async function markListingMerged(spaceId: string) {
 // ---------- annual network data ----------
 
 export type MetricKind = 'number' | 'percent' | 'money' | 'yesno' | 'text' | 'choice';
-/** `core` marks the ten asked first: the figures that say most about a space
+/** `core` marks the questions asked first, under "Start here" (the count may change): the figures that say most about a space
  *  and that nearly every space can answer without digging. */
 export interface MetricField { key: string; label: string; kind: MetricKind; hint?: string; choices?: string[]; core?: boolean;
   /** May be below zero: a deficit. Every other figure is a count, an amount or a share. */

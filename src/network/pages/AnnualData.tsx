@@ -177,7 +177,7 @@ export default function AnnualData({ spaceId, canEdit }: { spaceId: string; canE
               {[0, 1, 2].map((i) => reportingYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
             </select></label>
           <p style={{ margin: '0 0 12px' }}>
-            <strong>Core: {CORE.filter(answered).length} of {CORE.length}</strong>
+            <strong>Start here: {CORE.filter(answered).length} of {CORE.length}</strong>
             <span className="muted"> · all questions {ALL.filter(answered).length} of {ALL.length}</span>
             {canEdit && status && <> · <span role="status" className={`std-save ${status === SAVED ? 'saved' : status.startsWith('Not saved') ? 'error' : ''}`}>{status}</span></>}
           </p>
@@ -197,8 +197,8 @@ export default function AnnualData({ spaceId, canEdit }: { spaceId: string; canE
 
       <section className="card form-card" id="core">
         <div className="sec-head">
-          <h3>The core ten</h3>
-          {canEdit && <a className="linkish" href={ask('The core ten', 'core')}>Ask a colleague</a>}
+          <h3>Start here</h3>
+          {canEdit && <a className="linkish" href={ask('Start here', 'core')}>Ask a colleague</a>}
         </div>
         <p className="muted">Answer these and you've given the network what matters most. A good estimate beats a blank.</p>
         {CORE.map(row)}
