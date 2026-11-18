@@ -37,7 +37,7 @@ meetings, but a person can see and reach a verified person in any state.
 | SpaceAPI consume / publish | **Not started** |
 | OKW export | **Not started** |
 | Events: tickets, sponsors, network follow-through (`docs/EVENTS.md`) | **Live Stripe configured 2026-11-14; sales closed.** Full sandbox checkout/refund/email tests passed; live checkout creation/expiry and local signature checks passed without charging. Bonanza times, terms and publication remain pending |
-| Events from other makerspaces | **Live 2026-11-18** — the Events tab lists classes and open events at Connecticut makerspaces and craft studios, by topic, from the Community Calendar's `ct-makerspaces` calendar (~/development/Community-Calendar: consenting sources only, links go to each organisation). Still published from a workstation, not a nightly server job |
+| Events from other makerspaces | **Live 2026-11-18** — the Events tab lists classes and open events at Connecticut makerspaces and craft studios, by topic, from the Community Calendar's `ct-makerspaces` calendar (~/development/Community-Calendar: consenting sources only, links go to each organisation). Refreshed nightly at 04:15 by a systemd user timer on JR's workstation (scripts/nightly.sh there); a server schedule needs the Community Calendar project on Blaze plus an Anthropic key |
 | Makers: profiles for anyone who makes things (`docs/GOVERNANCE.md` §Makers) | **Functions deployed 2026-11-14.** Production photo upload / Storage setup still needs verification |
 | Reciprocity architecture (`docs/RECIPROCITY.md`) | **Designed, not started** — Open Badges 3.0, member-carried |
 | Network achievement framework | **Not started** — the scarce work in phase 3 |
