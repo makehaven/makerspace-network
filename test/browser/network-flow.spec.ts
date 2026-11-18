@@ -147,3 +147,18 @@ test('the listing reads old access answers in the new terms and records how much
   expect(sent.eligibility).toBe('affiliated_only');
 });
 
+
+test('campus spaces sit below the community spaces and say who they are for', async ({ page }) => {
+  await page.goto('/?region=us-ct');
+  const below = page.locator('a.card.mini');
+  await expect(below.filter({ hasText: 'Yale Center for Engineering Innovation and Design' })).toContainText('Campus space: its own students and staff only');
+  // Unconfirmed public access keeps a well-equipped campus space out of the main list.
+  await expect(below.filter({ hasText: 'SCSU Makerspace at Buley Library' })).toContainText('Campus space: probably its own students and staff');
+  await expect(page.locator('.cards:not(.compact) a.card', { hasText: 'SCSU Makerspace' })).toHaveCount(0);
+  await below.filter({ hasText: 'SCSU Makerspace' }).click();
+  await expect(page.locator('.access-note')).toContainText('A campus space.');
+  await page.goto('/?page=space&space=yale-ceid');
+  await expect(page.locator('.access-note')).toContainText('Not open to the public.');
+  await page.goto('/?page=space&space=makehaven');
+  await expect(page.locator('.access-note')).toHaveCount(0);
+});

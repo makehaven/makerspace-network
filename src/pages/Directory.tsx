@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Region, Space } from '../types';
-import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS } from '../data';
+import { spacesIn, label, CAPABILITIES, CAPABILITY_DOMAINS, ACCESS_MODELS, institutionalAccess } from '../data';
 import { href, navigate } from '../App';
 import RegionMap from '../components/RegionMap';
 import Logo from '../components/Logo';
@@ -54,11 +54,14 @@ const LEADS_MIN_CAPABILITIES = 4;
 
 const leads = (s: Space) =>
   (s.capabilities?.length ?? 0) >= LEADS_MIN_CAPABILITIES &&
-  s.operations?.public_access !== false;
+  institutionalAccess(s) === null;
 
 /** Why a space is in the second tier, said plainly on its card. */
 const whyBelow = (s: Space): string => {
-  if (s.operations?.public_access === false) return 'Its own students and staff';
+  const access = institutionalAccess(s);
+  const place = s.kind === 'school_makerspace' ? 'School space' : 'Campus space';
+  if (access === 'restricted') return s.kind === 'university_makerspace' || s.kind === 'school_makerspace' ? `${place}: its own students and staff only` : 'Its own members or affiliates only';
+  if (access === 'unconfirmed') return `${place}: probably its own students and staff`;
   if ((s.capabilities?.length ?? 0) === 0) return 'Details not yet confirmed';
   return 'Some tools confirmed';
 };
@@ -147,6 +150,8 @@ function Card({ s, domain = '' }: { s: Space; domain?: string }) {
               <span className="fact"><span className="k">From</span> ${ops.monthly_cost_usd.min}/mo</span>
             )}
             {ops.public_access === true && <span className="fact">Open to non-members</span>}
+            {institutionalAccess(s) === 'restricted' && <span className="fact restricted">Own students and staff only</span>}
+            {institutionalAccess(s) === 'unconfirmed' && <span className="fact restricted">Public access not confirmed</span>}
           </div>
 
           {caps.length > 0 && (

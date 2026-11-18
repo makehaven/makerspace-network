@@ -1,4 +1,4 @@
-import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, REPO_URL } from '../data';
+import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, REPO_URL, institutionalAccess } from '../data';
 import { href, navigate } from '../App';
 import Logo from '../components/Logo';
 
@@ -31,6 +31,12 @@ export default function SpacePage({ id }: { id: string }) {
             </p>
             <h1>{s.name}</h1>
             {s.summary && <p className="lede">{s.summary}</p>}
+            {institutionalAccess(s) === 'restricted' && (
+              <p className="notice access-note"><strong>Not open to the public.</strong> This space is for its own {s.kind === 'school_makerspace' || s.kind === 'university_makerspace' ? 'students and staff' : 'members or affiliates'}. It is listed so makers and other spaces know it is here; for a workshop you can join, see the community makerspaces nearby.</p>
+            )}
+            {institutionalAccess(s) === 'unconfirmed' && (
+              <p className="notice access-note"><strong>{s.kind === 'school_makerspace' ? 'A school space.' : 'A campus space.'}</strong> These are usually for their own students and staff, and this listing does not yet confirm whether anyone else can use it. Ask the space before you visit.</p>
+            )}
           </div>
         </div>
       </section>
@@ -72,8 +78,10 @@ export default function SpacePage({ id }: { id: string }) {
               <h2>Practical detail</h2>
               <dl className="kv">
                 {ops.access_model && (<><dt>Getting in</dt><dd>{label('AccessModel', ops.access_model)}</dd></>)}
-                {ops.public_access !== undefined && (
+                {ops.public_access !== undefined ? (
                   <><dt>Non-members</dt><dd>{ops.public_access ? 'Can use the space by some route' : 'Members or affiliates only'}</dd></>
+                ) : institutionalAccess(s) === 'unconfirmed' && (
+                  <><dt>Non-members</dt><dd>Not confirmed</dd></>
                 )}
                 {(ops.membership_models?.length ?? 0) > 0 && (
                   <><dt>Ways in</dt><dd>{ops.membership_models!.map((m) => label('MembershipModel', m)).join(', ')}</dd></>

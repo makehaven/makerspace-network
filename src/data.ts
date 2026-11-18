@@ -98,3 +98,14 @@ export function completeness(s: Space): { score: number; missing: string[] } {
   const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
   return { score: (checks.length - missing.length) / checks.length, missing };
 }
+
+/** Campus and school spaces exist mainly for their own students and staff. The
+ *  directory says so, from recorded facts: `restricted` when the record says
+ *  non-members cannot use it, `unconfirmed` for a campus or school space whose
+ *  record does not say either way. Library makerspaces are public, so not here. */
+const INSTITUTIONAL_KINDS = new Set(['university_makerspace', 'school_makerspace']);
+export function institutionalAccess(s: Space): 'restricted' | 'unconfirmed' | null {
+  if (s.operations?.public_access === false) return 'restricted';
+  if (INSTITUTIONAL_KINDS.has(s.kind) && s.operations?.public_access !== true) return 'unconfirmed';
+  return null;
+}

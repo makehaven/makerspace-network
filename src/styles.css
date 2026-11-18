@@ -618,6 +618,8 @@ details.form-card > summary { cursor: pointer; }
 .partner-ask li { margin-bottom: 4px; }
 .partner-ask .event-form { margin-top: 12px; }
 .partner-ask .share-link code { word-break: break-all; }
+.fact.restricted { color: var(--ink-2); font-style: italic; }
+.access-note { margin-top: 14px; max-width: 62ch; }
 .next-steps { padding-left: 18px; margin: 0; }
 .next-steps li { margin-bottom: 8px; }
 .attendee-list { list-style: none; padding: 0; margin: 10px 0 0; }
