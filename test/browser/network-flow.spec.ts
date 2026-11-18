@@ -221,3 +221,16 @@ test('someone with no space is asked once: member picks a space, or a ZIP sugges
   await page.getByRole('button', { name: 'Save' }).click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { __space?: string }).__space)).toBe('spark-makerspace');
 });
+
+test('the directory photo is a slideshow you can step through, and it stays put for reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?region=us-ct');
+  const show = page.locator('.slideshow');
+  await expect(show.locator('figcaption')).toHaveText('A woodworking class at MakeHaven, New Haven');
+  await expect(show.locator('.slide-dots button')).toHaveCount(4);
+  await page.waitForTimeout(6500);
+  await expect(show.locator('figcaption')).toHaveText('A woodworking class at MakeHaven, New Haven');
+  await show.getByRole('button', { name: /Photo 3 of 4/ }).click();
+  await expect(show.locator('figcaption')).toHaveText('Welding at MakeHaven, New Haven');
+  await expect(show.locator('.slide.on img')).toHaveAttribute('src', '/photos/makehaven-welding.webp');
+});

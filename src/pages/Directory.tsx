@@ -5,6 +5,7 @@ import { href, navigate } from '../App';
 import RegionMap from '../components/RegionMap';
 import Logo from '../components/Logo';
 import WorkshopPhoto from '../components/WorkshopPhoto';
+import PhotoSlideshow from '../components/PhotoSlideshow';
 import MakingIcon, { MAKING_CATEGORIES } from '../components/MakingIcon';
 import { useUrlFilters, setQueryValues } from '../useUrlFilters';
 
@@ -300,10 +301,12 @@ export default function Directory({ region }: { region: Region }) {
           </label>
           <a className="text-link" href="#spaces">View all spaces</a>
         </div>
-        {region.id === 'us-ct' && <figure className="workshop-cover">
-          <WorkshopPhoto photo="bags" priority />
-          <figcaption>Handmade bags at MakeHaven, New Haven</figcaption>
-        </figure>}
+        {region.id === 'us-ct' && <PhotoSlideshow slides={[
+          { photo: 'woodworking', caption: 'A woodworking class at MakeHaven, New Haven' },
+          { photo: 'quilting', caption: 'Longarm quilting at MakeHaven, New Haven' },
+          { photo: 'welding', caption: 'Welding at MakeHaven, New Haven' },
+          { photo: 'bags', caption: 'Handmade bags at MakeHaven, New Haven' },
+        ]} />}
       </section>
 
       <div className="wrap directory-body" id="spaces">

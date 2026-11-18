@@ -759,6 +759,14 @@ details.form-card > summary { cursor: pointer; }
 .workshop-footer a { font-weight: 650; }
 .directory-hero { padding-bottom: 34px; }
 .directory-hero .workshop-cover > img { aspect-ratio: 1.55; object-position: 50% 0%; }
+.slideshow .slides { display: grid; border-radius: 4px; overflow: hidden; }
+.slideshow .slide { grid-area: 1 / 1; opacity: 0; transition: opacity 1.2s ease; }
+.slideshow .slide.on { opacity: 1; }
+.slideshow .slide img { display: block; width: 100%; height: auto; aspect-ratio: 1.55; object-fit: cover; object-position: 50% 30%; }
+.slide-dots { position: absolute; bottom: 4px; right: 0; display: flex; gap: 6px; }
+.slide-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 1px solid var(--ink-3); background: transparent; cursor: pointer; }
+.slide-dots button[aria-current='true'] { background: var(--ink-2); border-color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { .slideshow .slide { transition: none; } }
 .directory-hero .workshop-lede { margin: 18px 0; }
 .directory-search { display: block; margin-bottom: 13px; max-width: 440px; }
 .directory-search > span { display: block; font-weight: 650; margin-bottom: 6px; font-size: .88rem; }
