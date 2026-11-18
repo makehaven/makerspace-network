@@ -167,9 +167,9 @@ export default function AnnualData({ spaceId, canEdit }: { spaceId: string; canE
     <div className="annual">
       <div className="card form-card">
         <p className="muted" style={{ marginTop: 0 }}>
-          The network's annual data standard. Calendar year, due January 31. Organisational figures
-          only — no member is ever named. Your staff and the regional steward can see these answers; the
-          network publishes totals, medians and ranges, never your figures.
+          Annual figures for the calendar year, due January 31. Only organisation-level numbers; no
+          member names. Your staff and the regional steward can see your answers. The network only
+          publishes totals across spaces.
         </p>
         <div className="inline-fields" style={{ alignItems: 'end' }}>
           <label className="field" style={{ maxWidth: 180 }}><span>Reporting year</span>

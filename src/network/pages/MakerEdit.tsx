@@ -167,7 +167,7 @@ export default function MakerEdit() {
     <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 50 }}>
       <p className="eyebrow"><PageLink page="makers">Makers</PageLink></p>
       <h1 style={{ fontSize: '1.9rem' }}>Your maker profile</h1>
-      <p className="muted">You're a maker if you say you are. Show what you make so people can find you, to collaborate, to learn from you or to hire you.</p>
+      <p className="muted">Show what you make so people can find you to collaborate, learn from you or hire you.</p>
 
       {s.status === 'loading' && <p>Loading…</p>}
       {s.status === 'signed_out' && <SignIn context={new URLSearchParams(window.location.search).has('registration') ? 'event' : 'maker'} />}

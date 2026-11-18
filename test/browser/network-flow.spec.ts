@@ -46,7 +46,7 @@ test('navigation and sign-in explain maker, organiser, invitation and event jour
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?page=home');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  for (const name of ['Find a space', 'Meet makers', 'Events', 'For organisers', 'Sign in']) await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
+  for (const name of ['Find a space', 'Events', 'For organisers', 'Sign in']) await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
   await expect(page.getByText('Use any email address you check regularly.')).toBeVisible();
   await expect(page.getByLabel('Email address')).toHaveAttribute('autocomplete', 'email');
   await expect(page.getByText('Your network account is free.', { exact: false })).toBeVisible();

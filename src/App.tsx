@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
+import { SHOW_MAKERS_DIRECTORY } from './features';
 import { resolveRegion, REPO_URL } from './data';
 import Directory from './pages/Directory';
 import SpacePage from './pages/SpacePage';
@@ -152,7 +153,7 @@ export default function App() {
           </a>
           <nav className="nav" aria-label="Main navigation">
             <Link page="directory">Find a space</Link>
-            <Link page="makers">Meet makers</Link>
+            {SHOW_MAKERS_DIRECTORY && <Link page="makers">Meet makers</Link>}
             <Link page="events">Events</Link>
             <Link page="for-spaces">For organisers</Link>
             <AccountLink />
@@ -209,7 +210,7 @@ export default function App() {
             <p style={{ margin: 0 }}>
               Code MIT · data <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
               <br />
-              <a href={href('about')}>About the network</a> · <a href={REPO_URL}>Corrections and additions welcome</a>
+              <a href={href('about')}>About the network</a> · <a href={REPO_URL}>Data and code on GitHub</a>
             </p>
           </div>
         </div>

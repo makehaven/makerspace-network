@@ -33,16 +33,15 @@ export default function Join({ spaceId }: { spaceId?: string }) {
           <p className="eyebrow">For organisers</p>
           <h1>{s.person ? 'Your space' : 'Connect your space or organisation'}</h1>
           <p className="lede">
-            Sign up as someone connected to a makerspace, or to an organisation that works with
-            them — an agency, funder, support organisation, school or network. You'll be reachable
-            for the meetings that concern you, you'll be able to find your counterparts in any
-            state, and when you move on, someone else can pick up where you left off.
+            For people who run or work at a makerspace, or at an agency, funder, school or other
+            organisation that works with makerspaces. Once you join, you can find people at other
+            spaces and get invited to meetings that concern you.
           </p>
           {!s.person && (
             <p className="notice info" style={{ marginTop: 16 }}>
-              <strong>A member of a makerspace, rather than someone who helps run one?</strong>{' '}
-              This page isn't for you: <a href={href('maker-edit')}>make a maker profile</a> instead,
-              and name your makerspace as your home space.
+              <strong>A member, not staff?</strong>{' '}
+              <a href={href('maker-edit')}>Make a maker profile</a> instead and choose your
+              makerspace as your home space.
             </p>
           )}
         </div>
@@ -265,7 +264,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
             </ul>
           )}
           <p className="muted" style={{ marginTop: 10 }}>
-            Not listed? The directory is Connecticut so far, and the network is not.{' '}
+            Not listed? The directory only covers Connecticut so far, but you can join from anywhere.{' '}
             <button type="button" className="linkish" onClick={() => setProposing(true)}>Add your space</button>
           </p>
           <p className="muted">
@@ -318,9 +317,9 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
           <h2>Your role there</h2>
           {mode === 'partner' ? (
             <p className="muted">
-              You'll join as an ecosystem partner. A steward confirms every partner — an email at the
-              organisation's domain isn't enough on its own — and once confirmed you can see and reach
-              people at makerspaces across the network, and they can reach you.
+              You'll join as a partner. A steward confirms every partner, even with an email at the
+              organisation's domain. Once confirmed, you and people at makerspaces in the network
+              can contact each other.
             </p>
           ) : domainOk ? (
             <div className="radios">

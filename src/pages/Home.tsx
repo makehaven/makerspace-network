@@ -1,6 +1,8 @@
 import { REGIONS, spacesIn, regionHref } from '../data';
 import { href } from '../App';
 import WorkshopPhoto from '../components/WorkshopPhoto';
+import { openFeedback } from '../components/FeedbackButton';
+import { SHOW_MAKERS_DIRECTORY } from '../features';
 
 export default function Home() {
   const active = REGIONS.filter((r) => r.status === 'active');
@@ -9,7 +11,7 @@ export default function Home() {
       <div className="workshop-intro">
         <h1>Find a makerspace.</h1>
         <p className="workshop-lede">Woodshops, sewing rooms and more, with tools and help for your next project.</p>
-        <div className="btn-row"><a className="btn" href="#regions">Find a space</a><a className="text-link" href={href('makers')}>Meet makers</a></div>
+        <div className="btn-row"><a className="btn" href="#regions">Find a space</a>{SHOW_MAKERS_DIRECTORY && <a className="text-link" href={href('makers')}>Meet makers</a>}</div>
       </div>
       <figure className="workshop-cover">
         <WorkshopPhoto photo="woodworking" priority />
@@ -23,7 +25,7 @@ export default function Home() {
         {r.id === 'us-ct' && <img src="/brand/connecticut-makerspace-network.png" alt="" width="72" height="72" />}
         <div><h3>{r.name}</h3><span>{spacesIn(r).length} spaces</span></div><span className="region-arrow" aria-hidden="true">→</span>
       </a>)}</div>
-      <p className="region-invite"><a href="mailto:directory@makerspace.network?subject=Add%20my%20region">Add a region</a></p>
+      <p className="region-invite"><button type="button" className="linkish" onClick={() => openFeedback('I would like to add my region: ')}>Ask to add your region</button></p>
     </section>
 
     <section className="workshop-stories wrap" aria-labelledby="workshop-title">

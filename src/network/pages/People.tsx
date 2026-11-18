@@ -42,9 +42,8 @@ export default function People() {
           <p className="eyebrow">Space and partner roster</p>
           <h1>Who's at the other spaces</h1>
           <p className="lede">
-            Verified people at makerspaces across the network, in every state, and at the
-            agencies, funders and organisations that work with them. Find the person who does
-            what you do somewhere else, and reach them.
+            Verified people at makerspaces in the network, and at agencies, funders and other
+            organisations that work with them. Find the person who does your job at another space.
           </p>
         </div>
       </section>

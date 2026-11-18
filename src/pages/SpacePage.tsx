@@ -1,6 +1,7 @@
-import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, REPO_URL, institutionalAccess } from '../data';
+import { spaceById, label, CAPABILITY_DOMAINS, CAPABILITIES, completeness, VOCAB, institutionalAccess } from '../data';
 import { href, navigate } from '../App';
 import Logo from '../components/Logo';
+import { openFeedback } from '../components/FeedbackButton';
 
 export default function SpacePage({ id }: { id: string }) {
   const s = spaceById(id);
@@ -32,10 +33,10 @@ export default function SpacePage({ id }: { id: string }) {
             <h1>{s.name}</h1>
             {s.summary && <p className="lede">{s.summary}</p>}
             {institutionalAccess(s) === 'restricted' && (
-              <p className="notice access-note"><strong>Not open to the public.</strong> This space is for its own {s.kind === 'school_makerspace' || s.kind === 'university_makerspace' ? 'students and staff' : 'members or affiliates'}. It is listed so makers and other spaces know it is here; for a workshop you can join, see the community makerspaces nearby.</p>
+              <p className="notice access-note"><strong>Not open to the public.</strong> This space is for its own {s.kind === 'school_makerspace' || s.kind === 'university_makerspace' ? 'students and staff' : 'members or affiliates'}. For a workshop you can join, see the community makerspaces nearby.</p>
             )}
             {institutionalAccess(s) === 'unconfirmed' && (
-              <p className="notice access-note"><strong>{s.kind === 'school_makerspace' ? 'A school space.' : 'A campus space.'}</strong> These are usually for their own students and staff, and this listing does not yet confirm whether anyone else can use it. Ask the space before you visit.</p>
+              <p className="notice access-note"><strong>{s.kind === 'school_makerspace' ? 'A school space.' : 'A campus space.'}</strong> These are usually for their own students and staff. We have not confirmed whether anyone else can use it, so ask before you visit.</p>
             )}
           </div>
         </div>
@@ -104,17 +105,14 @@ export default function SpacePage({ id }: { id: string }) {
             {missing.length > 0 && (
               <div className="notice section">
                 <h4>Still to confirm</h4>
-                <p style={{ margin: '4px 0 6px' }}>
-                  Written down as missing rather than guessed at:
-                </p>
                 <ul>{missing.map((m) => <li key={m}>{m}</li>)}</ul>
                 <p style={{ margin: '10px 0 0' }}>
                   If you run this space,{' '}
                   <a href={href('for-spaces')}
                      onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('for-spaces'); }}>
                     claim the listing
-                  </a>{' '}and the record becomes yours to correct — or{' '}
-                  <a href={`${REPO_URL}/blob/main/data/spaces/${s.id}.json`}>edit the file directly</a>.
+                  </a>{' '}to fill these in, or{' '}
+                  <button type="button" className="linkish" onClick={() => openFeedback(`Correction for ${s.name}: `)}>suggest a correction</button>.
                 </p>
               </div>
             )}
@@ -170,7 +168,7 @@ export default function SpacePage({ id }: { id: string }) {
               {website && <p style={{ margin: '0 0 4px' }}><a href={website}>{new URL(website).hostname}</a></p>}
               {closed && s.contact?.website && (
                 <p style={{ margin: '0 0 4px', color: 'var(--ink-2)' }}>
-                  Former website, {new URL(s.contact.website).hostname}, not linked: the space has closed and the domain may no longer be theirs.
+                  Former website: {new URL(s.contact.website).hostname} (not linked because the space has closed).
                 </p>
               )}
               {s.contact?.email && <p style={{ margin: '0 0 4px' }}><a href={`mailto:${s.contact.email}`}>{s.contact.email}</a></p>}
@@ -186,8 +184,8 @@ export default function SpacePage({ id }: { id: string }) {
               <div className="aside" style={{ marginBottom: 14 }}>
                 <h3>Live status</h3>
                 <p style={{ margin: 0 }}>
-                  This space publishes a <a href="https://spaceapi.io">SpaceAPI</a> endpoint —
-                  it is the authority for anything it carries.
+                  This space publishes its own live status through{' '}
+                  <a href="https://spaceapi.io">SpaceAPI</a>.
                 </p>
               </div>
             )}
@@ -206,9 +204,8 @@ export default function SpacePage({ id }: { id: string }) {
             <div className="card" style={{ marginTop: 14 }}>
               <h3>Part of {s.name}?</h3>
               <p className="muted" style={{ margin: '6px 0 10px' }}>
-                Join the network as someone connected to this space: get invited to the
-                meetings that concern it, find your counterparts at other spaces, and keep the
-                listing current.
+                Join the network to keep this listing current, meet people at other spaces,
+                and get invited to meetings that concern your space.
               </p>
               <a className="btn ghost" href={href('join', { space: s.id })}
                  onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); navigate('join', { space: s.id }); }}>

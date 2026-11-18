@@ -164,15 +164,15 @@ export default function StandardsAssessment({ spaceId, canEdit }: { spaceId: str
       <div className="card form-card">
         <h3 style={{ marginTop: 0 }}>Share a summary with the network</h3>
         <p className="muted">
-          Optional. Shares your level, your average in each domain and the health check — never a single
-          standard's score, your evidence or your notes. The steward sees it; the network only ever
-          publishes counts and ranges across spaces. You can withdraw it at any time.
+          Optional. Shares your level, your average in each area and the health check, but not
+          individual scores, evidence or notes. The steward sees it; the network only publishes totals
+          across spaces. You can withdraw it at any time.
         </p>
         <p><strong>{levelLabel(shareable.level)}</strong> · {shareable.domains.map((x) => `${x.name} ${x.avg.toFixed(1)}`).join(' · ')}</p>
         {summary && <p className="notice info">Shared on {summary.shared_at.slice(0, 10)} at {levelLabel(summary.level)}. Sharing again replaces it.</p>}
         {canEdit && computed.scored < computed.applicable.length * 0.8 && (
           <p className="muted">Score at least {Math.ceil(computed.applicable.length * 0.8)} of your {computed.applicable.length} standards first,
-            so the summary describes your space rather than how far you got.</p>
+            so the summary reflects your whole space.</p>
         )}
         {canEdit && (
           <div className="btn-row">

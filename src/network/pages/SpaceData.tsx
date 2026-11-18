@@ -71,8 +71,8 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
             <p style={{ margin: 0 }}>Only {space.name}'s admins and editors can answer these.</p>
             {!here ? (
               <p style={{ margin: '8px 0 0' }}>
-                If you work there, join {space.name} first — with an email address at the space's own domain you can
-                answer straight away. <PageLink className="btn small" page="join" params={back}>Join {space.name}</PageLink>
+                If you work there, join {space.name} first. With an email address at the space's own domain you can
+                start straight away. <PageLink className="btn small" page="join" params={back}>Join {space.name}</PageLink>
               </p>
             ) : here.status === 'pending' ? (
               <p style={{ margin: '8px 0 0' }}>You've asked to join and are waiting for {space.name}'s admin or the regional steward to confirm you. <PageLink page="join">Your profile</PageLink></p>
@@ -92,7 +92,7 @@ export default function SpaceData({ spaceId }: { spaceId?: string }) {
             {seen.has('annual') && <div role="tabpanel" hidden={tab !== 'annual'}><AnnualData spaceId={space.id} canEdit={!!mine} /></div>}
             {seen.has('standards') && <div role="tabpanel" hidden={tab !== 'standards'}>{mine
               ? <StandardsAssessment spaceId={space.id} canEdit />
-              : <p className="notice">A space's self-assessment is private to its own staff — stewards see only the summary a space chooses to share.</p>}</div>}
+              : <p className="notice">A space's self-assessment is private to its staff. Stewards only see a summary if the space shares one.</p>}</div>}
           </>
         )}
       </div>
