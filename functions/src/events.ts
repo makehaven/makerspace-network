@@ -494,9 +494,12 @@ export const eventInterest = endpoint([], async (req, body) => {
   const person = cleanPerson(body);
   if ('error' in person) throw new Refused(400, 'bad_person', person.error);
   const iso = nowIso();
+  const homeSpace = await knownSpace(body.home_space_id);
+  // A place not in the directory, as typed: a lead to verify, never a listing.
+  const other = !homeSpace && typeof body.home_space_other === 'string' ? body.home_space_other.trim().slice(0, 120) : '';
   await db().doc(`event_interest/${registrationId(ev.id, person.email)}`).set({
     event_id: ev.id, region_id: ev.region_id, name: person.name, email: person.email,
-    home_space_id: await knownSpace(body.home_space_id), referred_by: await knownSpace(body.ref), created_at: iso,
+    home_space_id: homeSpace, home_space_other: other, referred_by: await knownSpace(body.ref), created_at: iso,
   }, { merge: true });
   return { outcome: 'noted' };
 });

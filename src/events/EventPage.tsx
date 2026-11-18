@@ -278,7 +278,7 @@ function Interest({ id }: { id: string }) {
       <p className="muted">One email, when registration opens. Nothing else unless you ask for it.</p>
       <form onSubmit={async (e) => {
         e.preventDefault(); setError(null);
-        try { await api('interest', { event_id: id, name, email, home_space_id: space, ref: params.get('ref'), website: trap }); setDone(true); }
+        try { await api('interest', { event_id: id, name, email, home_space_id: space, home_space_other: space ? '' : other, ref: params.get('ref'), website: trap }); setDone(true); }
         catch (err) { setError(errText(err)); }
       }}>
         <div className="two">

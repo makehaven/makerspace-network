@@ -27,7 +27,7 @@ interface Sponsor {
   org_name: string; org_url: string; contact_name: string; contact_email: string; tier_id: string | null; tier_name: string | null;
   amount_cents: number | null; amount_paid_cents: number; note: string; pay: string; status: string; created_at: string;
 }
-interface Interested { name: string; email: string; home_space_id: string | null; referred_by: string | null; created_at: string }
+interface Interested { name: string; email: string; home_space_id: string | null; home_space_other?: string; referred_by: string | null; created_at: string }
 interface CodeRow { tier_id: string; max_uses: number; note: string }
 
 const DEFAULT_FINANCE: FinanceInputs = { costs: [], fee_rate: 0.029, fee_fixed_cents: 30, max_loss_cents: null };
@@ -381,7 +381,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
   const leaderRows = coming.filter((r) => r.answers.relationship.includes('space_leader') && r.home_space_id && byId.get(r.home_space_id)?.claimed === false);
   const leadersUnclaimed = leaderRows.filter((r) => r.consents.network);
   const leaderSpacesOnly = [...new Set(leaderRows.filter((r) => !r.consents.network).map((r) => byId.get(r.home_space_id!)?.name ?? ''))];
-  const notListedPlaces = [...new Set(coming.map((r) => r.answers.home_space_other).filter(Boolean))].sort();
+  const notListedPlaces = [...new Set([...coming.map((r) => r.answers.home_space_other), ...interest.map((i) => i.home_space_other ?? '')].filter(Boolean))].sort();
   const looking = coming.filter((r) => r.consents.space_intro);
   const noOrg = coming.filter((r) => r.consents.network && !r.home_space_id);
   const invitable = coming.filter((r) => r.consents.network && r.home_space_id);
@@ -428,7 +428,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
       {notListedPlaces.length > 0 && (
         <div className="card form-card">
           <h2>Places not in the directory ({notListedPlaces.length})</h2>
-          <p className="muted">As typed by attendees. Each is a lead to verify, not a listing: confirm it exists and record the source before adding a record.</p>
+          <p className="muted">As typed by attendees and by people waiting for tickets. Each is a lead to verify, not a listing: confirm it exists and record the source before adding a record.</p>
           <ul>{notListedPlaces.map((p) => <li key={p}>{p}</li>)}</ul>
         </div>
       )}

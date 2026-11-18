@@ -339,6 +339,11 @@ test('interest is recorded once per address and only for a real event', async ()
   for (let i = 0; i < 2; i++) assert.equal((await call('eventInterest', { event_id: EV, name: 'I', email: 'i@example.org', home_space_id: 'spark' })).body.outcome, 'noted');
   assert.equal((await db.collection('event_interest').get()).size, 1);
   assert.equal((await call('eventInterest', { event_id: 'nope', name: 'I', email: 'i@example.org' })).status, 404);
+  // A place not in the directory is kept as typed; a known space clears it.
+  await call('eventInterest', { event_id: EV, name: 'U', email: 'u@example.org', home_space_id: null, home_space_other: '  Garage Lab, Hamden ' });
+  assert.equal((await db.doc(`event_interest/${(await db.collection('event_interest').where('email', '==', 'u@example.org').get()).docs[0].id}`).get()).data().home_space_other, 'Garage Lab, Hamden');
+  await call('eventInterest', { event_id: EV, name: 'I', email: 'i@example.org', home_space_id: 'spark', home_space_other: 'ignored' });
+  assert.equal((await db.collection('event_interest').where('email', '==', 'i@example.org').get()).docs[0].data().home_space_other, '');
 });
 
 test('a form filled by a bot is thanked and dropped', async () => {
