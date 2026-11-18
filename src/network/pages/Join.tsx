@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../session';
 import { SPACES, spaceById } from '../../data';
-import { navigate } from '../../App';
+import { href, navigate } from '../../App';
 import {
   domainOfEmail, domainOfUrl, normalizeUrl, isCommonEmailDomain, US_STATES, stateName, ORGANISER_ROLES, STAFF_ROLES,
   type ContactPreference, type SpaceRole, type Membership, type PartnerType, type SpaceIndex,
@@ -38,6 +38,13 @@ export default function Join({ spaceId }: { spaceId?: string }) {
             for the meetings that concern you, you'll be able to find your counterparts in any
             state, and when you move on, someone else can pick up where you left off.
           </p>
+          {!s.person && (
+            <p className="notice info" style={{ marginTop: 16 }}>
+              <strong>A member of a makerspace, rather than someone who helps run one?</strong>{' '}
+              This page isn't for you: <a href={href('maker-edit')}>make a maker profile</a> instead,
+              and name your makerspace as your home space.
+            </p>
+          )}
         </div>
       </section>
       <div className="wrap narrow" style={{ paddingTop: 30, paddingBottom: 60 }}>
@@ -215,7 +222,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
       <h2>{mode === 'partner' ? 'Your organisation' : 'Your space'}</h2>
       {!chosen && !proposing && (
         <div className="radios compact">
-          <label className="radio"><input type="radio" checked={mode === 'makerspace'} onChange={() => { setMode('makerspace'); setSearch(''); }} /> I'm part of a makerspace</label>
+          <label className="radio"><input type="radio" checked={mode === 'makerspace'} onChange={() => { setMode('makerspace'); setSearch(''); }} /> I work at, help run or volunteer for a makerspace</label>
           <label className="radio"><input type="radio" checked={mode === 'partner'} onChange={() => { setMode('partner'); setSearch(''); }} /> I'm at an organisation that works with makerspaces — an agency, funder, support organisation, school, company or network</label>
         </div>
       )}
