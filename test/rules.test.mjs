@@ -716,6 +716,26 @@ test('staff share a summary; stewards read it; it never carries a single standar
   await assertSucceeds(deleteDoc(doc(jo, 'assessment_summaries', 'makehaven')));
 });
 
+test('a steward of another region cannot list a region\'s annual data or shared summaries', async () => {
+  // get() is scoped to the space's region; list() must not be a way round it.
+  await activate('ann', 'ann@example.test', 'makehaven', 'space_admin');
+  const ann = user('ann', 'ann@example.test');
+  await assertSucceeds(setDoc(doc(ann, 'space_metrics', 'makehaven~2025'), metrics('ann', 'makehaven')));
+  await assertSucceeds(setDoc(doc(ann, 'assessment_summaries', 'makehaven'), summary('ann')));
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'stewardships', 'ohsteward'), { region_ids: ['us-oh'], network_admin: false, granted_by: 'admin', created_at: T });
+  });
+  const oh = user('ohsteward', 'o@x.org');
+  await assertFails(getDoc(doc(oh, 'space_metrics', 'makehaven~2025')));
+  await assertFails(getDocs(collection(oh, 'space_metrics')));
+  await assertFails(getDocs(collection(oh, 'assessment_summaries')));
+  // The region's own steward still reads each of its spaces; the network admin still lists.
+  await assertSucceeds(getDoc(doc(user('ctsteward', 's@x.org'), 'space_metrics', 'makehaven~2025')));
+  await assertSucceeds(getDoc(doc(user('ctsteward', 's@x.org'), 'assessment_summaries', 'makehaven')));
+  await assertSucceeds(getDocs(collection(user('admin', 'a@x.org'), 'space_metrics')));
+  await assertSucceeds(getDocs(collection(user('admin', 'a@x.org'), 'assessment_summaries')));
+});
+
 // ---------- merging a duplicate organisation ----------
 
 const mergeBatch = (db, uid, from, to, role, status, toRegion = 'us-ct') => {
