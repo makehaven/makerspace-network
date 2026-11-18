@@ -5,6 +5,7 @@ import Logo from '../components/Logo';
 import { US_STATES } from '../network/model';
 import SpacePicker from './SpacePicker';
 import { LOOKING_FOR_WORDS, RELATIONSHIP_WORDS, type Answers, type Consents, type EventDoc } from './model';
+import { DISCIPLINES } from '../makers/model';
 
 export function FoodAndAccess({ event, answers: a, set }: { event: EventDoc; answers: Answers; set: (p: Partial<Answers>) => void }) {
   return <details className="fold"><summary>Food and access needs <span className="muted">(optional)</span></summary>
@@ -19,7 +20,7 @@ export function Introduction({ event, answers: a, consents, set, save, sharing, 
   event: EventDoc; answers: Answers; consents: Consents; set: (p: Partial<Answers>) => void;
   save: () => Promise<void>; sharing: React.ReactNode; children: React.ReactNode;
 }) {
-  const hasAnswers = a.relationship.length > 0 || a.looking_for.length > 0 || !!a.excited || !!a.makes;
+  const hasAnswers = a.relationship.length > 0 || a.looking_for.length > 0 || !!a.excited || !!a.makes || (a.disciplines ?? []).length > 0;
   const [step, setStep] = useState(hasAnswers ? -1 : 0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -79,14 +80,16 @@ export function Introduction({ event, answers: a, consents, set, save, sharing, 
           <label className="field"><span>Your town and state <span className="muted">(optional)</span></span><input maxLength={80} placeholder="For example, New Haven, CT" value={a.town} onChange={(e) => set({ town: e.target.value })} /></label>
           {(leader || a.relationship.includes('entrepreneur') || a.relationship.includes('partner') || a.organization) && <label className="field"><span>Your organisation or business</span><input maxLength={160} value={a.organization} onChange={(e) => set({ organization: e.target.value })} /></label>}
           {event.tracks.length > 0 && <fieldset className="event-fieldset"><legend>Which conversations interest you?</legend><div className="checks">{event.tracks.map((t) => <label className="check" key={t.id}><input type="checkbox" checked={a.tracks.includes(t.id)} onChange={() => set({ tracks: toggle(a.tracks, t.id) })} /><span>{t.label}</span></label>)}</div></fieldset>}
-          <details className="fold"><summary>Help shape the unconference (optional)</summary>
-            <label className="field"><span>A session you could offer, or a question for the room</span><textarea rows={2} maxLength={500} value={a.offer_session} onChange={(e) => set({ offer_session: e.target.value })} /></label>
-            <fieldset className="event-fieldset"><legend>Have you been to an unconference before?</legend><div className="btn-row">{[true, false].map((v) => <label className="check" key={String(v)}><input type="radio" name="unconference" checked={a.unconference_before === v} onChange={() => set({ unconference_before: v })} /><span>{v ? 'Yes' : 'No'}</span></label>)}</div></fieldset>
-          </details>
+          <label className="field"><span>Is there a session you'd lead, or a question you'd put to the room? <span className="muted">(optional)</span></span>
+            <textarea rows={2} maxLength={500} placeholder="For example: a 20-minute demo of my laser jig, or 'how do small shops price classes?'" value={a.offer_session} onChange={(e) => set({ offer_session: e.target.value })} /></label>
+          <fieldset className="event-fieldset"><legend>Have you been to an unconference before?</legend><div className="btn-row">{[true, false].map((v) => <label className="check" key={String(v)}><input type="radio" name="unconference" checked={a.unconference_before === v} onChange={() => set({ unconference_before: v })} /><span>{v ? 'Yes' : 'No'}</span></label>)}</div></fieldset>
         </>}
         {step === 2 && <>
+          <fieldset className="event-fieldset"><legend>What do you work with? Choose any.</legend><div className="checks">
+            {DISCIPLINES.map((d) => <label className="check" key={d.id}><input type="checkbox" checked={(a.disciplines ?? []).includes(d.id)} onChange={() => set({ disciplines: toggle(a.disciplines ?? [], d.id) })} /><span>{d.label}</span></label>)}
+          </div></fieldset>
           <label className="field"><span>Your short maker introduction</span><textarea maxLength={500} rows={3} placeholder="What do you make, or want to make?" value={a.makes} onChange={(e) => set({ makes: e.target.value })} /></label>
-          <p className="muted">Only this introduction, your name, space, selected event interests and any session offer appear in the attendee list if you choose to join it. Your goals, challenges, food and access needs stay with the organisers.</p>
+          <p className="muted">If you join the attendee list, people see your name, space, what you work with, this introduction, your conversation choices and any session offer. Your goals, challenges, food and access needs stay with the organisers.</p>
           {sharing}
           {consents.attendee_list && <div className="intro-preview"><strong>Your attendee introduction</strong><p>{a.makes || 'You can add an introduction later.'}</p>{a.offer_session && <p>Could offer: {a.offer_session}</p>}</div>}
         </>}

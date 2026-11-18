@@ -59,12 +59,12 @@ export const RELATIONSHIP_WORDS: [string, string][] = [
 
 export interface Answers {
   relationship: string[]; home_space_id: string | null; home_space_other: string; looking_for_space: boolean;
-  looking_for: string[]; town: string; organization: string; unconference_before: boolean | null; excited: string; challenged: string; makes: string; offer_session: string; tracks: string[]; dietary: string; access_needs: string; over_21: boolean | null;
+  looking_for: string[]; town: string; organization: string; unconference_before: boolean | null; excited: string; challenged: string; makes: string; disciplines: string[]; offer_session: string; tracks: string[]; dietary: string; access_needs: string; over_21: boolean | null;
 }
 export const EMPTY_ANSWERS: Answers = {
   relationship: [], home_space_id: null, home_space_other: '', looking_for_space: false, looking_for: [],
   organization: '', unconference_before: null, excited: '', challenged: '',
-  town: '', makes: '', offer_session: '', tracks: [], dietary: '', access_needs: '', over_21: null,
+  town: '', makes: '', disciplines: [], offer_session: '', tracks: [], dietary: '', access_needs: '', over_21: null,
 };
 
 export const LOOKING_FOR_WORDS: [string, string][] = [

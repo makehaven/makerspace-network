@@ -11,6 +11,7 @@ import { listSpaceIndex, type WithId } from '../db';
 import type { SpaceIndex } from '../model';
 import { PageLink, SignIn, csvEsc, download } from './shared';
 import { REGIONS } from '../../data';
+import { DISCIPLINES } from '../../makers/model';
 import { RELATIONSHIP_WORDS, money, type Answers, type Consents, type EventDoc } from '../../events/model';
 import {
   fixedCosts, formatCosts, marginPerHead, net, parseCosts, perHeadCost, sponsorsToBreakEven, type FinanceInputs,
@@ -227,13 +228,20 @@ function PeopleTab({ event, regs, orgs, onChange }: { event: EventDoc; regs: Wit
     .filter((r) => !filter || `${r.name} ${r.email} ${spaceOf(r)}`.toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
   const taken = regs.filter((r) => r.status === 'confirmed' || r.status === 'offered').length;
+  const coming = regs.filter((r) => r.status === 'confirmed');
+  const tally = (ids: string[], pick: (r: Reg) => string[] | undefined) =>
+    ids.map((id) => [id, coming.filter((r) => (pick(r) ?? []).includes(id)).length] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const byTrack = tally(event.tracks.map((t) => t.id), (r) => r.answers.tracks);
+  const byCraft = tally(DISCIPLINES.map((d) => d.id), (r) => r.answers.disciplines);
+  const offers = coming.filter((r) => r.answers.offer_session);
+  const firstTimers = coming.filter((r) => r.answers.unconference_before === false).length;
 
   const csv = () => {
-    const head = ['name', 'email', 'status', 'ticket', 'paid', 'space', 'town', 'relationship', 'tracks', 'makes', 'could_offer', 'dietary', 'access', 'over_21', 'referred_by', 'code',
+    const head = ['name', 'email', 'status', 'ticket', 'paid', 'space', 'town', 'relationship', 'tracks', 'works_with', 'makes', 'could_offer', 'dietary', 'access', 'over_21', 'referred_by', 'code',
       'ok_attendee_list', 'ok_peer_contact', 'ok_followup', 'ok_network', 'ok_space_share', 'ok_space_intro', 'looking_for_space', 'wants', 'organisation', 'excited_about', 'challenged_by', 'unconference_before', 'attended', 'registered'];
     const rows = regs.map((r) => [
       r.name, r.email, r.status, r.tier_name, (r.amount_paid_cents / 100).toFixed(2), spaceOf(r), r.answers.town, r.answers.relationship.join('; '),
-      r.answers.tracks.join('; '), r.answers.makes, r.answers.offer_session, r.answers.dietary, r.answers.access_needs, r.answers.over_21 ?? '',
+      r.answers.tracks.join('; '), (r.answers.disciplines ?? []).map((d) => DISCIPLINES.find((x) => x.id === d)?.label ?? d).join('; '), r.answers.makes, r.answers.offer_session, r.answers.dietary, r.answers.access_needs, r.answers.over_21 ?? '',
       r.referred_by ?? '', r.code ?? '', r.consents.attendee_list, r.consents.peer_contact, r.consents.followup, r.consents.network,
       r.consents.space_share, r.consents.space_intro, r.answers.looking_for_space, (r.answers.looking_for ?? []).join('; '), r.answers.organization ?? '', r.answers.excited ?? '', r.answers.challenged ?? '', r.answers.unconference_before ?? '', r.attended ?? '', r.created_at,
     ]);
@@ -252,6 +260,19 @@ function PeopleTab({ event, regs, orgs, onChange }: { event: EventDoc; regs: Wit
         <button className="btn ghost" onClick={csv}>Download CSV</button>
       </div>
       <p className="muted">The CSV holds personal details and each person's opt-ins. Share it with co-hosts for logistics only, and honour the opt-in columns for anything else.</p>
+      {coming.length > 0 && (
+        <div className="card form-card" style={{ marginBottom: 14 }}>
+          <h2>For planning the day</h2>
+          <p className="muted">From {coming.length} confirmed registrations. Only organisers see this.</p>
+          {byTrack.length > 0 && <p><strong>Conversations:</strong> {byTrack.map(([id, n]) => `${event.tracks.find((t) => t.id === id)?.label ?? id} ${n}`).join(' · ')}</p>}
+          {byCraft.length > 0 && <p><strong>Work with:</strong> {byCraft.map(([id, n]) => `${DISCIPLINES.find((d) => d.id === id)?.label ?? id} ${n}`).join(' · ')}</p>}
+          <p><strong>New to unconferences:</strong> {firstTimers} of {coming.length}</p>
+          {offers.length > 0 && <>
+            <h4>Session offers ({offers.length})</h4>
+            <ul>{offers.map((r) => <li key={r.id}><strong>{r.name}</strong>{spaceOf(r) && <span className="muted"> · {spaceOf(r)}</span>}: {r.answers.offer_session}</li>)}</ul>
+          </>}
+        </div>
+      )}
       <div className="scroll-x">
         <table className="data">
           <thead><tr><th>Name</th><th>Space</th><th>Ticket</th><th>Status</th><th>At the door</th></tr></thead>
@@ -603,7 +624,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
         </>}
       </div>
 
-      <PeopleList title="Say they run a space nobody has claimed" hint="The best phone call you can make: they can fix their own listing, and they asked to hear from the network." rows={leadersUnclaimed} note={(r) => byId.get(r.home_space_id!)?.name ?? ''} />
+      <PeopleList title="Say they run a space nobody has claimed" hint="Call these first: they asked to hear from the network and can update their own listing." rows={leadersUnclaimed} note={(r) => byId.get(r.home_space_id!)?.name ?? ''} />
       {leaderSpacesOnly.length > 0 && (
         <div className="card form-card">
           <h2>Unclaimed spaces with someone coming ({leaderSpacesOnly.length})</h2>

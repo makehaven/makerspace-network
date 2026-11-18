@@ -219,6 +219,8 @@ export const keyIsLive = (key: string) => /^(sk|rk)_live_/.test(key);
 export const RELATIONSHIPS = ['space_leader', 'space_member', 'independent_maker', 'entrepreneur', 'software_builder', 'student_faculty', 'partner', 'curious'] as const;
 /** What would help most. Same vocabulary as a maker profile's "looking for". */
 export const LOOKING_FOR = ['tool_access', 'collaborators', 'learning', 'customers', 'fabricators', 'cofounders_funding', 'teaching_opportunities', 'community'] as const;
+/** What a person works with. Same vocabulary as a maker profile (enums MakerDiscipline). */
+export const DISCIPLINES = ['woodworking', 'metalworking', 'digital_fabrication', 'electronics', 'software', 'textiles', 'ceramics', 'jewelry', 'art_design', 'print', 'craft', 'media', 'repair', 'science'] as const;
 export const CONSENT_KEYS = ['attendee_list', 'peer_contact', 'followup', 'network', 'space_share', 'space_intro'] as const;
 export type ConsentKey = typeof CONSENT_KEYS[number];
 export type Consents = Record<ConsentKey, boolean>;
@@ -235,6 +237,7 @@ export interface Answers {
   excited: string;
   challenged: string;
   makes: string;
+  disciplines: string[];
   offer_session: string;
   tracks: string[];
   dietary: string;
@@ -269,6 +272,7 @@ export function cleanAnswers(v: unknown, trackIds: string[]): Answers {
     excited: str(o.excited, 800),
     challenged: str(o.challenged, 800),
     makes: str(o.makes, 500),
+    disciplines: list(o.disciplines).filter((x) => (DISCIPLINES as readonly string[]).includes(x)),
     offer_session: str(o.offer_session, 500),
     tracks: list(o.tracks).filter((t) => trackIds.includes(t)),
     dietary: str(o.dietary, 200),

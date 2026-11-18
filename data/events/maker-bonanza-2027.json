@@ -71,7 +71,7 @@
       "name": "Makerspace member",
       "description": "A third off for members of our partner makerspaces, with your space's code.",
       "price_cents": 4000,
-      "limit": 50,
+      "limit": null,
       "requires_code": true,
       "attestation": null
     },
@@ -183,7 +183,7 @@
       "where": "climatehaven.tech social image, 2026-11-18; see public/sponsors/README.md"
     },
     {
-      "what": "Prices: general $60, partner members $40 (50 places), scholarship $25 released in batches of 10",
+      "what": "Prices: general $60, partner members $40 (no cap; about 50 expected), scholarship $25 released in batches of 10",
       "where": "J.R. Logan, 2026-11-18, after a break-even review against the brief's $8,150 budget and the board's $5,000 loss limit"
     }
   ],

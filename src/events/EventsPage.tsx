@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SHOW_MAKERS_DIRECTORY } from '../features';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../network/firebase';
 import { href } from '../App';
@@ -40,7 +41,7 @@ export default function EventsPage({ load = loadEvents }: { load?: () => Promise
       {shown?.length === 0 && <div className="notice info">
         <h2>No upcoming events announced{region ? ' here' : ''} yet</h2>
         <p>Check back for new gatherings. In the meantime, find a nearby space or meet other makers.</p>
-        <div className="btn-row"><a className="btn" href={href('directory')}>Find a space</a><a className="btn ghost" href={href('makers')}>Meet makers</a></div>
+        <div className="btn-row"><a className="btn" href={href('directory')}>Find a space</a>{SHOW_MAKERS_DIRECTORY && <a className="btn ghost" href={href('makers')}>Meet makers</a>}</div>
       </div>}
       <div className="cards">{shown?.map((event) => <article className="card form-card" key={event.id}>
         <p className="eyebrow">{event.date_label}</p><h2>{event.title}</h2>

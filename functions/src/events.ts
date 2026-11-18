@@ -437,7 +437,7 @@ export const eventManage = endpoint([STRIPE_KEY], async (req, body) => {
     return {
       attendees: regs.map((r) => ({
         name: r.name, space: (r.home_space_id && names.get(r.home_space_id)) || r.answers.home_space_other || null,
-        makes: r.answers.makes, offer_session: r.answers.offer_session, tracks: r.answers.tracks,
+        makes: r.answers.makes, disciplines: r.answers.disciplines ?? [], offer_session: r.answers.offer_session, tracks: r.answers.tracks,
         email: r.consents.peer_contact ? r.email : null,
         profile: profiles.get(r.email) ?? null,
       })).sort((a, b) => a.name.localeCompare(b.name)),
@@ -915,7 +915,7 @@ export const eventPartnerChanged = onDocumentWritten(
       '',
       'As a partner you have agreed to share the event with your community and to send at least one person.',
       '',
-      `A DISCOUNT FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)}, while member places last)`,
+      `A DISCOUNT FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)})`,
       `Code ${memberCode}. Send your active members this link:`,
       link(memberCode),
       '',

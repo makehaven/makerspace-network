@@ -9,6 +9,7 @@ import { auth, db } from '../network/firebase';
 import { SPACES } from '../data';
 import SpacePicker from './SpacePicker';
 import Logo from '../components/Logo';
+import { DISCIPLINES } from '../makers/model';
 import { Connections, FoodAndAccess, Introduction } from './Introduction';
 import { meetingIcs } from '../../functions/src/ics';
 import { href } from '../App';
@@ -572,7 +573,7 @@ export function Manage({ id, event, regId, token }: { id: string; event: EventDo
   const [saved, setSaved] = useState(false);
   const [sharedOnly, setSharedOnly] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [people, setPeople] = useState<{ name: string; space: string | null; makes: string; offer_session: string; tracks: string[]; email: string | null; profile: { id: string; headline: string; bio: string; cover_url: string | null; website: string | null } | null }[] | null>(null);
+  const [people, setPeople] = useState<{ name: string; space: string | null; makes: string; disciplines?: string[]; offer_session: string; tracks: string[]; email: string | null; profile: { id: string; headline: string; bio: string; cover_url: string | null; website: string | null } | null }[] | null>(null);
   const [transferring, setTransferring] = useState(false);
   const [toName, setToName] = useState('');
   const [toEmail, setToEmail] = useState('');
@@ -611,7 +612,8 @@ export function Manage({ id, event, regId, token }: { id: string; event: EventDo
     const r = await call('update', { answers, consents }); take(r); setSaved(true);
   };
   const sameInterest = (p: NonNullable<typeof people>[number]) =>
-    !!(space && p.space === space.name) || p.tracks?.some((t) => me.answers.tracks.includes(t));
+    !!(space && p.space === space.name) || p.tracks?.some((t) => me.answers.tracks.includes(t))
+    || !!p.disciplines?.some((d) => (me.answers.disciplines ?? []).includes(d));
   const shownPeople = people?.filter((p) => !sharedOnly || sameInterest(p));
   const calendar = () => {
     if (!event.starts_at || !event.ends_at) return;
@@ -681,7 +683,8 @@ export function Manage({ id, event, regId, token }: { id: string; event: EventDo
                       {p.email && <> · <a href={`mailto:${p.email}`}>{p.email}</a></>}
                       {p.profile?.cover_url && <img className="attendee-work" src={p.profile.cover_url} alt={`Work by ${p.name}`} />}
                       {p.profile?.headline && <div>{p.profile.headline}</div>}
-                      {sameInterest(p) && <p className="muted">{space && p.space === space.name ? `Also from ${space.name}` : `Shared interest: ${event.tracks.filter((t) => me.answers.tracks.includes(t.id) && p.tracks?.includes(t.id)).map((t) => t.label).join(', ')}`}</p>}
+                      {sameInterest(p) && <p className="muted">{space && p.space === space.name ? `Also from ${space.name}` : `Shared interest: ${[...event.tracks.filter((t) => me.answers.tracks.includes(t.id) && p.tracks?.includes(t.id)).map((t) => t.label), ...DISCIPLINES.filter((d) => (me.answers.disciplines ?? []).includes(d.id) && p.disciplines?.includes(d.id)).map((d) => d.label)].join(', ')}`}</p>}
+                      {(p.disciplines?.length ?? 0) > 0 && <div className="tags">{p.disciplines!.map((d) => <span key={d} className={`tag${(me.answers.disciplines ?? []).includes(d) ? ' on' : ''}`}>{DISCIPLINES.find((x) => x.id === d)?.label ?? d}</span>)}</div>}
                       {p.makes && <div>{p.makes}</div>}
                       {p.profile?.bio && <div className="muted">{p.profile.bio}</div>}
                       {p.profile?.website && <div><a href={p.profile.website} rel="noopener nofollow">{p.profile.website.replace(/^https?:\/\//, '')}</a></div>}

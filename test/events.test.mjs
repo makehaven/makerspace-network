@@ -113,8 +113,9 @@ test('every opt-in is off unless it is literally true', () => {
 });
 
 test('answers are trimmed to known values', () => {
-  const a = L.cleanAnswers({ relationship: ['space_member', 'king'], tracks: ['arts', 'x'], home_space_id: '../evil', makes: 'y'.repeat(900) }, ['arts']);
+  const a = L.cleanAnswers({ relationship: ['space_member', 'king'], tracks: ['arts', 'x'], home_space_id: '../evil', makes: 'y'.repeat(900), disciplines: ['woodworking', 'alchemy', 3] }, ['arts']);
   assert.deepEqual(a.relationship, ['space_member']);
+  assert.deepEqual(a.disciplines, ['woodworking']);
   assert.deepEqual(a.tracks, ['arts']);
   assert.equal(a.home_space_id, null);
   assert.equal(a.makes.length, 500);
@@ -197,6 +198,8 @@ test('the maker vocabularies on the form match the versioned ones', () => {
   assert.deepEqual(enums.LookingFor.map((r) => r.id), [...L.LOOKING_FOR]);
   const model = readFileSync(new URL('../src/events/model.ts', import.meta.url), 'utf8');
   for (const r of enums.LookingFor) assert.ok(model.includes(`['${r.id}', '${r.label}']`), `model.ts lacks ${r.id}`);
+  // What you work with: the server's allowlist is the profile's vocabulary.
+  assert.deepEqual(enums.MakerDiscipline.map((r) => r.id), [...L.DISCIPLINES]);
 });
 
 const profile = (o = {}) => ({ headline: '', bio: '', town: '', disciplines: [], open_to: [], website: null, instagram: null, work_count: 0, events: [], ...o });
