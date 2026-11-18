@@ -8,6 +8,9 @@ export default function SpacePage({ id }: { id: string }) {
 
   const ops = s.operations ?? {};
   const addr = s.address ?? {};
+  // A closed space's domain lapses and gets taken over, so never link it.
+  const closed = s.status === 'closed';
+  const website = closed ? undefined : s.contact?.website;
   const { missing } = completeness(s);
   const caps = new Set(s.capabilities ?? []);
   const mapQuery = addr.latitude !== undefined
@@ -148,12 +151,17 @@ export default function SpacePage({ id }: { id: string }) {
                   </a>
                 </p>
               )}
-              {s.contact?.website && <p style={{ margin: '0 0 4px' }}><a href={s.contact.website}>{new URL(s.contact.website).hostname}</a></p>}
+              {website && <p style={{ margin: '0 0 4px' }}><a href={website}>{new URL(website).hostname}</a></p>}
+              {closed && s.contact?.website && (
+                <p style={{ margin: '0 0 4px', color: 'var(--ink-2)' }}>
+                  Former website, {new URL(s.contact.website).hostname}, not linked: the space has closed and the domain may no longer be theirs.
+                </p>
+              )}
               {s.contact?.email && <p style={{ margin: '0 0 4px' }}><a href={`mailto:${s.contact.email}`}>{s.contact.email}</a></p>}
               {s.contact?.phone && <p style={{ margin: 0 }}>{s.contact.phone}</p>}
-              {s.contact?.website && (
+              {website && (
                 <p style={{ marginTop: 12, marginBottom: 0 }}>
-                  <a className="btn" href={s.contact.website}>Visit site</a>
+                  <a className="btn" href={website}>Visit site</a>
                 </p>
               )}
             </div>

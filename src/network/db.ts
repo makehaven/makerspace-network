@@ -340,16 +340,19 @@ export async function syncSpaceIndex(spaces: Space[], regions: Region[]) {
   for (const s of spaces) {
     const prev = existing.get(s.id);
     const regionId = s.region_ids?.[0] ?? null;
+    // A closed space's lapsed domain must not let its new owner claim the
+    // space by email domain (firestore.rules domainMatches), or be linked.
+    const website = s.status === 'closed' ? null : s.contact?.website ?? null;
     const entry: SpaceIndex = {
       name: s.name,
       kind: 'makerspace',
       partner_type: null,
-      domain: domainOfUrl(s.contact?.website),
+      domain: domainOfUrl(website),
       state: s.address?.region ?? regions.find((r) => r.id === regionId)?.region_code ?? null,
       region_id: regionId,
       size_tier: prev?.size_tier ?? s.size_tier ?? null,
       proposed: false,
-      website: s.contact?.website ?? null,
+      website,
       city: s.address?.locality ?? null,
       claimed: prev?.claimed ?? false,
       updated_at: t,
