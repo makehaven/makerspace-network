@@ -162,11 +162,11 @@ test('the scholarship and member tickets stay out of sight until asked for', asy
   await page.getByRole('button', { name: 'Is the $60 price keeping you from coming?' }).click();
   await expect(page.getByRole('radio')).toHaveCount(2);
   await expect(page.getByRole('radio', { name: /Scholarship/ })).toBeChecked();
-  await expect(page.getByLabel('The full price would be a barrier for me.')).toBeVisible();
+  await expect(page.getByLabel('My household income is under the guideline for my household size.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Is the $60 price keeping you from coming?' })).toHaveCount(0);
   await page.getByLabel('Full name').fill('Test Maker');
   await page.getByLabel('Email address').fill('maker@example.test');
-  await page.getByLabel('The full price would be a barrier for me.').check();
+  await page.getByLabel('My household income is under the guideline for my household size.').check();
   await page.getByLabel("I'm 18 or older").check();
   await page.getByLabel('I agree to the event terms').check();
   await page.getByRole('button', { name: 'Continue to payment · $25' }).click();

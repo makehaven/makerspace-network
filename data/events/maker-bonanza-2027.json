@@ -60,11 +60,11 @@
     {
       "id": "scholarship",
       "name": "Scholarship",
-      "description": "Use this if the $60 price would keep you from coming: you're a student, between jobs, on a tight budget, or paying your own way and it's a stretch. No application and no proof needed. If an employer or organisation is paying for you, please choose general admission so this stays available for someone who needs it.",
+      "description": "For households earning less than a living wage. That's under $52,666 a year for one adult, $72,467 for two adults, $104,229 for an adult with a dependent, $139,589 for a family of three, or $174,762 for a family of four or more. If your employer is paying, please choose general admission.",
       "price_cents": 2500,
       "limit": 10,
       "requires_code": false,
-      "attestation": "The full price would be a barrier for me."
+      "attestation": "My household income is under the guideline for my household size."
     },
     {
       "id": "member",
@@ -193,6 +193,10 @@
     {
       "what": "Redwood Endeavors, Inc. is a 501(c)(3) non-profit organization",
       "where": "J.R. Logan, 2026-11-18"
+    },
+    {
+      "what": "Scholarship income guideline: MakeHaven's sliding-scale living-wage line by household size",
+      "where": "makehaven-website config/webform.webform.webform_25293.yml ('Request Membership Sliding Scale Price Change or Renewal'), living-wage options; adopted by J.R. Logan, 2026-11-18"
     }
   ],
   "gaps": [],
