@@ -186,12 +186,12 @@ test('a makerspace can ask to be a partner in one step, and partners and sponsor
   await expect(page.getByRole('button', { name: 'No makerspace yet' })).toHaveCount(0);
   await page.getByLabel('Your name').fill('Pat Organiser');
   await page.getByLabel('Email').fill('pat@example.test');
-  await page.getByRole('button', { name: 'Count us in' }).click();
+  await page.getByRole('button', { name: "We're in" }).click();
   await expect(page.getByText('Please choose your makerspace.')).toBeVisible();
   expect(sent).toBeUndefined();
   await page.getByRole('searchbox').fill('Danbury');
   await page.getByRole('button', { name: /Danbury Makerspace/ }).click();
-  await page.getByRole('button', { name: 'Count us in' }).click();
+  await page.getByRole('button', { name: "We're in" }).click();
   await expect(page.getByText(/will add Danbury Makerspace here shortly/)).toBeVisible();
   await expect(page.locator('.share-link code')).toContainText('?ref=danbury-makerspace');
   expect(sent).toMatchObject({ partner: true, home_space_id: 'danbury-makerspace', name: 'Pat Organiser', email: 'pat@example.test' });

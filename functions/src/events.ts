@@ -822,3 +822,118 @@ export const eventChanged = onDocumentWritten({ document: 'events/{id}', region:
   if (!after) return;
   if (!before || before.capacity !== after.capacity || JSON.stringify(before.tiers) !== JSON.stringify(after.tiers)) await refreshStats(e.params.id);
 });
+
+// ---------- partner makerspaces: what a space gets for saying yes ----------
+//
+// A partner agrees to share the event and send at least one person. In return,
+// besides its logo on the page: one free seat, and a half-price code for its
+// members. Both codes are made here, never in the browser, so a space's staff
+// can be shown theirs (event_partner_kits) without reading every code.
+
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const randomCode = (n: number) => [...randomBytes(n)].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+export const MEMBER_TIER = 'member';
+const MEMBER_CODE_USES = 50;
+
+export interface PartnerKit {
+  event_id: string; region_id: string | null; space_id: string; space_name: string;
+  seat_code: string; member_code: string; member_uses: number; member_price_cents: number;
+  sent_to: string[]; created_at: string;
+}
+
+/** Who at a space hears about its kit: whoever asked, else its organisers. */
+async function partnerContacts(eventId: string, spaceId: string, agreedBy: string): Promise<string[]> {
+  const asked = await db().collection('event_partner_requests').where('event_id', '==', eventId).where('space_id', '==', spaceId).get();
+  const fromRequests = asked.docs.map((d) => d.get('email') as string).filter(Boolean);
+  await Promise.all(asked.docs.map((d) => d.ref.delete()));
+  if (fromRequests.length) return [...new Set(fromRequests)];
+  const organisers = await db().collection('memberships').where('space_id', '==', spaceId).where('status', '==', 'active').get();
+  const uids = organisers.docs.filter((d) => ['space_admin', 'space_editor'].includes(d.get('role'))).map((d) => d.get('person_id') as string);
+  // Someone at the space who said yes themselves comes first.
+  const ordered = uids.includes(agreedBy) ? [agreedBy] : uids;
+  const emails = await Promise.all(ordered.map((u) => getAuth().getUser(u).then((x) => x.email ?? null).catch(() => null)));
+  return [...new Set(emails.filter((x): x is string => !!x))];
+}
+
+export const eventPartnerChanged = onDocumentWritten(
+  { document: 'event_partners/{pid}', secrets: [POSTMARK_SERVER_TOKEN, POSTMARK_FROM_EMAIL], region: REGION },
+  async (e) => {
+    const before = e.data?.before.data() as { event_id: string; space_id: string; space_name: string; agreed_by: string } | undefined;
+    const after = e.data?.after.data() as typeof before;
+    const kitRef = db().doc(`event_partner_kits/${e.params.pid}`);
+
+    if (before && !after) {
+      // Stepping back: unused codes go; a code someone registered with stays,
+      // so their ticket still traces to where it came from.
+      const kit = (await kitRef.get()).data() as PartnerKit | undefined;
+      if (!kit) return;
+      const rows = (await regsOf(kit.event_id).get()).docs.map((d) => d.data() as RegRow);
+      for (const code of [kit.seat_code, kit.member_code]) {
+        if (!rows.some((r) => r.code === code && holdsSeat(r, Date.now()))) await db().doc(`event_codes/${kit.event_id}~${code}`).delete();
+      }
+      await kitRef.delete();
+      return;
+    }
+    if (!after || before) return;
+    if ((await kitRef.get()).exists) return; // a redelivered event
+
+    const ev = (await eventRef(after.event_id).get()).data() as EventDoc | undefined;
+    if (!ev) return;
+    const general = ev.tiers.find((t) => !t.requires_code && !t.attestation && t.price_cents > 0)?.price_cents ?? 0;
+    // The half-price ticket appears only with a code, so it is added the first
+    // time a space needs one rather than shown to everyone.
+    let memberTier = ev.tiers.find((t) => t.id === MEMBER_TIER);
+    if (!memberTier) {
+      memberTier = {
+        id: MEMBER_TIER, name: 'Makerspace member', price_cents: Math.round(general / 2), limit: null, requires_code: true, attestation: null,
+        description: 'Half price for members of our partner makerspaces, with your space\'s code.',
+      } as EventDoc['tiers'][number];
+      await eventRef(after.event_id).update({ tiers: FieldValue.arrayUnion(memberTier), updated_at: nowIso() });
+    }
+    const seatTier = ev.tiers.find((t) => t.requires_code && t.price_cents === 0);
+    const prefix = after.space_id.split('-')[0].toUpperCase().slice(0, 10);
+    const seatCode = `SEAT-${randomCode(6)}`;
+    const memberCode = `${prefix}-${randomCode(4)}`;
+    const iso = nowIso();
+    const codeRow = { event_id: after.event_id, region_id: ev.region_id, space_id: after.space_id, created_at: iso };
+    if (seatTier) await db().doc(`event_codes/${after.event_id}~${seatCode}`).set({ ...codeRow, tier_id: seatTier.id, max_uses: 1, note: `Partner seat: ${after.space_name}` });
+    await db().doc(`event_codes/${after.event_id}~${memberCode}`).set({ ...codeRow, tier_id: MEMBER_TIER, max_uses: MEMBER_CODE_USES, note: `Members of ${after.space_name}` });
+
+    const to = await partnerContacts(after.event_id, after.space_id, after.agreed_by);
+    const kit: PartnerKit = {
+      event_id: after.event_id, region_id: ev.region_id, space_id: after.space_id, space_name: after.space_name,
+      seat_code: seatTier ? seatCode : '', member_code: memberCode, member_uses: MEMBER_CODE_USES,
+      member_price_cents: memberTier.price_cents, sent_to: [], created_at: iso,
+    };
+    await kitRef.set(kit);
+    if (!to.length) return;
+
+    const page = ev.public_url || `${SITE}/events/${after.event_id}`;
+    const link = (code: string) => `${page}?ref=${after.space_id}&code=${code}#register`;
+    const dollars = (c: number) => `$${(c / 100).toFixed(c % 100 ? 2 : 0)}`;
+    const text = [
+      `Thank you: ${after.space_name} is now a partner of ${ev.title}${ev.date_label ? `, ${ev.date_label}` : ''}, and your logo is on the page:`,
+      `${page}#partners`,
+      '',
+      'As a partner you have agreed to share the event with your community and to send at least one person.',
+      '',
+      ...(seatTier ? [
+        'YOUR FREE SEAT (one person)',
+        `Code ${seatCode}, or use this link, which fills it in:`,
+        link(seatCode),
+        '',
+      ] : []),
+      `HALF PRICE FOR YOUR MEMBERS (${dollars(memberTier.price_cents)} instead of ${dollars(general)}, up to ${MEMBER_CODE_USES} people)`,
+      `Code ${memberCode}. Send your active members this link:`,
+      link(memberCode),
+      '',
+      'Everyone who registers through these links is counted for your space. Your organisers can see the codes and counts on their Home page at makerspace.network.',
+      '',
+      'Questions, or need more member places? Reply to this email.',
+    ].join('\n');
+    try {
+      await sendMail(to.join(', '), `${ev.title}: your partner seat and members' code`, text, undefined, ev.reply_to_email || ev.notify_email);
+      await kitRef.update({ sent_to: to });
+    } catch (err) { logger.warn('partner kit mail failed', err); }
+  },
+);

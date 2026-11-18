@@ -49,6 +49,8 @@ export interface EventDoc {
   starts_at: string | null;
   ends_at: string | null;
   location: string;
+  date_label?: string;
+  public_url?: string;
   /** Until this moment an attendee can refund their own ticket; null means no self-service refunds. */
   refund_until: string | null;
   /** The organisation whose Stripe account takes the money. Only 'makehaven' is configured today. */

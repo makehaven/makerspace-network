@@ -76,7 +76,7 @@ before(async () => {
 after(async () => { mock.close(); });
 beforeEach(async () => {
   stripeCalls = []; stripeDown = false;
-  for (const c of ['makers', 'audit', 'events', 'event_registrations', 'event_registration_secrets', 'event_locks', 'event_rate_limits', 'event_sponsors', 'event_interest', 'event_codes', 'event_stats', 'event_space_stats']) {
+  for (const c of ['makers', 'audit', 'events', 'event_registrations', 'event_registration_secrets', 'event_locks', 'event_rate_limits', 'event_sponsors', 'event_interest', 'event_codes', 'event_stats', 'event_space_stats', 'event_partners', 'event_partner_requests', 'event_partner_kits']) {
     await db.recursiveDelete(db.collection(c));
   }
   await db.doc(`events/${EV}`).set(baseEvent());
@@ -231,6 +231,52 @@ test("a makerspace's member code credits that space", async () => {
   const reg = await regByEmail('member@example.org');
   assert.equal(reg.get('referred_by'), 'spark');
   assert.equal(reg.get('code'), 'SPARK');
+});
+
+test('a partner request is kept for a steward, and does not join the ticket-interest list', async () => {
+  assert.equal((await call('eventInterest', { event_id: EV, partner: true, name: 'Pat', email: 'pat@example.org', role: 'Director', home_space_id: null, home_space_other: '' })).body.code, 'bad_space');
+  assert.equal((await call('eventInterest', { event_id: EV, partner: true, name: 'Pat', email: 'pat@example.org', role: 'Director', home_space_id: 'spark' })).body.outcome, 'requested');
+  const reqs = await db.collection('event_partner_requests').get();
+  assert.equal(reqs.size, 1);
+  assert.equal(reqs.docs[0].get('space_id'), 'spark');
+  assert.equal((await db.collection('event_interest').get()).size, 0);
+});
+
+test('a new partner gets one free seat and a half-price members code, emailed to whoever asked', async () => {
+  await call('eventInterest', { event_id: EV, partner: true, name: 'Pat', email: 'pat@example.org', home_space_id: 'spark' });
+  await db.doc(`event_partners/${EV}~spark`).set({ event_id: EV, space_id: 'spark', space_name: 'Spark', agreed_by: 'steward', created_at: T });
+  const kit = await waitFor(async () => (await db.doc(`event_partner_kits/${EV}~spark`).get()).data());
+  assert.ok(kit, 'kit made');
+  assert.match(kit.seat_code, /^SEAT-[A-Z2-9]{6}$/);
+  assert.match(kit.member_code, /^SPARK-[A-Z2-9]{4}$/);
+  assert.equal(kit.member_price_cents, 2500);
+  // The request was used for the address, then cleared.
+  assert.equal((await db.collection('event_partner_requests').get()).size, 0);
+  const member = (await db.doc(`events/${EV}`).get()).get('tiers').find((t) => t.id === 'member');
+  assert.equal(member.price_cents, 2500);
+  assert.equal(member.requires_code, true);
+
+  assert.equal((await signup('seat@example.org', { code: kit.seat_code })).body.outcome, 'confirmed');
+  assert.equal((await signup('seat2@example.org', { code: kit.seat_code })).body.code, 'code_used_up');
+  assert.equal((await regByEmail('seat@example.org')).get('referred_by'), 'spark');
+  const m = await signup('m@example.org', { code: kit.member_code });
+  assert.equal(m.body.outcome, 'checkout');
+  assert.equal(stripeCalls.at(-1).params['line_items[0][price_data][unit_amount]'], '2500');
+
+  // Stepping back removes the unused code and keeps the used one.
+  await db.doc(`event_partners/${EV}~spark`).delete();
+  await waitFor(async () => !(await db.doc(`event_partner_kits/${EV}~spark`).get()).exists);
+  assert.equal((await db.doc(`event_codes/${EV}~${kit.seat_code}`).get()).exists, true);
+  assert.equal((await db.doc(`event_codes/${EV}~${kit.member_code}`).get()).exists, true, 'a pending member checkout still holds its code');
+
+  // Back again, then gone before anyone used the new codes: both are deleted.
+  await db.doc(`event_partners/${EV}~spark`).set({ event_id: EV, space_id: 'spark', space_name: 'Spark', agreed_by: 'steward', created_at: T });
+  const again = await waitFor(async () => (await db.doc(`event_partner_kits/${EV}~spark`).get()).data());
+  assert.notEqual(again.seat_code, kit.seat_code);
+  await db.doc(`event_partners/${EV}~spark`).delete();
+  await waitFor(async () => !(await db.doc(`event_partner_kits/${EV}~spark`).get()).exists);
+  assert.equal((await db.doc(`event_codes/${EV}~${again.seat_code}`).get()).exists, false);
+  assert.equal((await db.doc(`event_codes/${EV}~${again.member_code}`).get()).exists, false);
 });
 
 test('the emailed link: wrong token refused; right token edits opt-ins and records the decision', async () => {

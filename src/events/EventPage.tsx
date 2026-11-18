@@ -386,6 +386,8 @@ function PartnerAsk({ id, event, partners, onAdded }: {
   }, [open]);
 
   const listed = new Set(partners.map((p) => p.space_id));
+  const generalPrice = event.tiers.find((t) => !t.requires_code && !t.attestation && t.price_cents > 0)?.price_cents ?? 0;
+  const memberPrice = event.tiers.find((t) => t.id === 'member')?.price_cents ?? Math.round(generalPrice / 2);
   const refLink = (spaceId: string) => `${event.public_url}?ref=${spaceId}`;
   const shareLink = (spaceId: string) => <p className="share-link">
     Start sharing now. Sign-ups through this link are counted for your space:<br />
@@ -396,12 +398,24 @@ function PartnerAsk({ id, event, partners, onAdded }: {
   return (
     <div className="card partner-ask" id="partner">
       <h3>Run a makerspace? Be a partner.</h3>
-      <ul>
-        <li><strong>Tell your members about the day</strong>: an email, a post, a flyer by the door.</li>
-        <li><strong>Your logo goes here</strong>, linked to your space's listing.</li>
-        <li><strong>You get your own link</strong> that counts sign-ups from your community.</li>
-      </ul>
-      <p className="muted">Free, nothing to sign, and you can step back at any time.</p>
+      <div className="partner-deal">
+        <div>
+          <h4>You agree to</h4>
+          <ul>
+            <li><strong>Share the event</strong> with your community: an email, a post, a flyer by the door.</li>
+            <li><strong>Send at least one person</strong> from your space.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>You get</h4>
+          <ul>
+            <li><strong>Your logo on this page</strong>, linked to your listing.</li>
+            <li><strong>One free ticket</strong> for someone from your space.</li>
+            <li><strong>Half price for your members</strong>, with your own code{memberPrice ? ` (${money(memberPrice)} instead of ${money(generalPrice)})` : ''}.</li>
+          </ul>
+        </div>
+      </div>
+      <p className="muted">Nothing to sign or pay. Your codes are emailed to you once you're listed.</p>
       {!open && !sent && <button className="btn" onClick={() => setOpen(true)}>Become a partner makerspace</button>}
 
       {open && !sent && <>
@@ -433,14 +447,14 @@ function PartnerAsk({ id, event, partners, onAdded }: {
             <input maxLength={120} placeholder="Director, board member, volunteer…" value={role} onChange={(e) => setRole(e.target.value)} /></label>
           <label className="sr-only" aria-hidden="true">Leave this empty<input tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} /></label>
           {error && <p className="error">{error}</p>}
-          <button className="btn">Count us in</button>
+          <button className="btn">We're in</button>
         </form>
       </>}
 
       {sent && (listed.has(sent.space ?? '') && mine.some((m) => m.space_id === sent.space)
-        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is listed above.</p>{shareLink(sent.space!)}</>
+        ? <><p className="notice ok">Done. {SPACES.find((s) => s.id === sent.space)?.name} is listed above. Your free ticket and members' code are on their way by email, and on your Home page.</p>{shareLink(sent.space!)}</>
         : <>
-            <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day.</p>
+            <p className="notice ok">Thank you. The organisers will add {SPACES.find((s) => s.id === sent.space)?.name ?? sent.other} here shortly, usually within a day, and email you your free ticket and members' code.</p>
             {sent.space && shareLink(sent.space)}
           </>)}
     </div>

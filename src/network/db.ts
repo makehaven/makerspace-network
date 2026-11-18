@@ -720,6 +720,9 @@ export async function eventsForSpace(spaceId: string) {
       referred: (data?.referred ?? 0) as number,
       people: (data?.people ?? []) as { name: string; email: string }[],
       partner: (await getDoc(doc(db, 'event_partners', `${d.id}~${spaceId}`)).catch(() => null))?.exists() ?? false,
+      // Organisers only; made by a Function a moment after the space becomes a partner.
+      kit: ((await getDoc(doc(db, 'event_partner_kits', `${d.id}~${spaceId}`)).catch(() => null))?.data() ?? null) as
+        { seat_code: string; member_code: string; member_uses: number; member_price_cents: number } | null,
     };
   }));
 }

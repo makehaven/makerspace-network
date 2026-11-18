@@ -434,7 +434,7 @@ function SpaceEvents({ spaceId, spaceName }: { spaceId: string; spaceName: strin
             <h4>{e.title}, {e.date_label}</h4>
             {e.partner
               ? <p style={{ margin: '0 0 8px' }}><span className="pill ok">Partner</span> {spaceName} is listed on the event page. <button className="linkish" onClick={async () => { await setEventPartner(e.id, spaceId, spaceName, s.user!.uid, false); setRows(await eventsForSpace(spaceId)); }}>Remove</button></p>
-              : <p style={{ margin: '0 0 8px' }}><button className="btn small" onClick={async () => { await setEventPartner(e.id, spaceId, spaceName, s.user!.uid, true); setRows(await eventsForSpace(spaceId)); }}>We'll promote this to our members</button> <span className="muted">Lists {spaceName} as a partner on the event page.</span></p>}
+              : <p style={{ margin: '0 0 8px' }}><button className="btn small" onClick={async () => { await setEventPartner(e.id, spaceId, spaceName, s.user!.uid, true); setRows(await eventsForSpace(spaceId)); }}>Become a partner</button> <span className="muted">You agree to share it with your community and send at least one person. {spaceName} is listed on the event page, and you get a free seat and a half-price code for your members.</span></p>}
             <p style={{ margin: '0 0 8px' }}>
               Share this link with your community. {e.home + e.referred > 0
                 ? <>So far: {e.home} registered with this as their home space, {e.referred} through your link.</>
@@ -442,6 +442,10 @@ function SpaceEvents({ spaceId, spaceName }: { spaceId: string; spaceName: strin
             </p>
             <code>{link}</code>{' '}
             <button className="linkish" onClick={async () => { await navigator.clipboard.writeText(link); setCopied(e.id); }}>{copied === e.id ? 'Copied' : 'Copy'}</button>
+            {e.partner && (e.kit ? <div style={{ marginTop: 10 }}>
+              <p style={{ margin: '0 0 4px' }}><strong>Your free seat</strong> (one person): <code>{e.kit.seat_code}</code> · <code>{`${e.public_url}?ref=${spaceId}&code=${e.kit.seat_code}#register`}</code></p>
+              <p style={{ margin: 0 }}><strong>Half price for your members</strong> (${(e.kit.member_price_cents / 100).toFixed(0)}, up to {e.kit.member_uses}): <code>{e.kit.member_code}</code> · <code>{`${e.public_url}?ref=${spaceId}&code=${e.kit.member_code}#register`}</code></p>
+            </div> : <p className="muted" style={{ margin: '8px 0 0' }}>Your free seat and members' code are being made and emailed to you; refresh in a minute to see them here.</p>)}
             {e.people.length > 0 && <p style={{ margin: '8px 0 0' }}>Coming, and happy for you to know: {e.people.map((p) => `${p.name} (${p.email})`).join(', ')}</p>}
           </div>
         );

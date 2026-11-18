@@ -39,6 +39,8 @@ beforeEach(async () => {
     await setDoc(doc(db, 'event_codes', 'ev~FREE'), { event_id: 'ev', region_id: 'us-ct', tier_id: 'comp', max_uses: 1, note: '', created_at: T });
     await setDoc(doc(db, 'event_finance', 'ev'), { costs: [] });
     await setDoc(doc(db, 'event_space_stats', 'ev~spark'), { event_id: 'ev', space_id: 'spark', region_id: 'us-ct', home: 1, people: [] });
+    await setDoc(doc(db, 'event_partner_kits', 'ev~spark'), { event_id: 'ev', space_id: 'spark', region_id: 'us-ct', seat_code: 'SEAT-X', member_code: 'SPARK-X' });
+    await setDoc(doc(db, 'event_partner_requests', 'q1'), { event_id: 'ev', space_id: 'spark', region_id: 'us-ct', email: 'pat@spark.org' });
     await setDoc(doc(db, 'people', 'sparkadmin'), { name: 'A', email: 'a@spark.org' });
     await setDoc(doc(db, 'memberships', 'sparkadmin_spark'), { person_id: 'sparkadmin', space_id: 'spark', role: 'space_admin', status: 'active' });
     await setDoc(doc(db, 'memberships', 'sparkmember_spark'), { person_id: 'sparkmember', space_id: 'spark', role: 'space_contact', status: 'active' });
@@ -113,6 +115,22 @@ test('a space\'s staff see their own counts; its other members and other people 
   await assertFails(getDoc(doc(user('sparkmember'), 'event_space_stats', 'ev~spark')));
   await assertFails(getDoc(doc(user('someone'), 'event_space_stats', 'ev~spark')));
   await assertFails(getDoc(doc(anon(), 'event_space_stats', 'ev~spark')));
+});
+test("a partner's codes: its organisers and the steward, nobody else; only the Function writes them", async () => {
+  await assertSucceeds(getDoc(doc(user('sparkadmin'), 'event_partner_kits', 'ev~spark')));
+  await assertSucceeds(getDoc(doc(user('ct'), 'event_partner_kits', 'ev~spark')));
+  await assertFails(getDoc(doc(user('sparkmember'), 'event_partner_kits', 'ev~spark')));
+  await assertFails(getDoc(doc(user('ri'), 'event_partner_kits', 'ev~spark')));
+  await assertFails(getDoc(doc(anon(), 'event_partner_kits', 'ev~spark')));
+  await assertFails(setDoc(doc(user('ct'), 'event_partner_kits', 'ev~other'), { event_id: 'ev', space_id: 'other', region_id: 'us-ct' }));
+});
+test('partner requests: the steward reads and clears them; nobody writes them from a browser', async () => {
+  await assertFails(getDoc(doc(user('sparkadmin'), 'event_partner_requests', 'q1')));
+  await assertFails(getDoc(doc(anon(), 'event_partner_requests', 'q1')));
+  await assertFails(setDoc(doc(anon(), 'event_partner_requests', 'q2'), { event_id: 'ev', space_id: 'spark', region_id: 'us-ct', email: 'x@y.z' }));
+  await assertSucceeds(getDocs(query(collection(user('ct'), 'event_partner_requests'), where('event_id', '==', 'ev'), where('region_id', '==', 'us-ct'))));
+  await assertFails(deleteDoc(doc(user('ri'), 'event_partner_requests', 'q1')));
+  await assertSucceeds(deleteDoc(doc(user('ct'), 'event_partner_requests', 'q1')));
 });
 test('sponsors, interest, codes and the budget are stewards only', async () => {
   for (const [c, id] of [['event_sponsors', 's1'], ['event_interest', 'i1'], ['event_codes', 'ev~FREE'], ['event_finance', 'ev']]) {

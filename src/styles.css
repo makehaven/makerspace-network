@@ -613,6 +613,8 @@ details.form-card > summary { cursor: pointer; }
 .partner-ask { border: 2px solid var(--accent); background: var(--accent-soft); margin: 8px 0 36px; }
 .partner-ask h3 { font-size: 1.3rem; margin: 0 0 8px; }
 .partner-ask ul { margin: 0 0 8px; padding-left: 20px; }
+.partner-deal { display: grid; gap: 4px 28px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.partner-deal h4 { margin: 6px 0 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
 .partner-ask li { margin-bottom: 4px; }
 .partner-ask .event-form { margin-top: 12px; }
 .partner-ask .share-link code { word-break: break-all; }

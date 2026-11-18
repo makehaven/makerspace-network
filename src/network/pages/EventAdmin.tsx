@@ -10,7 +10,7 @@ import { useSession } from '../session';
 import { listSpaceIndex, type WithId } from '../db';
 import type { SpaceIndex } from '../model';
 import { PageLink, SignIn, csvEsc, download } from './shared';
-import { REGIONS, SPACES } from '../../data';
+import { REGIONS } from '../../data';
 import { RELATIONSHIP_WORDS, money, type Answers, type Consents, type EventDoc } from '../../events/model';
 import {
   fixedCosts, formatCosts, marginPerHead, net, parseCosts, perHeadCost, sponsorsToBreakEven, type FinanceInputs,
@@ -339,7 +339,6 @@ function SponsorsTab({ id, event, sponsors, onChange }: { id: string; event: Eve
         </table>
       </div>
 
-      <MemberCodes id={id} event={event} codes={codes} onDone={async () => { await onChange(); await loadCodes(); }} />
 
       <div className="card form-card" style={{ marginTop: 16 }}>
         <h2>Ticket codes</h2>
@@ -363,87 +362,45 @@ function SponsorsTab({ id, event, sponsors, onChange }: { id: string; event: Eve
   );
 }
 
-// ---------- member codes: one per makerspace ----------
+// ---------- partner kits: a free seat and a members' code per partner ----------
 
-const MEMBER_TIER = 'member';
-const memberCode = (spaceId: string) => spaceId.toUpperCase().slice(0, 40);
+interface PartnerKit { space_id: string; space_name: string; seat_code: string; member_code: string; member_uses: number; member_price_cents: number; sent_to: string[]; created_at: string }
 
-/** Half price for members of the region's makerspaces. Each open space gets its
- *  own code, which also credits that space with every sign-up it brings. */
-function MemberCodes({ id, event, codes, onDone }: { id: string; event: EventDoc; codes: WithId<CodeRow>[]; onDone: () => Promise<void> }) {
-  const region = REGIONS.find((r) => r.id === event.region_id);
-  const spaces = SPACES.filter((s) => s.status !== 'closed' && !!event.region_id && (s.region_ids ?? []).includes(event.region_id))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const general = event.tiers.find((t) => !t.requires_code && !t.attestation && t.price_cents > 0)?.price_cents ?? 0;
-  const existing = event.tiers.find((t) => t.id === MEMBER_TIER);
-  const price = existing?.price_cents ?? Math.round(general / 2);
-  const made = codes.filter((c) => c.tier_id === MEMBER_TIER && c.space_id);
-  const missing = spaces.filter((s) => !codes.some((c) => c.id === memberCode(s.id)));
-  const [uses, setUses] = useState('25');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const link = (spaceId: string) => `${event.public_url}?ref=${spaceId}&code=${memberCode(spaceId)}#register`;
-  const nameOf = (spaceId: string) => SPACES.find((s) => s.id === spaceId)?.name ?? spaceId;
-
-  const make = async () => {
-    setBusy(true); setMsg(null);
-    try {
-      if (!existing) {
-        await updateDoc(doc(db, 'events', id), {
-          tiers: [...event.tiers, {
-            id: MEMBER_TIER, name: 'Makerspace member',
-            description: `Half price for members of ${region?.name ?? 'the region'}'s makerspaces, with your space's code.`,
-            price_cents: price, limit: null, requires_code: true, attestation: null,
-          }],
-          updated_at: isoNow(),
-        });
-      }
-      const max = Math.min(500, Math.max(1, Math.round(Number(uses)) || 25));
-      for (const s of missing) {
-        await setDoc(doc(db, 'event_codes', `${id}~${memberCode(s.id)}`), {
-          event_id: id, region_id: event.region_id, tier_id: MEMBER_TIER, max_uses: max,
-          note: `Members of ${s.name}`, space_id: s.id, created_at: isoNow(),
-        });
-      }
-      setMsg(`Made ${missing.length} code${missing.length === 1 ? '' : 's'}.`);
-      await onDone();
-    } catch (e) { setMsg(e instanceof Error ? e.message : String(e)); }
-    setBusy(false);
-  };
-
+/** Made by the eventPartnerChanged Function when a space becomes a partner. */
+function PartnerKits({ id, event, regs }: { id: string; event: EventDoc; regs: WithId<Reg>[] }) {
+  const [kits, setKits] = useState<WithId<PartnerKit>[]>([]);
+  useEffect(() => {
+    getDocs(query(collection(db, 'event_partner_kits'), where('event_id', '==', id), where('region_id', '==', event.region_id)))
+      .then((r) => setKits(r.docs.map((d) => ({ id: d.id, ...(d.data() as PartnerKit) })).sort((a, b) => a.space_name.localeCompare(b.space_name))))
+      .catch(() => undefined);
+  }, [id, event.region_id]);
+  const used = (code: string) => regs.filter((r) => r.code === code && ['confirmed', 'pending_payment', 'offered', 'waitlisted'].includes(r.status)).length;
+  const link = (k: PartnerKit, code: string) => `${event.public_url}?ref=${k.space_id}&code=${code}#register`;
   return (
     <div className="card form-card" style={{ marginTop: 16 }}>
-      <h2>Member codes, one per makerspace</h2>
-      <p className="muted">
-        A {money(price)} "Makerspace member" ticket that appears only with a code, and one code for each
-        open makerspace in {region?.name ?? 'the region'} ({spaces.length}). A space sends its members its own
-        link, which fills in the code and credits the space with each sign-up.
-      </p>
-      {missing.length > 0 && (
-        <div className="inline-fields">
-          <label className="field"><span>Uses per code</span><input value={uses} onChange={(e) => setUses(e.target.value)} /></label>
-          <button className="btn" disabled={busy || !general} onClick={() => void make()}>
-            {busy ? 'Making…' : made.length ? `Make the ${missing.length} missing codes` : `Make ${missing.length} member codes`}
-          </button>
-        </div>
-      )}
-      {msg && <p className="muted">{msg}</p>}
-      {made.length > 0 && (
-        <>
+      <h2>Partner seats and member codes ({kits.length})</h2>
+      <p className="muted">Each partner makerspace gets one free seat and a half-price code for its members ({kits[0] ? money(kits[0].member_price_cents) : 'half price'}), made and emailed automatically when it becomes a partner. Removing a partner deletes its unused codes.</p>
+      {kits.length > 0 && <>
+        <div className="scroll-x">
           <table className="data">
-            <thead><tr><th>Makerspace</th><th>Code</th><th>Uses</th><th>Link for its members</th></tr></thead>
+            <thead><tr><th>Makerspace</th><th>Free seat</th><th>Members' code</th><th>Emailed to</th></tr></thead>
             <tbody>
-              {made.sort((a, b) => nameOf(a.space_id!).localeCompare(nameOf(b.space_id!))).map((c) => (
-                <tr key={c.id}><td>{nameOf(c.space_id!)}</td><td><code>{c.id}</code></td><td>{c.max_uses}</td><td><code>{link(c.space_id!)}</code></td></tr>
+              {kits.map((k) => (
+                <tr key={k.id}>
+                  <td>{k.space_name}</td>
+                  <td><code>{k.seat_code}</code> {used(k.seat_code) ? <span className="pill ok">used</span> : <span className="muted">unused</span>}</td>
+                  <td><code>{k.member_code}</code> <span className="muted">{used(k.member_code)} of {k.member_uses}</span></td>
+                  <td>{k.sent_to.length ? k.sent_to.join(', ') : <span className="muted">nobody yet: send it yourself</span>}</td>
+                </tr>
               ))}
             </tbody>
           </table>
-          <button className="btn ghost small" onClick={() => download(`${id}-member-codes.csv`,
-            ['makerspace,code,uses,link', ...made.map((c) => [nameOf(c.space_id!), c.id, String(c.max_uses), link(c.space_id!)].map(csvEsc).join(','))].join('\n'))}>
-            Download as CSV
-          </button>
-        </>
-      )}
+        </div>
+        <button className="btn ghost small" onClick={() => download(`${id}-partner-codes.csv`,
+          ['makerspace,seat_code,seat_link,member_code,member_link,emailed_to', ...kits.map((k) => [k.space_name, k.seat_code, link(k, k.seat_code), k.member_code, link(k, k.member_code), k.sent_to.join(' ')].map(csvEsc).join(','))].join('\n'))}>
+          Download as CSV
+        </button>
+      </>}
     </div>
   );
 }
@@ -468,10 +425,13 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
     setRequests(r.docs.map((d) => ({ id: d.id, ...(d.data() as PartnerRequest) })).sort((a, b) => a.created_at.localeCompare(b.created_at)));
   };
   useEffect(() => { void loadRequests().catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  // Approving leaves the request for the Function, which emails the codes to
+  // whoever asked and then removes it.
   const settle = async (r: WithId<PartnerRequest>, approve: boolean) => {
     if (approve && r.space_id) await setEventPartner(id, r.space_id, byId.get(r.space_id)?.name ?? r.space_id, s.user!.uid, true);
-    await deleteDoc(doc(db, 'event_partner_requests', r.id));
-    await Promise.all([loadRequests(), loadPartners()]);
+    else await deleteDoc(doc(db, 'event_partner_requests', r.id));
+    setRequests((rs) => rs.filter((x) => x.id !== r.id));
+    await loadPartners();
   };
 
   // The terms promise that anything beyond logistics is the person's choice, so
@@ -504,7 +464,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
       {requests.length > 0 && (
         <div className="card form-card">
           <h2>Partner requests ({requests.length})</h2>
-          <p className="muted">From "Become a partner makerspace" on the event page. Approving lists the space publicly with its logo; check the person is plausibly speaking for it first. A place not in the directory needs a record before it can be listed.</p>
+          <p className="muted">From "Become a partner makerspace" on the event page. Approving lists the space publicly with its logo and emails the person its free seat and members' code, so check they plausibly speak for it first. A place not in the directory needs a record before it can be listed.</p>
           <ul className="attendee-list">
             {requests.map((r) => (
               <li key={r.id}>
@@ -555,7 +515,7 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
 
       <div className="card form-card">
         <h2>Spaces in {REGIONS.find((r) => r.id === event.region_id)?.name ?? 'this region'}</h2>
-        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page. Tick Partner only once a space has agreed to promote the event; it then appears on the public page. Spaces can also ask from the event page (requests appear above), and signed-in staff can say yes themselves.</p>
+        <p className="muted">Give each space its link. People who arrive through it are counted for that space, and its staff see those counts on their Home page. Tick Partner only once a space has agreed to the partner terms; it then appears on the public page and its organisers are emailed a free seat and a members' code. Spaces can also ask from the event page (requests appear above), and signed-in staff can say yes themselves.</p>
         <div className="scroll-x">
           <table className="data">
             <thead><tr><th>Partner</th><th>Space</th><th>Home space of</th><th>Came through its link</th><th>Interested</th><th>Link</th></tr></thead>
@@ -575,6 +535,8 @@ function NetworkTab({ id, event, regs, interest, orgs }: { id: string; event: Ev
           </table>
         </div>
       </div>
+
+      <PartnerKits id={id} event={event} regs={regs} />
 
       {interest.length > 0 && (
         <div className="card form-card">

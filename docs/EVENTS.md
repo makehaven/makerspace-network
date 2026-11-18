@@ -58,8 +58,9 @@ directory creates a lead to verify, per the rule on never inventing directory da
 Bonanza, from Redwood Endeavors, leads. ClimateHaven is a sponsor, donating the
 space. MakeHaven handles the money, because someone has to be the fiduciary, and is
 otherwise listed as one partner among the makerspaces that agree to promote the event
-to their members. A space is listed only once it has said yes: its staff can say so
-from Home, or a steward records it on the Network tab. This keeps the network from
+to their members. A space is listed only once it has said yes: it asks from the
+event page or Home, or a steward records it on the Network tab. See *Partner
+makerspaces* below for what a partner agrees to and gets. This keeps the network from
 reading as MakeHaven's.
 
 ## What it does not do yet
@@ -280,13 +281,29 @@ The short address `/bonanza` is an alias in `src/App.tsx`; any event also answer
 price keeping you from coming?", so it doesn't sit beside general admission as an
 equal choice. It needs no application, as before.
 
-**Member codes (2026-11-18).** Event admin → Sponsors → *Member codes, one per
-makerspace* adds a hidden half-price `member` tier and one code per open makerspace
-in the event's region: the space id in capitals, e.g. `SPARK-MAKERSPACE`. A code
-can carry `space_id`, and registering with it credits that space when no `?ref=`
-link already did. Each space sends its members
-`<public_url>?ref=<space-id>&code=<CODE>#register`, which fills in both. Every
-half-price ticket is $25 the sponsors must cover, so cap the uses per code.
+**Partner makerspaces (2026-11-18).** Member codes are now a partner benefit, not
+something every space gets. A partner **agrees to** share the event with its
+community and send at least one person. It **gets** its logo on the page, one free
+seat, and a half-price code for its members.
+
+- A space asks with *Become a partner makerspace* on the event page. Anyone can
+  type a space's name, so the request (`event_partner_requests`, written only by
+  `eventInterest`) waits for a steward, who is emailed and approves it on the
+  Network tab. An organiser signed in on the event's host lists their own space at
+  once. Either way the result is an `event_partners` row.
+- The `eventPartnerChanged` Function then adds the hidden half-price `member` tier
+  if the event lacks it, and makes two codes carrying `space_id`: `SEAT-XXXXXX`
+  (comp, one use) and `<SPACE>-XXXX` (member, 50 uses). Both are random, because a
+  free seat must not be guessable. It records them in
+  `event_partner_kits/{ev~space}`, which the space's organisers see on Home, and
+  emails them to whoever asked or else the space's organisers. Replies come to the
+  event's reply-to address.
+- Removing a partner deletes its codes that no live registration used.
+- Network tab → *Partner seats and member codes* lists every kit, its use and who
+  it was emailed to, with a CSV.
+
+Each free seat costs the event its food and fees, and each member ticket is $25
+the sponsors cover.
 
 ## Tests
 
