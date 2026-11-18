@@ -97,7 +97,10 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   // exists in the index, so partner mode searches that instead.
   const [mode, setMode] = useState<'makerspace' | 'partner'>('makerspace');
   const [partners, setPartners] = useState<(SpaceIndex & { id: string })[]>([]);
-  const [role, setRole] = useState<SpaceRole>('space_contact');
+  // No role is preselected when the email matches: preselecting "keep me in
+  // the loop" meant someone who came to claim their listing and pressed Join
+  // became a contact who could edit nothing, with the listing still unclaimed.
+  const [picked, setPicked] = useState<SpaceRole | null>(null);
   const [functions, setFunctions] = useState<string[]>([]);
   const [pref, setPref] = useState<ContactPreference>('relay');
   const [invitations, setInvitations] = useState(true);
@@ -111,6 +114,8 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
   const spaceDomain = domainOfUrl(space?.contact?.website);
   const domainOk = !!space && !!spaceDomain && spaceDomain === emailDomain
     && !isCommonEmailDomain(emailDomain) && user.emailVerified;
+  const role: SpaceRole = domainOk ? picked ?? 'space_contact' : 'space_contact';
+  const mustPick = mode === 'makerspace' && !proposing && domainOk && !picked;
   const organiser = mode === 'partner' || ORGANISER_ROLES.includes(role);
 
   useEffect(() => {
@@ -122,7 +127,7 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
     if (!chosen || proposing) { setIndexed(null); return; }
     getSpaceIndex(chosen).then((x) => setIndexed(!!x)).catch(() => setIndexed(false));
   }, [chosen, proposing]);
-  useEffect(() => { if (!domainOk) setRole('space_contact'); }, [domainOk]);
+  useEffect(() => { if (!domainOk) setPicked(null); }, [domainOk]);
   useEffect(() => { if (!organiser) setPref('relay'); }, [organiser]);
 
   const partnerMatches = useMemo(() => {
@@ -317,8 +322,8 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
                 ['space_editor', 'I\'m on the staff — editor', 'Answer the listing and annual data. Your email or phone can be shown to verified people.'],
                 ['space_contact', 'Keep me in the loop', 'Meeting invitations and the people directory. Messages reach you by relay.'],
               ] as const).map(([r, title, body]) => (
-                <label key={r} className={`radio ${role === r ? 'on' : ''}`}>
-                  <input type="radio" name="role" checked={role === r} onChange={() => setRole(r)} />
+                <label key={r} className={`radio ${picked === r ? 'on' : ''}`}>
+                  <input type="radio" name="role" checked={picked === r} onChange={() => setPicked(r)} />
                   <span><strong>{title}</strong><br /><span className="muted">{body}</span></span>
                 </label>
               ))}
@@ -360,7 +365,8 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
 
           {error && <p className="error">{error}</p>}
           <div className="btn-row">
-            <button className="btn" disabled={busy || !name.trim() || (indexed === false && !proposing && mode === 'makerspace')
+            {mustPick && <span className="muted">Choose your role there to continue.</span>}
+            <button className="btn" disabled={busy || !name.trim() || mustPick || (indexed === false && !proposing && mode === 'makerspace')
               || (proposing && mode === 'partner' && !proposal.partner_type)}>
               {busy ? 'Joining…' : 'Join'}
             </button>
@@ -375,6 +381,9 @@ function JoinForm({ presetSpaceId, onDone }: { presetSpaceId?: string; onDone: (
 // already answered, in which case it is a link they can come back to.
 function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void }) {
   const [started, setStarted] = useState<boolean | null>(null);
+  // Sent here by "Ask a colleague"? Go back to the part they were asked about.
+  const q = new URLSearchParams(window.location.search);
+  const dest = { space: spaceId, tab: q.get('tab') ?? 'annual', ...(q.get('section') ? { section: q.get('section')! } : {}) };
   useEffect(() => {
     Promise.all([getListingSubmission(spaceId), getSpaceMetrics(spaceId, reportingYear())])
       .then(([l, m]) => setStarted(!!l || !!m)).catch(() => setStarted(true));
@@ -385,7 +394,7 @@ function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void })
       <p className="muted">Your space's listing and annual data have been started by a colleague. You can review or add to them any time from your space card.</p>
       <div className="btn-row">
         <button className="btn" onClick={onDone}>Continue</button>
-        <PageLink className="btn ghost" page="space-data" params={{ space: spaceId }}>Review your space's data</PageLink>
+        <PageLink className="btn ghost" page="space-data" params={dest}>Review your space's data</PageLink>
       </div>
     </>
   ) : (
@@ -393,7 +402,7 @@ function StaffNext({ spaceId, onDone }: { spaceId: string; onDone: () => void })
       <h3>Next: tell the network about your space</h3>
       <p>Start with the network's annual data — members, square feet, staff, finances. It saves as you go, is private to your space and the steward, and is only ever published in totals. The public listing and the Standards self-assessment are there too, whenever you're ready.</p>
       <div className="btn-row">
-        <PageLink className="btn" page="space-data" params={{ space: spaceId, tab: 'annual' }}>Answer now</PageLink>
+        <PageLink className="btn" page="space-data" params={dest}>Answer now</PageLink>
         <button className="btn ghost" onClick={onDone}>Later</button>
       </div>
     </>
