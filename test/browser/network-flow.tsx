@@ -5,6 +5,7 @@ import { MakerDirectory } from '../../src/makers/MakerPages';
 import EventsPage from '../../src/events/EventsPage';
 import { ListingEditor } from '../../src/network/pages/SpaceData';
 import { blankMaker } from '../../src/makers/model';
+import { ConnectSpaceView } from '../../src/network/pages/ConnectSpace';
 import type { EventDoc } from '../../src/events/model';
 import seed from '../../data/events/maker-bonanza-2027.json';
 import '../../src/styles.css';
@@ -23,6 +24,8 @@ const oldSubmission = async () => ({
 });
 const sent = async (f: unknown) => { (window as unknown as { __sent: unknown }).__sent = f; };
 const view = q.get('view');
-createRoot(document.getElementById('root')!).render(view === 'events' ? <EventsPage load={loadEvents} />
+const saveSpace = async (id: string) => { (window as unknown as { __space: string }).__space = id; };
+createRoot(document.getElementById('root')!).render(view === 'connect' ? <main className="wrap narrow"><ConnectSpaceView save={saveSpace} /></main>
+  : view === 'events' ? <EventsPage load={loadEvents} />
   : view === 'listing' ? <main className="wrap narrow"><ListingEditor spaceId="fixture" canEdit load={oldSubmission} submit={sent} /></main>
   : <MakerDirectory load={loadMakers} />);

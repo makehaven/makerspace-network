@@ -162,3 +162,24 @@ test('campus spaces sit below the community spaces and say who they are for', as
   await page.goto('/?page=space&space=makehaven');
   await expect(page.locator('.access-note')).toHaveCount(0);
 });
+
+test('someone with no space is asked once: member picks a space, or a ZIP suggests public spaces first', async ({ page }) => {
+  await page.goto('/test/browser/network-flow.html?view=connect');
+  await page.getByRole('button', { name: 'Not yet: show me spaces near me' }).click();
+  await page.getByLabel('Your ZIP code').fill('06511');
+  const near = page.locator('.near-list li');
+  await expect(near).toHaveCount(3);
+  await expect(near.filter({ hasText: 'MakeHaven' })).toHaveCount(1);
+  // Yale CEID and SCSU are close by but not open to the public, so public spaces come first.
+  await expect(near.filter({ hasText: /Yale|SCSU/ })).toHaveCount(0);
+  await page.getByLabel('Your ZIP code').fill('10001');
+  await expect(page.getByText('We can only suggest spaces in Connecticut so far.')).toBeVisible();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: "I'm a member" }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Choose your makerspace.')).toBeVisible();
+  await page.getByRole('searchbox').fill('Spark');
+  await page.getByRole('button', { name: /SPARK Makerspace/ }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __space?: string }).__space)).toBe('spark-makerspace');
+});

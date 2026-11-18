@@ -2,6 +2,9 @@
 // what applies to them, so someone with no makerspace is not asked to join one
 // first. Every source fails quietly: a section the rules refuse simply isn't there.
 
+import { href } from '../../App';
+import Logo from '../../components/Logo';
+import ConnectSpace from './ConnectSpace';
 import { useEffect, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -105,7 +108,7 @@ export default function Home() {
 
       if (steward) {
         const [makers, listings] = await Promise.all([quiet(getDocs(collection(db, 'makers')), null), quiet(listListingSubmissions(), [])]);
-        const profiles = (makers?.docs ?? []).filter((d) => d.get('review') === 'pending').length;
+        const profiles = (makers?.docs ?? []).filter((d) => d.get('review') === 'pending' && d.get('visibility') !== 'hidden').length;
         const photos = (makers?.docs ?? []).reduce((n, d) => n + ((d.get('work_pending') as number | undefined) ?? 0), 0);
         if (profiles) list.push({ key: 'profiles', text: `${profiles} new maker ${profiles === 1 ? 'profile' : 'profiles'} to look over`, page: 'steward', params: { tab: 'makers' } });
         if (photos) list.push({ key: 'photos', text: `${photos} ${photos === 1 ? 'photo' : 'photos'} to review`, page: 'steward', params: { tab: 'makers' } });
@@ -159,6 +162,10 @@ export default function Home() {
           </section>
         )}
 
+        {tasks !== null && s.memberships.length === 0 && !maker?.home_space_id && (
+          <ConnectSpace maker={maker} onSaved={setMaker} />
+        )}
+
         {events.map((ev) => {
           const t = tickets.find((x) => x.event_id === ev.id);
           return (
@@ -179,6 +186,9 @@ export default function Home() {
         <section className="card form-card home-card">
           <h2>Your maker profile</h2>
           {maker ? <>
+            {maker.home_space_id && spaceById(maker.home_space_id) && (
+              <p className="home-space"><Logo space={spaceById(maker.home_space_id)!} /> <span>Your makerspace: <a href={href('space', { space: maker.home_space_id })}>{spaceById(maker.home_space_id)!.name}</a></span></p>
+            )}
             <p className="muted" style={{ margin: 0 }}>{profileScore(maker)}% complete{nextStep ? `. Next: ${nextStep.prompt.toLowerCase()}.` : '.'}</p>
             <div className="meter"><span style={{ width: `${profileScore(maker)}%` }} /></div>
             <div className="btn-row">

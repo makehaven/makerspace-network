@@ -73,6 +73,9 @@ export const makerCreated = onDocumentCreated(
       await applyAttendance(uid, regs.docs.map((d) => ({ id: d.get('event_id') as string, attended: d.get('attended') === true })));
       return;
     }
+    // A hidden profile (often just a home makerspace, from My network) is not
+    // shown to anyone, so there is nothing to review until its owner shows it.
+    if (e.data?.get('visibility') === 'hidden') return;
     await notifyModerator(`New profile: ${e.data?.get('display_name')}`, `${e.data?.get('display_name')} made a maker profile and has no event ticket, so it waits for you before anyone else can see it.`);
   },
 );

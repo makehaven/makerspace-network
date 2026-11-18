@@ -298,7 +298,8 @@ export function MakersReviewTab() {
 
   if (error) return <p className="error">{error}</p>;
   if (!rows) return <p>Loading…</p>;
-  const waiting = rows.filter((r) => r.review === 'pending' || r.pendingWork.length > 0);
+  // A profile its owner keeps hidden is nobody else's to review until they show it.
+  const waiting = rows.filter((r) => (r.review === 'pending' && r.visibility !== 'hidden') || r.pendingWork.length > 0);
   const others = rows.filter((r) => !waiting.includes(r));
   return (
     <>
