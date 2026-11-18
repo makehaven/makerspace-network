@@ -10,6 +10,7 @@ import ForSpaces from './pages/ForSpaces';
 import AchievementDetail from './pages/AchievementDetail';
 import { ACHIEVEMENTS } from './data';
 import FeedbackButton from './components/FeedbackButton';
+import { useAuthHint } from './authHint';
 
 // The people layer (join, people, steward) needs Firebase. It is loaded only
 // when one of those pages is opened, so the public directory stays static.
@@ -85,7 +86,7 @@ export const href = (page: string, params: Record<string, string> = {}) => {
   return qs ? `/?${qs}` : '/';
 };
 
-function Link({ page, params, children }: { page: string; params?: Record<string, string>; children: React.ReactNode }) {
+function Link({ page, params, children, className, label }: { page: string; params?: Record<string, string>; children: React.ReactNode; className?: string; label?: string }) {
   const here = parse().page;
   // Everything about you and your space belongs to Home.
   const current = here === page
@@ -97,6 +98,9 @@ function Link({ page, params, children }: { page: string; params?: Record<string
   return (
     <a
       href={href(page, params)}
+      className={className}
+      aria-label={label}
+      title={label}
       aria-current={current ? 'page' : undefined}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -106,6 +110,18 @@ function Link({ page, params, children }: { page: string; params?: Record<string
     >
       {children}
     </a>
+  );
+}
+
+/** Sign in, or who you are: the header's one answer to "am I signed in?". */
+function AccountLink() {
+  const who = useAuthHint();
+  if (!who) return <Link page="home" className="nav-signin">Sign in</Link>;
+  return (
+    <Link page="home" className="nav-account" label={`My network, signed in as ${who}`}>
+      <span className="avatar" aria-hidden="true">{who.trim().charAt(0).toUpperCase()}</span>
+      My network
+    </Link>
   );
 }
 
@@ -139,7 +155,7 @@ export default function App() {
             <Link page="makers">Meet makers</Link>
             <Link page="events">Events</Link>
             <Link page="for-spaces">For organisers</Link>
-            <Link page="home">My network</Link>
+            <AccountLink />
           </nav>
         </div>
       </header>

@@ -117,6 +117,15 @@ a:hover { color: var(--accent-2); }
 }
 .nav a:hover { color: var(--ink); background: var(--paper-2); }
 .nav a[aria-current='page'] { color: var(--accent); background: var(--accent-soft); }
+/* Signed out: an outlined button, so the way in is obvious. */
+.nav a.nav-signin { color: var(--accent); border: 1px solid var(--accent); padding: 9px 14px; margin-left: 4px; }
+.nav a.nav-signin:hover { background: var(--accent-soft); }
+/* Signed in: your initial beside My network, as most sites show it. */
+.nav a.nav-account { display: inline-flex; align-items: center; gap: 8px; padding-left: 6px; }
+.nav-account .avatar {
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink); font-size: 0.8rem; font-weight: 700; line-height: 1;
+}
 
 /* Let navigation wrap below the brand on smaller screens. */
 @media (max-width: 960px) {

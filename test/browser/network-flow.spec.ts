@@ -46,7 +46,7 @@ test('navigation and sign-in explain maker, organiser, invitation and event jour
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?page=home');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  for (const name of ['Find a space', 'Meet makers', 'Events', 'For organisers', 'My network']) await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
+  for (const name of ['Find a space', 'Meet makers', 'Events', 'For organisers', 'Sign in']) await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
   await expect(page.getByText('Use any email address you check regularly.')).toBeVisible();
   await expect(page.getByLabel('Email address')).toHaveAttribute('autocomplete', 'email');
   await expect(page.getByText('Your network account is free.', { exact: false })).toBeVisible();
@@ -109,4 +109,15 @@ test('activity filters work by keyboard, persist, and leave mobile search access
   await page.locator('.directory-map > summary').click();
   await expect(page.locator('.map-panel')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
+
+test('the header says who is signed in, on any page, without loading Firebase', async ({ page, context }) => {
+  await context.addCookies([{ name: 'mn_who', value: encodeURIComponent('Jo Rivera'), domain: '127.0.0.1', path: '/' }]);
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  await expect(nav.getByRole('link', { name: 'My network, signed in as Jo Rivera' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+  await context.clearCookies();
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
 });
