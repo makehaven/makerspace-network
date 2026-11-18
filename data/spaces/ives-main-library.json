@@ -19,6 +19,12 @@
       "url": "https://www.google.com/maps/d/viewer?mid=1SSnuE9p2Uh0al972HHFjKRJxSZZ1GHc",
       "retrieved": "2026-08-28",
       "note": "'CT Makerspaces Map' attached to the superseded Google Site. This record is the 'Ives Main Library' pin and nothing else — the pin carried a name and a location, no other detail."
+    },
+    {
+      "system": "space_website",
+      "url": "https://nhfpl.libcal.com/ical_subscribe.php?src=p&cid=20143&cat=71351",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: New Haven Free Public Library LibCal, Ives calendar, 'Ives Squared' category. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -38,5 +44,8 @@
       "minor_policy",
       "capabilities"
     ]
+  },
+  "endpoints": {
+    "ical": "https://nhfpl.libcal.com/ical_subscribe.php?src=p&cid=20143&cat=71351"
   }
 }

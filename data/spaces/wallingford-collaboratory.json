@@ -20,6 +20,12 @@
       "url": "https://makerspacect.com/makerspaces/",
       "retrieved": "2026-08-29",
       "note": "Listed as 'Collaboratory at the Wallingford Public Library', Wallingford CT, in MakerspaceCT's own directory. The URL it gives (wallingford.lioninc.org) no longer resolves."
+    },
+    {
+      "system": "space_website",
+      "url": "https://www.wallingfordlibrary.org/events/feed/ical?program_types%5B125%5D=125",
+      "retrieved": "2026-11-18",
+      "note": "Public events feed: Wallingford Public Library calendar, program type 'Collaboratory'; also carries library closings. Read nightly for the Events listing (Community Calendar, ct-makerspaces)."
     }
   ],
   "verification": {
@@ -38,5 +44,8 @@
       "capabilities",
       "whether use is restricted to Wallingford library card holders"
     ]
+  },
+  "endpoints": {
+    "ical": "https://www.wallingfordlibrary.org/events/feed/ical?program_types%5B125%5D=125"
   }
 }
