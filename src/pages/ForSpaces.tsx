@@ -92,9 +92,10 @@ export default function ForSpaces() {
         </p>
         <p className="notice info">
           <strong>Being straight about what exists today:</strong> sign-in, claiming, the
-          roster and invitations are live. Editing the listing from the site is not built
-          yet — until it is, send changes by <a href={CONTACT}>email</a> or pull request and
-          we make the edit for you. See{' '}
+          roster and invitations are live. Once you have claimed your listing you correct it
+          under Your space and send it; the steward merges it into the directory, with your
+          space recorded as the source, so it is not live the moment you press send. You can
+          also send changes by <a href={CONTACT}>email</a> or pull request. See{' '}
           <a href={`${REPO_URL}/blob/main/docs/GOVERNANCE.md`}>docs/GOVERNANCE.md</a> for the
           full specification.
         </p>
